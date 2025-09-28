@@ -1,6 +1,6 @@
 # Package Maximizer 📦🔍
 
-[![CI/CD](https://github.com/dominicusin/package-maximizer/workflows/Package%20Maximizer%20CI/CD/badge.svg)](https://github.com/package-maximizer/package-maximizer/actions)
+[![CI/CD](https://github.com/dominicusin/package-maximizer/workflows/Package%20Maximizer%20CI/CD/badge.svg)](https://github.com/dominicusin/package-maximizer/actions)
 [![codecov](https://codecov.io/gh/package-maximizer/package-maximizer/branch/main/graph/badge.svg)](https://codecov.io/gh/package-maximizer/package-maximizer)
 [![PyPI version](https://badge.fury.io/py/package-maximizer.svg)](https://badge.fury.io/py/package-maximizer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
