@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "package-maximizer"
+description = "Модульная система для максимизации непротиворечивого множества пакетов"
+authors = [{name = "Package Maximizer Team", email = "team@package-maximizer.dev"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Topic :: System :: Software Distribution",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dynamic = ["version"]
+dependencies = [
+    "click>=8.0.0",
+    "pyyaml>=6.0",
+    "numpy>=1.20.0",
+    "pandas>=1.3.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+    "psutil>=5.8.0",
+    "requests>=2.25.0",
+]
+
+[project.optional-dependencies]
+web = [
+    "flask>=2.0.0",
+    "werkzeug>=2.0.0",
+    "gunicorn>=20.0.0",
+]
+solvers = [
+    "z3-solver>=4.8.0",
+    "pulp>=2.5.0",
+    "ortools>=9.0.0",
+]
+all = [
+    "package-maximizer[web,solvers]",
+    "pysat>=0.1.7",
+]
+dev = [
+    "pytest>=6.2.0",
+    "pytest-cov>=3.0.0",
+    "black>=21.0.0",
+    "flake8>=4.0.0",
+    "mypy>=0.910",
+    "isort>=5.0.0",
+    "pre-commit>=2.15.0",
+]
+
+[project.scripts]
+package-maximizer = "package_maximizer.cli.main:cli"
+pm-web = "package_maximizer.web.app:run_app"
+
+[project.urls]
+Homepage = "https://github.com/package-maximizer/package-maximizer"
+Documentation = "https://package-maximizer.readthedocs.io/"
+Repository = "https://github.com/package-maximizer/package-maximizer.git"
+"Bug Tracker" = "https://github.com/package-maximizer/package-maximizer/issues"
