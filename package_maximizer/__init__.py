@@ -10,21 +10,20 @@ __author__ = "Package Maximizer Team"
 __email__ = "team@package-maximizer.dev"
 __license__ = "MIT"
 
-from .core.package import Package, PackageConstraint
-from .core.maximizer import PackageMaximizer
-from .core.interfaces import PackageParser, ConstraintSolver, ResultAnalyzer
-
 # Enums
 from .core.enums import PackageManagerType, SolverType
+from .core.interfaces import ConstraintSolver, PackageParser, ResultAnalyzer
+from .core.maximizer import PackageMaximizer
+from .core.package import Package, PackageConstraint
 
 __all__ = [
     "Package",
-    "PackageConstraint", 
+    "PackageConstraint",
     "PackageMaximizer",
     "PackageParser",
-    "ConstraintSolver", 
+    "ConstraintSolver",
     "ResultAnalyzer",
     "PackageManagerType",
     "SolverType",
-    "__version__"
+    "__version__",
 ]

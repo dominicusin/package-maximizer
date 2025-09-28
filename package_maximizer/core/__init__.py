@@ -1,17 +1,17 @@
 """Основные компоненты Package Maximizer"""
 
-from .package import Package, PackageConstraint
-from .maximizer import PackageMaximizer
-from .interfaces import PackageParser, ConstraintSolver, ResultAnalyzer
 from .enums import PackageManagerType, SolverType
+from .interfaces import ConstraintSolver, PackageParser, ResultAnalyzer
+from .maximizer import PackageMaximizer
+from .package import Package, PackageConstraint
 
 __all__ = [
     "Package",
     "PackageConstraint",
-    "PackageMaximizer", 
+    "PackageMaximizer",
     "PackageParser",
     "ConstraintSolver",
     "ResultAnalyzer",
     "PackageManagerType",
-    "SolverType"
+    "SolverType",
 ]
