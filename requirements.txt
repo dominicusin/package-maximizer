@@ -9,7 +9,7 @@ psutil>=5.8.0
 
 # Веб-интерфейс
 flask>=2.0.0
-werkzeug>=2.0.0
+werkzeug>=3.1.5
 
 # Солверы (опционально)
 z3-solver>=4.8.0
@@ -29,3 +29,4 @@ pytest-cov>=3.0.0
 black>=21.0.0
 flake8>=4.0.0
 mypy>=0.910
+urllib3>=2.6.3 # not directly required, pinned by Snyk to avoid a vulnerability
