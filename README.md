@@ -29,4 +29,6 @@ git clone https://github.com/dominicusin/package-maximizer.git
 cd package-maximizer
 pip install -e ".[all]"
 
+---
 
+🔄 **Mirrors:** [![GitLab](https://img.shields.io/badge/GitLab-dominicusin-orange?logo=gitlab)](https://gitlab.com/dominicusin/package-maximizer) · GitHub is canonical.
