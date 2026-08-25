@@ -47,7 +47,6 @@ solvers = [
 ]
 all = [
     "package-maximizer[web,solvers]",
-    "pysat>=0.1.7",
 ]
 dev = [
     "pytest>=6.2.0",
