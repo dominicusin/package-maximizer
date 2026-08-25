@@ -29,4 +29,18 @@ git clone https://github.com/dominicusin/package-maximizer.git
 cd package-maximizer
 pip install -e ".[all]"
 
+---
 
+🔄 **Mirrors:** [![GitLab](https://img.shields.io/badge/GitLab-dominicusin-orange?logo=gitlab)](https://gitlab.com/dominicusin/package-maximizer) · GitHub is canonical.
+
+## 📊 Solvers & Benchmarks
+
+| Solver | Тип | Установка | Статус |
+|---|---|---|---|
+| **Z3** | SMT | `pip install package-maximizer[solvers]` (z3-solver) | ✅ основной |
+| **PuLP** | ILP/MIP | входит в `[solvers]` | ✅ основной |
+| **OR-Tools** | CP-SAT | входит в `[solvers]` | ✅ опционально |
+| **MaxSAT / MiniSat** | SAT | через `[all]` / python-sat | 🔬 экспериментально |
+
+Запуск бенчмарков: `python -m package_maximizer.bench --solvers z3,pulp --packages 500`
+(сравнение времени решения и качества множества на синтетических зависимостных графах).
