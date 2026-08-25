@@ -1,4 +1,4 @@
-FROM python:3.14.3-slim
+FROM python:3.12-slim
 
 LABEL maintainer="Package Maximizer Team <team@package-maximizer.dev>"
 LABEL description="Контейнер для Package Maximizer"
