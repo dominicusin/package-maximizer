@@ -1,5 +1,7 @@
 """Модель пакета и его ограничения."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 
 
@@ -8,8 +10,8 @@ class Package:
     name: str
     version: str = ""
     status: str = "candidate"
-    depends: list[str] = field(default_factory=list)
-    conflicts: list[str] = field(default_factory=list)
+    depends: list = field(default_factory=list)
+    conflicts: list = field(default_factory=list)
 
     def __str__(self) -> str:
         v = f" {self.version}" if self.version else ""
@@ -26,7 +28,7 @@ class PackageConstraint:
         if not self.version or not other_version:
             return True
 
-        def key(v: str):
+        def key(v):
             return [int(x) for x in v.split(".") if x.isdigit()]
 
         a, b = key(other_version), key(self.version)
