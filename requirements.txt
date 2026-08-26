@@ -19,7 +19,7 @@ ortools>=9.0.0
 # Для работы с различными пакетными менеджерами
 requests>=2.25.0
 lxml>=4.6.0
-beautifulsoup4>=4.9.0
+beautifulsoup4>=4.15.0
 
 # Тестирование
 pytest>=6.2.0
