@@ -67,3 +67,6 @@ Homepage = "https://github.com/package-maximizer/package-maximizer"
 Documentation = "https://package-maximizer.readthedocs.io/"
 Repository = "https://github.com/package-maximizer/package-maximizer.git"
 "Bug Tracker" = "https://github.com/package-maximizer/package-maximizer/issues"
+
+[tool.setuptools_scm]
+fallback_version = "0.1.0"
