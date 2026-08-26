@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it."
+title: "Package Maximizer"
+abstract: "Modular system for maximizing a consistent package set."
+authors:
+  - family-names: "Package Maximizer Team"
+license: MIT
+repository-code: "https://github.com/dominicusin/package-maximizer"
+url: "https://pypi.org/project/package-maximizer/"
+keywords: [packaging, dependency-resolution, optimization]
+version: 0.1.0
