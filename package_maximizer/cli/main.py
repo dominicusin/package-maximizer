@@ -44,14 +44,16 @@ def cli(verbose: bool, quiet: bool, config: str | None):
     cfg = load_config(config)
     # CLI flags take precedence over config/env for log level.
     configure_logging(level, json_output=cfg.log_json)
+    # Share the loaded config with subcommands (ctx.obj).
+    click.get_current_context().obj = {"config": cfg, "config_path": config}
 
 
 
 @cli.command()
 @click.argument('packages', nargs=-1)
-@click.option('--manager', '-m', type=str, default='apt',
-              help='Тип пакетного менеджера (apt, pacman, dnf, brew)')
-@click.option('--solver', '-s', type=str, default='greedy',
+@click.option('--manager', '-m', type=str, default=None,
+              help='Тип пакетного менеджера (apt, pacman, dnf, brew, snap, flatpak, cargo, npm)')
+@click.option('--solver', '-s', type=str, default=None,
               help='Тип солвера (greedy, z3, pulp, ortools, maxsat, minisat, enhanced_greedy)')
 @click.option('--conflicts', '-c', type=(str, str), multiple=True,
               help='Конфликты между пакетами (имя1,имя2)')
@@ -71,6 +73,14 @@ def maximize(packages, manager, solver, conflicts, output, weights):
         
         package-maximizer pkg1 pkg2 pkg3 -w pkg1,2.0 -w pkg2,1.5
     """
+    # Resolve config-driven defaults (explicit CLI flags take precedence).
+    obj = click.get_current_context().obj or {}
+    cfg = obj.get("config")
+    if manager is None:
+        manager = (cfg.default_manager if cfg else "apt")
+    if solver is None:
+        solver = (cfg.default_solver if cfg else "greedy")
+
     try:
         # Валидация менеджера
         try:
