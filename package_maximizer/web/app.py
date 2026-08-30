@@ -316,6 +316,61 @@ def maximize_get() -> tuple[dict, int]:
         return maximize_post()
 
 
+# ─── Export endpoint ──────────────────────────────────────────
+@app.post("/api/v1/export")
+@require_api_key
+def export_post() -> tuple[dict, int] | tuple[str, int]:
+    """
+    Maximize packages and return the result in JSON/CSV/GraphML.
+
+    Body is the same as /api/v1/maximize plus an ``format`` field
+    (json | csv | graphml).
+    """
+    from ..utils.exporters import to_json, to_csv, to_graphml
+
+    try:
+        packages, conflicts, weights = validate_maximize_payload(request.get_json(force=True))
+    except ValueError as e:
+        return jsonify({"error": "Bad Request", "message": str(e)}), 400
+
+    data = request.get_json(force=True)
+    manager = data.get("manager", "apt")
+    solver = data.get("solver", "greedy")
+    fmt = (data.get("format") or "json").lower()
+
+    try:
+        manager_enum = PackageManagerType(manager)
+    except ValueError:
+        return jsonify({"error": "Bad Request", "message": f"Unknown manager '{manager}'"}), 400
+
+    from ..solvers import SOLVER_REGISTRY
+
+    if solver not in SOLVER_REGISTRY:
+        return jsonify({"error": "Bad Request", "message": f"Unknown solver '{solver}'"}), 400
+
+    pkg_objs = [Package(name=n, status="candidate") for n in packages]
+    conflict_map: dict[str, list[str]] = {}
+    for c in conflicts:
+        if isinstance(c, (list, tuple)) and len(c) == 2:
+            conflict_map.setdefault(c[0], []).append(c[1])
+            conflict_map.setdefault(c[1], []).append(c[0])
+    for p in pkg_objs:
+        if p.name in conflict_map:
+            p.conflicts = conflict_map[p.name]
+
+    try:
+        maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
+        selected = maximizer.solve(pkg_objs) if not weights else maximizer.solve_with_weights(pkg_objs, weights)
+    except Exception as e:  # pragma: no cover - defensive
+        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
+
+    if fmt == "csv":
+        return to_csv(pkg_objs, selected), 200, {"Content-Type": "text/csv"}
+    if fmt == "graphml":
+        return to_graphml(pkg_objs, selected), 200, {"Content-Type": "application/xml"}
+    return to_json(pkg_objs, selected), 200, {"Content-Type": "application/json"}
+
+
 # ─── Benchmark endpoint ──────────────────────────────────────
 @app.post("/api/v1/benchmark")
 @require_api_key

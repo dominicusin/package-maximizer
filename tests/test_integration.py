@@ -401,3 +401,32 @@ class TestWebAPIIntegration:
             headers=auth_headers,
         )
         assert resp.status_code == 400
+
+    # ─── Export endpoint (PM-30 ergonomics) ───────────────────
+    def test_export_json(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/export",
+            json={"packages": ["vim", "emacs", "nano"], "format": "json"},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert "selected" in data
+
+    def test_export_csv(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/export",
+            json={"packages": ["vim", "emacs", "nano"], "format": "csv"},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 200
+        assert resp.data.decode().startswith("name,version,selected")
+
+    def test_export_graphml(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/export",
+            json={"packages": ["vim", "emacs"], "conflicts": [["vim", "emacs"]], "format": "graphml"},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 200
+        assert "<graphml" in resp.data.decode()

@@ -528,5 +528,54 @@ def config_command(config, output):
             click.echo(f"  {key} = {value!r}")
 
 
+@cli.command(name="export")
+@click.argument('packages', nargs=-1)
+@click.option('--manager', '-m', type=str, default='apt')
+@click.option('--solver', '-s', type=str, default='greedy')
+@click.option('--conflicts', '-c', type=(str, str), multiple=True,
+              help='Конфликты между пакетами (имя1,имя2)')
+@click.option('--format', '-f', type=click.Choice(['json', 'csv', 'graphml']),
+              default='json', help='Формат экспорта результатов')
+@click.option('--output-file', '-o', type=str, default=None,
+              help='Путь к файлу (по умолчанию stdout)')
+def export_command(packages, manager, solver, conflicts, format, output_file):
+    """
+    Решить задачу максимизации и экспортировать результат в файл.
+    """
+    from ..utils.exporters import to_json, to_csv, to_graphml
+
+    pkg_objs = [Package(name=n) for n in packages]
+    conflict_map: dict[str, list[str]] = {}
+    for a, b in conflicts:
+        conflict_map.setdefault(a, []).append(b)
+        conflict_map.setdefault(b, []).append(a)
+    for p in pkg_objs:
+        if p.name in conflict_map:
+            p.conflicts = conflict_map[p.name]
+
+    try:
+        maximizer = PackageMaximizer(manager=manager, solver=solver)
+        selected = maximizer.maximize(pkg_objs)
+    except Exception as e:
+        click.echo(f"Ошибка: {e}", err=True)
+        sys.exit(1)
+
+    selected_names = [p.name if isinstance(p, Package) else p for p in selected]
+
+    if format == 'json':
+        content = to_json(pkg_objs, selected_names)
+    elif format == 'csv':
+        content = to_csv(pkg_objs, selected_names)
+    else:
+        content = to_graphml(pkg_objs, selected_names)
+
+    if output_file:
+        with open(output_file, 'w', encoding='utf-8') as fh:
+            fh.write(content)
+        click.echo(f"Записано в {output_file} ({len(selected)} выбрано)")
+    else:
+        click.echo(content)
+
+
 if __name__ == '__main__':
     cli()
