@@ -9,6 +9,7 @@ from typing import Any, TYPE_CHECKING, Iterable, Sequence
 
 from .enums import PackageManagerType, SolverType
 from .package import Package, PackageConstraint
+from ..utils import CacheManager
 
 if TYPE_CHECKING:
     from ..solvers import ConstraintSolver
@@ -77,6 +78,11 @@ class PackageMaximizer:
         self.use_cache = use_cache
         self.cache_ttl = cache_ttl
         self._cache: dict[str, Any] = {}
+        self._cache_manager: CacheManager | None = CacheManager(default_ttl=cache_ttl) if use_cache else None
+    
+    def _get_cache(self) -> CacheManager | None:
+        """Get the cache manager (DI-friendly accessor)."""
+        return self._cache_manager
 
     def _get_solver_instance(self, solver_type: SolverType) -> ConstraintSolver:
         """
