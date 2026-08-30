@@ -72,3 +72,6 @@ Repository = "https://github.com/package-maximizer/package-maximizer.git"
 
 [tool.setuptools_scm]
 fallback_version = "0.1.0"
+
+[tool.package-maximizer]
+plugin-metadata-version = "1"

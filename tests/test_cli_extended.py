@@ -245,3 +245,5 @@ class TestCLICommandBehavior:
         result = runner.invoke(cli, ["version"])
         assert result.exit_code == 0
         assert "0.5" in result.output
+
+
