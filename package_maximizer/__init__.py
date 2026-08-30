@@ -14,6 +14,7 @@ from .core.enums import PackageManagerType, SolverType, PackageStatus
 from .core.interfaces import ConstraintSolver, PackageParser, ResultAnalyzer
 from .core.maximizer import PackageMaximizer
 from .core.package import Package, PackageConstraint
+from .core.constraints import VersionConstraint, DependencyConstraint, ConflictConstraint, ConstraintParser
 
 # Solvers
 from .solvers import (
@@ -64,6 +65,10 @@ __all__ = [
     # Core classes
     "Package",
     "PackageConstraint",
+    "VersionConstraint",
+    "DependencyConstraint",
+    "ConflictConstraint",
+    "ConstraintParser",
     "PackageMaximizer",
     
     # Solvers
