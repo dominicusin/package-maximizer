@@ -453,3 +453,34 @@ class TestWebAPIIntegration:
         for _ in range(3):
             resp = client.get("/api/v1/solvers", headers=auth_headers)
         assert resp.status_code == 429
+
+
+    def test_bad_package_type_returns_400(self, client, auth_headers):
+        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": "not-a-list"})
+        assert resp.status_code == 400
+
+    def test_unknown_manager_returns_400(self, client, auth_headers):
+        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": ["vim"], "manager": "unknown"})
+        assert resp.status_code == 400
+
+    def test_unknown_solver_returns_400(self, client, auth_headers):
+        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": ["vim"], "solver": "unknown_solver"})
+        assert resp.status_code == 400
+
+    def test_maximize_with_weights(self, client, auth_headers):
+        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": ["vim", "nano"], "weights": {"vim": 2.0}})
+        assert resp.status_code == 200
+
+    def test_export_cache_disabled(self, client, auth_headers, monkeypatch):
+        monkeypatch.setenv("PM_CACHE_ENABLED", "false")
+        resp = client.post("/api/v1/export", headers=auth_headers, json={"packages": ["vim"], "format": "json"})
+        assert resp.status_code == 200
+
+    def test_cache_stats_when_disabled(self, client, auth_headers, monkeypatch):
+        monkeypatch.setenv("PM_CACHE_ENABLED", "false")
+        resp = client.get("/api/v1/cache/stats", headers=auth_headers)
+        assert resp.status_code == 200
+
+    def test_cache_clear(self, client, auth_headers):
+        resp = client.delete("/api/v1/cache", headers=auth_headers)
+        assert resp.status_code == 200
