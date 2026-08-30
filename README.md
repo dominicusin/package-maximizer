@@ -212,8 +212,9 @@ python -m pytest tests/ --cov=package_maximizer --cov-report=html
 
 ## 📞 Контакты
 
-- Email: team@package-maximizer.dev
 - GitHub: [dominicusin/package-maximizer](https://github.com/dominicusin/package-maximizer)
+- WWW: [https://dominicusin.github.io/package-maximizer/](https://dominicusin.github.io/package-maximizer/)
+- Email: team@package-maximizer.dev
 
 ## 🎉 Благодарности
 
