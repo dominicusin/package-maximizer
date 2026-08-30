@@ -4,7 +4,7 @@ Package Maximizer - Модульная система для максимиза�
 Использует различные SAT/ILP/SMT солверы для множественных пакетных менеджеров.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __author__ = "Package Maximizer Team"
 __email__ = "team@package-maximizer.dev"
 __license__ = "MIT"
@@ -14,6 +14,7 @@ from .core.enums import PackageManagerType, SolverType, PackageStatus
 from .core.interfaces import ConstraintSolver, PackageParser, ResultAnalyzer
 from .core.maximizer import PackageMaximizer
 from .core.package import Package, PackageConstraint
+from .core.constraints import VersionConstraint, DependencyConstraint, ConflictConstraint, ConstraintParser
 
 # Solvers
 from .solvers import (
@@ -23,6 +24,7 @@ from .solvers import (
     ORToolsSolver,
     MaxSatSolver,
     MiniSatSolver,
+    EnhancedGreedySolver,
     get_solver,
     SOLVER_REGISTRY,
 )
@@ -44,6 +46,15 @@ from .analyzers import (
     ANALYZER_REGISTRY,
 )
 
+# Utilities
+from .utils import (
+    CacheManager,
+    BenchmarkRunner,
+)
+
+# Integrations
+from .integrations import RealRepoIntegration
+
 __all__ = [
     # Version info
     "__version__",
@@ -64,6 +75,10 @@ __all__ = [
     # Core classes
     "Package",
     "PackageConstraint",
+    "VersionConstraint",
+    "DependencyConstraint",
+    "ConflictConstraint",
+    "ConstraintParser",
     "PackageMaximizer",
     
     # Solvers
@@ -73,6 +88,7 @@ __all__ = [
     "ORToolsSolver",
     "MaxSatSolver",
     "MiniSatSolver",
+    "EnhancedGreedySolver",
     "get_solver",
     "SOLVER_REGISTRY",
     
@@ -88,4 +104,11 @@ __all__ = [
     "ResultAnalyzer",
     "get_analyzer",
     "ANALYZER_REGISTRY",
+    
+    # Utilities
+    "CacheManager",
+    "BenchmarkRunner",
+    
+    # Integrations
+    "RealRepoIntegration",
 ]
