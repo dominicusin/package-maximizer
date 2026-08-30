@@ -5,7 +5,7 @@ Package Maximizer - Ядро системы максимизации непро�
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Iterable, Sequence
+from typing import Any, TYPE_CHECKING, Iterable, Sequence
 
 from .enums import PackageManagerType, SolverType
 from .package import Package, PackageConstraint
