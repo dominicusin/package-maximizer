@@ -19,6 +19,7 @@ class PackageManagerType(Enum):
 
 
 class SolverType(Enum):
+    GREEDY = "greedy"
     Z3 = "z3"
     PULP = "pulp"
     ORTOOLS = "ortools"
