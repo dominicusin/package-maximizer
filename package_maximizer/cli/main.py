@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from ..core.enums import PackageManagerType, SolverType
+from ..core.enums import PackageManagerType
 from ..core.maximizer import PackageMaximizer
 from ..core.package import Package
 from ..core.config import load_config

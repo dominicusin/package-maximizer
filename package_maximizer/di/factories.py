@@ -134,7 +134,9 @@ def build_default_solver_factory() -> SolverFactory:
 
     factory = SolverFactory()
     for name, cls in SOLVER_REGISTRY.items():
-        factory.register(name, lambda c=cls: c())
+        def _build(cls: type = cls) -> "ConstraintSolver":
+            return cls()  # type: ignore[no-any-return]
+        factory.register(name, _build)
     return factory
 
 

@@ -36,7 +36,9 @@ class Container:
             if lifecycle == "singleton":
                 self._singletons[cls] = None  # type: ignore
             else:
-                self._factories[cls] = lambda c=cls: c()
+                def _factory(c: type = cls) -> Any:
+                    return c()
+                self._factories[cls] = _factory
             return cls
 
         return decorator
@@ -51,7 +53,7 @@ class Container:
 
     def _resolve_constructor(self, cls: type) -> list[Any]:
         """Resolve constructor dependencies via type hints."""
-        sig = inspect.signature(cls.__init__)
+        sig = inspect.signature(cls.__init__)  # type: ignore[misc]
         deps = []
 
         for name, param in sig.parameters.items():
@@ -163,10 +165,11 @@ def inject(dep_type: type) -> Callable[[T], T]:
     """
 
     def decorator(target: T) -> T:
+        name = getattr(target, "__name__", "")
         setattr(
             target,
             "_injected_deps",
-            getattr(target, "_injected_deps", {}) | {target.__name__: dep_type},
+            getattr(target, "_injected_deps", {}) | {name: dep_type},
         )
         return target
 
