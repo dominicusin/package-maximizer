@@ -14,6 +14,7 @@ import click
 from ..core.enums import PackageManagerType, SolverType
 from ..core.maximizer import PackageMaximizer
 from ..core.package import Package
+from ..integrations import RealRepoIntegration
 
 if TYPE_CHECKING:
     pass
@@ -47,9 +48,9 @@ def cli(verbose: bool, quiet: bool):
 @cli.command()
 @click.argument('packages', nargs=-1)
 @click.option('--manager', '-m', type=str, default='apt',
-              help='Тип пакетного менеджера (apt, pacman, dnf и др.)')
+              help='Тип пакетного менеджера (apt, pacman, dnf, brew)')
 @click.option('--solver', '-s', type=str, default='greedy',
-              help='Тип солвера (greedy, z3, pulp, ortools)')
+              help='Тип солвера (greedy, z3, pulp, ortools, maxsat, minisat, enhanced_greedy)')
 @click.option('--conflicts', '-c', type=(str, str), multiple=True,
               help='Конфликты между пакетами (имя1,имя2)')
 @click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text',
@@ -61,7 +62,7 @@ def maximize(packages, manager, solver, conflicts, output, weights):
     Максимизировать множество пакетов.
     
     Примеры:
-    
+
         package-maximizer pkg1 pkg2 pkg3
         
         package-maximizer pkg1 pkg2 -c pkg1,pkg2 -s z3
@@ -182,7 +183,7 @@ def from_file(package_file, manager, solver, output):
     """
     Максимизировать пакеты из JSON файла.
     
-    Файл должен содержать JSON массив объектов пакетов:
+    Файл должен содержать массив объектов:
     [
         {"name": "pkg1", "version": "1.0", "conflicts": ["pkg2"]},
         {"name": "pkg2", "version": "2.0"}
@@ -250,8 +251,10 @@ def from_file(package_file, manager, solver, output):
 @click.option('--packages', '-p', type=int, default=100,
               help='Количество пакетов для теста')
 @click.option('--runs', '-r', type=int, default=5,
-              help='Количество запусков на солвер')
-def benchmark(solvers, packages, runs):
+              help='Количество запусков на каждый тест')
+@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text',
+              help='Формат вывода')
+def benchmark(solvers, packages, runs, output):
     """
     Запустить тесты производительности солверов.
     """
@@ -317,6 +320,189 @@ def benchmark(solvers, packages, runs):
     if results:
         fastest = min(results.items(), key=lambda x: x[1]['avg_time'])
         click.echo(f"Самый быстрый: {fastest[0]} ({fastest[1]['avg_time']:.4f}s)")
+    
+    # Вывод в JSON если нужно
+    if output == 'json':
+        click.echo(json.dumps(results, indent=2))
+
+
+# Новые команды для Фазы 4
+
+@cli.command()
+@click.option('--manager', '-m', type=str, default='apt',
+              help='Тип пакетного менеджера')
+@click.option('--limit', '-l', type=int, default=20,
+              help='Максимальное количество результатов')
+@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text')
+def list_installed(manager, limit, output):
+    """
+    Показать установленные пакеты.
+    """
+    try:
+        integration = RealRepoIntegration(package_manager=manager)
+        packages = integration.get_installed_packages()
+        
+        if output == 'json':
+            output_data = {
+                'manager': manager,
+                'count': len(packages),
+                'packages': [
+                    {
+                        'name': p.name,
+                        'version': p.version,
+                        'status': p.status
+                    }
+                    for p in packages[:limit]
+                ]
+            }
+            click.echo(json.dumps(output_data, indent=2))
+        else:
+            click.echo(f"Установлено пакетов: {len(packages)}")
+            click.echo(f"Первые {min(limit, len(packages))}:")
+            for pkg in packages[:limit]:
+                click.echo(f"  - {pkg.name} {pkg.version or ''}")
+    except Exception as e:
+        click.echo(f"Ошибка: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument('query')
+@click.option('--manager', '-m', type=str, default='apt',
+              help='Тип пакетного менеджера')
+@click.option('--limit', '-l', type=int, default=20,
+              help='Максимальное количество результатов')
+@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text')
+def search(query, manager, limit, output):
+    """
+    Поиск пакетов в репозитории.
+    """
+    try:
+        integration = RealRepoIntegration(package_manager=manager)
+        packages = integration.search_packages(query, limit)
+        
+        if output == 'json':
+            output_data = {
+                'manager': manager,
+                'query': query,
+                'count': len(packages),
+                'packages': [
+                    {
+                        'name': p.name,
+                        'version': p.version,
+                        'status': p.status
+                    }
+                    for p in packages
+                ]
+            }
+            click.echo(json.dumps(output_data, indent=2))
+        else:
+            click.echo(f"Найдено пакетов: {len(packages)}")
+            for pkg in packages:
+                click.echo(f"  - {pkg.name} {pkg.version or ''}")
+    except Exception as e:
+        click.echo(f"Ошибка: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument('package_name')
+@click.option('--manager', '-m', type=str, default='apt',
+              help='Тип пакетного менеджера')
+@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text')
+def info(package_name, manager, output):
+    """
+    Показать информацию о пакете.
+    """
+    try:
+        integration = RealRepoIntegration(package_manager=manager)
+        info = integration.get_package_info(package_name)
+        
+        if info is None:
+            click.echo(f"Пакет '{package_name}' не найден", err=True)
+            sys.exit(1)
+        
+        if output == 'json':
+            output_data = {
+                'name': info.name,
+                'version': info.version,
+                'description': info.description,
+                'depends': info.depends,
+                'conflicts': info.conflicts,
+                'size': info.size,
+                'installed': info.installed
+            }
+            click.echo(json.dumps(output_data, indent=2))
+        else:
+            click.echo(f"Имя: {info.name}")
+            click.echo(f"Версия: {info.version}")
+            click.echo(f"Описание: {info.description}")
+            click.echo(f"Зависимости: {', '.join(info.depends) if info.depends else 'Нет'}")
+            click.echo(f"Конфликты: {', '.join(info.conflicts) if info.conflicts else 'Нет'}")
+            click.echo(f"Размер: {info.size} KB")
+            click.echo(f"Установлен: {'Да' if info.installed else 'Нет'}")
+    except Exception as e:
+        click.echo(f"Ошибка: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+@click.option('--manager', '-m', type=str, default='apt',
+              help='Тип пакетного менеджера')
+@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text')
+def check_updates(manager, output):
+    """
+    Проверить доступные обновления.
+    """
+    try:
+        integration = RealRepoIntegration(package_manager=manager)
+        updates = integration.get_available_updates()
+        
+        if output == 'json':
+            output_data = {
+                'manager': manager,
+                'count': len(updates),
+                'packages': [
+                    {
+                        'name': p.name,
+                        'version': p.version,
+                        'status': p.status
+                    }
+                    for p in updates
+                ]
+            }
+            click.echo(json.dumps(output_data, indent=2))
+        else:
+            click.echo(f"Доступно обновлений: {len(updates)}")
+            for pkg in updates:
+                click.echo(f"  - {pkg.name} {pkg.version or ''}")
+    except Exception as e:
+        click.echo(f"Ошибка: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+@click.option('--manager', '-m', type=str, default='apt',
+              help='Тип пакетного менеджера')
+@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text')
+def system_info(manager, output):
+    """
+    Показать информацию о системе.
+    """
+    try:
+        integration = RealRepoIntegration(package_manager=manager)
+        info = integration.get_system_info()
+        
+        if output == 'json':
+            click.echo(json.dumps(info, indent=2))
+        else:
+            click.echo(f"Пакетный менеджер: {info.get('package_manager', 'Unknown')}")
+            click.echo(f"Версия: {info.get('pm_version', 'Unknown')}")
+            click.echo(f"Установлено пакетов: {info.get('installed_packages', 0)}")
+            click.echo(f"Доступно обновлений: {info.get('available_updates', 0)}")
+    except Exception as e:
+        click.echo(f"Ошибка: {e}", err=True)
+        sys.exit(1)
 
 
 if __name__ == '__main__':

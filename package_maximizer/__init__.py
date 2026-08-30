@@ -4,7 +4,7 @@ Package Maximizer - Модульная система для максимиза�
 Использует различные SAT/ILP/SMT солверы для множественных пакетных менеджеров.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 __author__ = "Package Maximizer Team"
 __email__ = "team@package-maximizer.dev"
 __license__ = "MIT"
@@ -54,6 +54,22 @@ from .utils import (
 
 # Integrations
 from .integrations import RealRepoIntegration
+
+# CLI
+from .cli import (
+    cli,
+    maximize,
+    list_solvers,
+    list_parsers,
+    version,
+    from_file,
+    benchmark,
+    list_installed,
+    search,
+    info,
+    check_updates,
+    system_info,
+)
 
 __all__ = [
     # Version info
@@ -111,4 +127,18 @@ __all__ = [
     
     # Integrations
     "RealRepoIntegration",
+    
+    # CLI
+    "cli",
+    "maximize",
+    "list_solvers",
+    "list_parsers",
+    "version",
+    "from_file",
+    "benchmark",
+    "list_installed",
+    "search",
+    "info",
+    "check_updates",
+    "system_info",
 ]

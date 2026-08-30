@@ -11,7 +11,7 @@ def test_import():
         import package_maximizer
 
         assert hasattr(package_maximizer, "__version__")
-        assert package_maximizer.__version__ == "0.4.0"
+        assert package_maximizer.__version__ == "0.5.0"
     except ImportError:
         assert False, "Failed to import package_maximizer"
 
