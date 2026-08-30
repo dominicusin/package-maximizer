@@ -10,6 +10,7 @@ from .pulp_solver import PulPSolver
 from .ortools_solver import ORToolsSolver
 from .maxsat_solver import MaxSatSolver
 from .minisat_solver import MiniSatSolver
+from .enhanced_greedy import EnhancedGreedySolver
 
 # Available solvers
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     "ORToolsSolver",
     "MaxSatSolver",
     "MiniSatSolver",
+    "EnhancedGreedySolver",
     "get_solver",
     "SOLVER_REGISTRY",
 ]
@@ -31,6 +33,7 @@ SOLVER_REGISTRY = {
     "ortools": ORToolsSolver,
     "maxsat": MaxSatSolver,
     "minisat": MiniSatSolver,
+    "enhanced_greedy": EnhancedGreedySolver,
 }
 
 

@@ -18,4 +18,8 @@ __all__ = [
     "PackageMaximizer",
     "Package",
     "PackageConstraint",
+    "VersionConstraint",
+    "DependencyConstraint",
+    "ConflictConstraint",
+    "ConstraintParser",
 ]
