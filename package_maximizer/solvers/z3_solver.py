@@ -63,6 +63,7 @@ class Z3Solver(ConstraintSolver):
         if not Z3_AVAILABLE:
             logger.warning("Z3 not available, falling back to GreedySolver")
             from .greedy import GreedySolver
+
             return GreedySolver().solve(packages)
 
         package_list = list(packages)
@@ -102,7 +103,8 @@ class Z3Solver(ConstraintSolver):
             # Solution found, extract selected packages
             model = solver.model()
             selected = [
-                pkg_name for pkg_name, var in x.items()
+                pkg_name
+                for pkg_name, var in x.items()
                 if model.evaluate(var, model_completion=True)
             ]
             return selected
@@ -111,9 +113,7 @@ class Z3Solver(ConstraintSolver):
             return []
 
     def solve_with_weights(
-        self,
-        packages,
-        weights: dict[str, float] | None = None
+        self, packages, weights: dict[str, float] | None = None
     ) -> list[str]:
         """
         Решить задачу с учетом весов пакетов.
@@ -128,6 +128,7 @@ class Z3Solver(ConstraintSolver):
         if not Z3_AVAILABLE:
             logger.warning("Z3 not available, falling back to GreedySolver")
             from .greedy import GreedySolver
+
             return GreedySolver().solve_with_weights(packages, weights)
 
         from z3 import Real, If
@@ -171,7 +172,8 @@ class Z3Solver(ConstraintSolver):
         elif result == sat:
             model = solver.model()
             selected = [
-                pkg_name for pkg_name, var in x.items()
+                pkg_name
+                for pkg_name, var in x.items()
                 if model.evaluate(var, model_completion=True)
             ]
             return selected
