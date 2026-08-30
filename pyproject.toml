@@ -9,6 +9,7 @@ authors = [{name = "Package Maximizer Team", email = "team@package-maximizer.dev
 license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.10"
+keywords = ["package", "maximizer", "sat", "ilp", "smt", "apt", "z3", "pulp"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -19,15 +20,12 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dynamic = ["version"]
 dependencies = [
     "click>=8.0.0",
     "pyyaml>=6.0",
-    "numpy>=1.20.0",
-    "pandas>=1.3.0",
-    "matplotlib>=3.5.0",
-    "seaborn>=0.11.0",
     "psutil>=5.8.0",
     "requests>=2.25.0",
 ]
@@ -43,8 +41,14 @@ solvers = [
     "pulp>=2.5.0",
     "ortools>=9.0.0",
 ]
+viz = [
+    "numpy>=1.20.0",
+    "pandas>=1.3.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+]
 all = [
-    "package-maximizer[web,solvers]",
+    "package-maximizer[web,solvers,viz]",
 ]
 dev = [
     "pytest>=6.2.0",
@@ -61,10 +65,14 @@ package-maximizer = "package_maximizer.cli.main:cli"
 pm-web = "package_maximizer.web.app:run_app"
 
 [project.urls]
-Homepage = "https://github.com/package-maximizer/package-maximizer"
+Homepage = "https://github.com/dominicusin/package-maximizer"
 Documentation = "https://package-maximizer.readthedocs.io/"
-Repository = "https://github.com/package-maximizer/package-maximizer.git"
-"Bug Tracker" = "https://github.com/package-maximizer/package-maximizer/issues"
+Repository = "https://github.com/dominicusin/package-maximizer.git"
+"Bug Tracker" = "https://github.com/dominicusin/package-maximizer/issues"
+PyPI = "https://pypi.org/project/package-maximizer/"
 
 [tool.setuptools_scm]
 fallback_version = "0.1.0"
+
+[tool.package-maximizer]
+plugin-metadata-version = "1"

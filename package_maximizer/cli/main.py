@@ -7,13 +7,16 @@ from __future__ import annotations
 import json
 import logging
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import click
 
-from ..core.enums import PackageManagerType, SolverType
+from ..core.enums import PackageManagerType
 from ..core.maximizer import PackageMaximizer
 from ..core.package import Package
+from ..core.config import load_config
+from ..utils.logging_config import configure_logging
 from ..integrations import RealRepoIntegration
 
 if TYPE_CHECKING:
@@ -25,31 +28,32 @@ logger = logging.getLogger(__name__)
 @click.group()
 @click.option('--verbose', '-v', is_flag=True, help='Включить подробный вывод')
 @click.option('--quiet', '-q', is_flag=True, help='Отключить вывод')
-def cli(verbose: bool, quiet: bool):
+@click.option('--config', '-C', type=str, default=None,
+              help='Путь к файлу конфигурации (YAML/JSON)')
+def cli(verbose: bool, quiet: bool, config: str | None):
     """
     Package Maximizer - Система максимизации непротиворечивого множества пакетов.
     
     Использует различные SAT/ILP/SMT солверы для решения задачи.
     """
+    level = "INFO"
     if quiet:
-        logging.getLogger().setLevel(logging.ERROR)
+        level = "ERROR"
     elif verbose:
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
-    else:
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(levelname)s - %(message)s'
-        )
+        level = "DEBUG"
+    cfg = load_config(config)
+    # CLI flags take precedence over config/env for log level.
+    configure_logging(level, json_output=cfg.log_json)
+    # Share the loaded config with subcommands (ctx.obj).
+    click.get_current_context().obj = {"config": cfg, "config_path": config}
+
 
 
 @cli.command()
 @click.argument('packages', nargs=-1)
-@click.option('--manager', '-m', type=str, default='apt',
-              help='Тип пакетного менеджера (apt, pacman, dnf, brew)')
-@click.option('--solver', '-s', type=str, default='greedy',
+@click.option('--manager', '-m', type=str, default=None,
+              help='Тип пакетного менеджера (apt, pacman, dnf, brew, snap, flatpak, cargo, npm)')
+@click.option('--solver', '-s', type=str, default=None,
               help='Тип солвера (greedy, z3, pulp, ortools, maxsat, minisat, enhanced_greedy)')
 @click.option('--conflicts', '-c', type=(str, str), multiple=True,
               help='Конфликты между пакетами (имя1,имя2)')
@@ -69,6 +73,14 @@ def maximize(packages, manager, solver, conflicts, output, weights):
         
         package-maximizer pkg1 pkg2 pkg3 -w pkg1,2.0 -w pkg2,1.5
     """
+    # Resolve config-driven defaults (explicit CLI flags take precedence).
+    obj = click.get_current_context().obj or {}
+    cfg = obj.get("config")
+    if manager is None:
+        manager = (cfg.default_manager if cfg else "apt")
+    if solver is None:
+        solver = (cfg.default_solver if cfg else "greedy")
+
     try:
         # Валидация менеджера
         try:
@@ -503,6 +515,107 @@ def system_info(manager, output):
     except Exception as e:
         click.echo(f"Ошибка: {e}", err=True)
         sys.exit(1)
+
+
+@cli.command(name="config")
+@click.option('--config', '-C', type=str, default=None,
+              help='Путь к файлу конфигурации (YAML/JSON)')
+@click.option('--output', '-o', type=click.Choice(['text', 'yaml', 'json']), default='text')
+def config_command(config, output):
+    """Показать итоговую конфигурацию (с учётом файла и переменных окружения)."""
+    cfg = load_config(config)
+    data = cfg.as_dict()
+    if output == 'json':
+        click.echo(json.dumps(data, indent=2))
+    elif output == 'yaml':
+        try:
+            import yaml
+            click.echo(yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
+        except ImportError:
+            click.echo(json.dumps(data, indent=2))
+    else:
+        click.echo(f"Источник конфигурации: {cfg.source}")
+        for key, value in data.items():
+            click.echo(f"  {key} = {value!r}")
+
+
+@cli.command(name="init-config")
+@click.option('--config', '-C', type=str, default='package-maximizer.json',
+              help='Путь для записи файла конфигурации по умолчанию')
+def init_config_command(config):
+    """Создать файл конфигурации по умолчанию (JSON)."""
+    from ..core.config import Config
+
+    path = Path(config)
+    if path.exists():
+        click.echo(f"Файл {path} уже существует — пропуск.", err=True)
+        sys.exit(1)
+    path.write_text(json.dumps(Config().as_dict(), indent=2), encoding="utf-8")
+    click.echo(f"Создан файл конфигурации: {path}")
+
+
+@cli.command(name="export")
+@click.argument('packages', nargs=-1)
+@click.option('--manager', '-m', type=str, default='apt')
+@click.option('--solver', '-s', type=str, default='greedy')
+@click.option('--conflicts', '-c', type=(str, str), multiple=True,
+              help='Конфликты между пакетами (имя1,имя2)')
+@click.option('--format', '-f', type=click.Choice(['json', 'csv', 'graphml']),
+              default='json', help='Формат экспорта результатов')
+@click.option('--output-file', '-o', type=str, default=None,
+              help='Путь к файлу (по умолчанию stdout)')
+def export_command(packages, manager, solver, conflicts, format, output_file):
+    """
+    Решить задачу максимизации и экспортировать результат в файл.
+    """
+    from ..utils.exporters import to_json, to_csv, to_graphml
+
+    pkg_objs = [Package(name=n) for n in packages]
+    conflict_map: dict[str, list[str]] = {}
+    for a, b in conflicts:
+        conflict_map.setdefault(a, []).append(b)
+        conflict_map.setdefault(b, []).append(a)
+    for p in pkg_objs:
+        if p.name in conflict_map:
+            p.conflicts = conflict_map[p.name]
+
+    try:
+        maximizer = PackageMaximizer(manager=manager, solver=solver)
+        selected = maximizer.maximize(pkg_objs)
+    except Exception as e:
+        click.echo(f"Ошибка: {e}", err=True)
+        sys.exit(1)
+
+    selected_names = [p.name if isinstance(p, Package) else p for p in selected]
+
+    if format == 'json':
+        content = to_json(pkg_objs, selected_names)
+    elif format == 'csv':
+        content = to_csv(pkg_objs, selected_names)
+    else:
+        content = to_graphml(pkg_objs, selected_names)
+
+    if output_file:
+        with open(output_file, 'w', encoding='utf-8') as fh:
+            fh.write(content)
+        click.echo(f"Записано в {output_file} ({len(selected)} выбрано)")
+    else:
+        click.echo(content)
+
+
+
+@cli.command(name="tui")
+def tui_command() -> None:
+    """
+    Запустить интерактивный TUI (Textual).
+    """
+    try:
+        from ..tui.app import run_tui
+        run_tui()
+    except ImportError as e:
+        click.echo(f"Ошибка: {e}", err=True)
+        sys.exit(1)
+
 
 
 if __name__ == '__main__':

@@ -1,0 +1,18 @@
+# .gitleaks.toml — Gitleaks secret-scan config for Package Maximizer.
+
+title = "gitleaks config for Package Maximizer"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowlist non-sensitive patterns in docs/tests/config"
+paths = [
+  '''^\.github/ISSUE_TEMPLATE/''',
+  '''^\.github/pull_request_template\.md$''',
+  '''^tests/''',
+  '''^docs/''',
+  '''^CHANGELOG\.md$''',
+  '''^CONTRIBUTING\.md$''',
+  '''^SECURITY\.md$''',
+]

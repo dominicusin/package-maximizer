@@ -245,14 +245,14 @@ class PackageMaximizer:
         
         for arg in args:
             if isinstance(arg, (list, tuple)):
-                key_parts.append(str([hashlib.md5(str(item).encode()).hexdigest() for item in arg]))
+                key_parts.append(str([hashlib.md5(str(item).encode(), usedforsecurity=False).hexdigest() for item in arg]))
             else:
                 key_parts.append(str(arg))
         
         for k, v in sorted(kwargs.items()):
             key_parts.append(f"{k}={v}")
         
-        return hashlib.md5("|".join(key_parts).encode()).hexdigest()
+        return hashlib.md5("|".join(key_parts).encode(), usedforsecurity=False).hexdigest()
 
     def check_constraints(
         self, packages: Iterable[Package], constraints: Iterable[PackageConstraint]

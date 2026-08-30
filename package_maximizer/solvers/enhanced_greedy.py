@@ -70,9 +70,9 @@ class EnhancedGreedySolver(ConstraintSolver):
         # Сортируем пакеты по приоритету
         sorted_packages = self._sort_packages(package_list)
         
-        selected = []
-        selected_set = set()
-        selected_versions = {}
+        selected: list[str] = []
+        selected_set: set[str] = set()
+        selected_versions: dict[str, str] = {}
         
         for pkg in sorted_packages:
             # Проверяем конфликты
@@ -125,9 +125,9 @@ class EnhancedGreedySolver(ConstraintSolver):
         else:
             sorted_packages = self._sort_packages(package_list)
         
-        selected = []
-        selected_set = set()
-        selected_versions = {}
+        selected: list[str] = []
+        selected_set: set[str] = set()
+        selected_versions: dict[str, str] = {}
         
         for pkg in sorted_packages:
             # Проверяем конфликты

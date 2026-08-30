@@ -1,16 +1,21 @@
----
 name: Feature request
-about: Предложить идею для проекта
-title: '[FEATURE] '
+about: Suggest an idea for this project
+title: ''
 labels: enhancement
-assignees: ''
----
+assignees: dominicusin
 
-**Связана ли ваша функция с проблемой?**
-Четкое и краткое описание проблемы.
-
-**Опишите решение которое вы хотите**
-Четкое и краткое описание того, что вы хотите.
-
-**Дополнительная информация**
-Любой другой контекст или скриншоты о запросе функции.
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What problem does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this useful?
+    validations:
+      required: false

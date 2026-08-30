@@ -2,6 +2,9 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/package-maximizer?logo=pypi)](https://pypi.org/project/package-maximizer/)
+[![PyPI Downloads](https://static.pepy.tech/badge/package-maximizer)](https://pepy.tech/project/package-maximizer)
+[![ReadTheDocs](https://readthedocs.org/projects/package-maximizer/badge/?version=latest)](https://package-maximizer.readthedocs.io/en/latest/?badge=latest)
 [![GitHub Issues](https://img.shields.io/github/issues/dominicusin/package-maximizer)](https://github.com/dominicusin/package-maximizer/issues)
 [![GitHub Stars](https://img.shields.io/github/stars/dominicusin/package-maximizer)](https://github.com/dominicusin/package-maximizer/stargazers)
 
@@ -12,9 +15,10 @@
 Система позволяет:
 - Находить максимальное непротиворечивое подмножество пакетов
 - Учитывать конфликты между пакетами
-- Работать с разными пакетными менеджерами (APT, Pacman, DNF, Brew)
+- Работать с разными пакетными менеджерами (APT, Pacman, DNF, Brew, Snap, Flatpak, Cargo, npm)
 - Использовать различные алгоритмы решения (жадный, SAT, ILP, SMT, CP-SAT)
 - Учитывать версионные ограничения и зависимости
+- Экспортировать результаты в JSON, CSV и GraphML
 
 ## ✨ Возможности
 
@@ -212,9 +216,13 @@ python -m pytest tests/ --cov=package_maximizer --cov-report=html
 
 ## 📞 Контакты
 
-- GitHub: [dominicusin/package-maximizer](https://github.com/dominicusin/package-maximizer)
-- WWW: [https://dominicusin.github.io/package-maximizer/](https://dominicusin.github.io/package-maximizer/)
-- Email: team@package-maximizer.dev
+| Ссылка | Описание |
+|--------|----------|
+| GitHub | [dominicusin/package-maximizer](https://github.com/dominicusin/package-maximizer) |
+| WWW | [dominicusin.github.io/package-maximizer](https://dominicusin.github.io/package-maximizer/) |
+| PyPI | [package-maximizer](https://pypi.org/project/package-maximizer/) |
+| ReadTheDocs | [docs](https://package-maximizer.readthedocs.io/) |
+| Email | [team@package-maximizer.dev](mailto:team@package-maximizer.dev) |
 
 ## 🎉 Благодарности
 

@@ -7,7 +7,7 @@ PuLP ILP Solver - ILP-солвер на основе PuLP.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, Optional
 
 from ..core.interfaces import ConstraintSolver
 
@@ -39,7 +39,7 @@ class PulPSolver(ConstraintSolver):
     - Ограничение по времени выполнения
     """
 
-    def __init__(self, solver_name: str = None, time_limit: int = 10000) -> None:
+    def __init__(self, solver_name: Optional[str] = None, time_limit: int = 10000) -> None:
         """
         Инициализация PuLP солвера.
 

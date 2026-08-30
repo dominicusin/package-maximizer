@@ -352,3 +352,135 @@ class TestWebAPIIntegration:
             headers=auth_headers,
         )
         assert resp.status_code == 200
+
+    # ─── Input validation (security) ──────────────────────────
+    def test_missing_packages_field(self, client, auth_headers):
+        resp = client.post("/api/v1/maximize", json={"manager": "apt"}, headers=auth_headers)
+        assert resp.status_code == 400
+        assert "packages" in resp.get_json()["message"].lower()
+
+    def test_non_string_package_name(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/maximize",
+            json={"packages": ["vim", 123, "nano"]},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 400
+
+    def test_empty_package_name(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/maximize",
+            json={"packages": ["", "vim"]},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 400
+
+    def test_non_numeric_weight(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/maximize",
+            json={"packages": ["vim", "nano"], "weights": {"vim": "heavy"}},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 400
+
+    def test_missing_api_key(self, client):
+        resp = client.post(
+            "/api/v1/maximize",
+            json={"packages": ["vim", "nano"]},
+        )
+        assert resp.status_code == 401
+
+    def test_too_many_packages_rejected(self, client, auth_headers, monkeypatch):
+        import sys
+
+        web_mod = sys.modules["package_maximizer.web.app"]
+        monkeypatch.setattr(web_mod, "MAX_PACKAGES", 3)
+        resp = client.post(
+            "/api/v1/maximize",
+            json={"packages": ["a", "b", "c", "d"]},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 400
+
+    # ─── Export endpoint (PM-30 ergonomics) ───────────────────
+    def test_export_json(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/export",
+            json={"packages": ["vim", "emacs", "nano"], "format": "json"},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert "selected" in data
+
+    def test_export_csv(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/export",
+            json={"packages": ["vim", "emacs", "nano"], "format": "csv"},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 200
+        assert resp.data.decode().startswith("name,version,selected")
+
+    def test_export_graphml(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/export",
+            json={"packages": ["vim", "emacs"], "conflicts": [["vim", "emacs"]], "format": "graphml"},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 200
+        assert "<graphml" in resp.data.decode()
+
+    # ─── OpenAPI / docs / rate-limit (PM-23 ergonomics) ──────
+    def test_openapi_spec(self, client):
+        resp = client.get("/api/v1/openapi.json")
+        assert resp.status_code == 200
+        spec = resp.get_json()
+        assert spec["openapi"].startswith("3.")
+        assert "/api/v1/maximize" in spec["paths"]
+
+    def test_docs_page(self, client):
+        resp = client.get("/api/v1/docs")
+        assert resp.status_code == 200
+        assert b"Package Maximizer API" in resp.data
+
+    def test_rate_limit_returns_429(self, client, auth_headers, monkeypatch):
+        import sys
+
+        web_mod = sys.modules["package_maximizer.web.app"]
+        # Tiny limit so repeated calls trip 429
+        monkeypatch.setattr(web_mod, "RATE_LIMITER", web_mod.RateLimiter(max_requests=2, window=60))
+        for _ in range(3):
+            resp = client.get("/api/v1/solvers", headers=auth_headers)
+        assert resp.status_code == 429
+
+
+    def test_bad_package_type_returns_400(self, client, auth_headers):
+        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": "not-a-list"})
+        assert resp.status_code == 400
+
+    def test_unknown_manager_returns_400(self, client, auth_headers):
+        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": ["vim"], "manager": "unknown"})
+        assert resp.status_code == 400
+
+    def test_unknown_solver_returns_400(self, client, auth_headers):
+        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": ["vim"], "solver": "unknown_solver"})
+        assert resp.status_code == 400
+
+    def test_maximize_with_weights(self, client, auth_headers):
+        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": ["vim", "nano"], "weights": {"vim": 2.0}})
+        assert resp.status_code == 200
+
+    def test_export_cache_disabled(self, client, auth_headers, monkeypatch):
+        monkeypatch.setenv("PM_CACHE_ENABLED", "false")
+        resp = client.post("/api/v1/export", headers=auth_headers, json={"packages": ["vim"], "format": "json"})
+        assert resp.status_code == 200
+
+    def test_cache_stats_when_disabled(self, client, auth_headers, monkeypatch):
+        monkeypatch.setenv("PM_CACHE_ENABLED", "false")
+        resp = client.get("/api/v1/cache/stats", headers=auth_headers)
+        assert resp.status_code == 200
+
+    def test_cache_clear(self, client, auth_headers):
+        resp = client.delete("/api/v1/cache", headers=auth_headers)
+        assert resp.status_code == 200
