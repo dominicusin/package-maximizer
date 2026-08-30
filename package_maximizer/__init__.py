@@ -4,7 +4,7 @@ Package Maximizer - Модульная система для максимиза�
 Использует различные SAT/ILP/SMT солверы для множественных пакетных менеджеров.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.3.0"
 __author__ = "Package Maximizer Team"
 __email__ = "team@package-maximizer.dev"
 __license__ = "MIT"
@@ -24,7 +24,6 @@ from .solvers import (
     ORToolsSolver,
     MaxSatSolver,
     MiniSatSolver,
-    EnhancedGreedySolver,
     get_solver,
     SOLVER_REGISTRY,
 )
@@ -45,15 +44,6 @@ from .analyzers import (
     get_analyzer,
     ANALYZER_REGISTRY,
 )
-
-# Utilities
-from .utils import (
-    CacheManager,
-    BenchmarkRunner,
-)
-
-# Integrations
-from .integrations import RealRepoIntegration
 
 __all__ = [
     # Version info
@@ -88,7 +78,6 @@ __all__ = [
     "ORToolsSolver",
     "MaxSatSolver",
     "MiniSatSolver",
-    "EnhancedGreedySolver",
     "get_solver",
     "SOLVER_REGISTRY",
     
@@ -104,11 +93,4 @@ __all__ = [
     "ResultAnalyzer",
     "get_analyzer",
     "ANALYZER_REGISTRY",
-    
-    # Utilities
-    "CacheManager",
-    "BenchmarkRunner",
-    
-    # Integrations
-    "RealRepoIntegration",
 ]
