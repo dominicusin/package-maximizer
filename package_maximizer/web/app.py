@@ -23,6 +23,89 @@ CACHE_TTL = int(os.environ.get("PM_CACHE_TTL", "3600"))
 
 cache = CacheManager() if CACHE_ENABLED else None
 
+# ─── Rate limiting (in-memory, per API key) ────────────────
+class RateLimiter:
+    """Fixed-window rate limiter keyed by client identity."""
+
+    def __init__(self, max_requests: int = 100, window: float = 60.0) -> None:
+        self.max_requests = max_requests
+        self.window = window
+        self._hits: dict[str, list[float]] = {}
+
+    def is_allowed(self, key: str) -> bool:
+        now = time.monotonic()
+        hits = self._hits.get(key, [])
+        hits = [t for t in hits if now - t < self.window]
+        if len(hits) >= self.max_requests:
+            self._hits[key] = hits
+            return False
+        hits.append(now)
+        self._hits[key] = hits
+        return True
+
+    def reset(self, key: str) -> None:
+        self._hits.pop(key, None)
+
+
+RATE_LIMITER = RateLimiter(
+    max_requests=int(os.environ.get("PM_RATE_LIMIT", "100")),
+    window=float(os.environ.get("PM_RATE_WINDOW", "60")),
+)
+
+
+# ─── Input validation ────────────────────────────────────────
+MAX_PACKAGES = int(os.environ.get("PM_MAX_PACKAGES", "5000"))
+MAX_NAME_LEN = int(os.environ.get("PM_MAX_NAME_LEN", "256"))
+
+
+def validate_maximize_payload(data: Any) -> tuple[list[str], list, dict | None]:
+    """
+    Validate the JSON body for /api/v1/maximize.
+
+    Returns ``(cleaned_pkgs, conflicts, weights)`` when valid, or raises a
+    ``ValueError`` whose message is client-safe.
+    """
+    if not isinstance(data, dict):
+        raise ValueError("Request body must be a JSON object")
+    if "packages" not in data:
+        raise ValueError("Missing 'packages' field in request body")
+
+    raw_packages = data.get("packages")
+    if not isinstance(raw_packages, list):
+        raise ValueError("'packages' must be a list of strings")
+
+    cleaned: list[str] = []
+    for pkg in raw_packages:
+        if not isinstance(pkg, str):
+            raise ValueError("Each package name must be a string")
+        name = pkg.strip()
+        if not name:
+            raise ValueError("Package names must not be empty")
+        if len(name) > MAX_NAME_LEN:
+            raise ValueError(f"Package name too long (max {MAX_NAME_LEN} chars)")
+        cleaned.append(name)
+
+    if len(cleaned) > MAX_PACKAGES:
+        raise ValueError(f"Too many packages (max {MAX_PACKAGES})")
+
+    conflicts = data.get("conflicts", [])
+    if conflicts is not None and not isinstance(conflicts, list):
+        raise ValueError("'conflicts' must be a list of [a, b] pairs")
+
+    weights = data.get("weights", None)
+    if weights is not None:
+        if not isinstance(weights, dict):
+            raise ValueError("'weights' must be an object mapping name -> number")
+        for k, v in weights.items():
+            if not isinstance(k, str):
+                raise ValueError("Weight keys must be strings")
+            try:
+                float(v)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                raise ValueError(f"Weight for '{k}' must be numeric")
+
+    return cleaned, conflicts, weights  # type: ignore[return-value]
+
 
 # ─── Request timing middleware ───────────────────────────────
 @app.before_request
@@ -60,6 +143,19 @@ def require_api_key(f):
                 ),
                 401,
             )
+        # Rate limiting (per API key)
+        if not RATE_LIMITER.is_allowed(api_key):
+            return (
+                jsonify(
+                    {
+                        "error": "Too Many Requests",
+                        "message": f"Rate limit exceeded ({RATE_LIMITER.max_requests} per "
+                        f"{int(RATE_LIMITER.window)}s).",
+                    }
+                ),
+                429,
+            )
+
         return f(*args, **kwargs)
 
     return decorated
@@ -129,32 +225,27 @@ def maximize_post() -> tuple[dict, int]:
     """
     Maximize packages from JSON body.
 
-    Expected JSON body:
-    {
-        "packages": ["pkg1", "pkg2", "pkg3"],
-        "manager": "apt",
-        "solver": "greedy",
-        "conflicts": [["pkg1", "pkg2"]],
-        "weights": {"pkg1": 2.0, "pkg2": 1.5}
-    }
+    Expected JSON body::
+
+        {
+            "packages": ["pkg1", "pkg2", "pkg3"],
+            "manager": "apt",
+            "solver": "greedy",
+            "conflicts": [["pkg1", "pkg2"]],
+            "weights": {"pkg1": 2.0, "pkg2": 1.5}
+        }
     """
     data = request.get_json(force=True)
-    if not data or "packages" not in data:
+    try:
+        packages, conflicts, weights = validate_maximize_payload(data)
+    except ValueError as e:
         return (
-            jsonify(
-                {
-                    "error": "Bad Request",
-                    "message": "Missing 'packages' field in request body",
-                }
-            ),
+            jsonify({"error": "Bad Request", "message": str(e)}),
             400,
         )
 
-    packages = data.get("packages", [])
     manager = data.get("manager", "apt")
     solver = data.get("solver", "greedy")
-    conflicts = data.get("conflicts", [])
-    weights = data.get("weights", None)
 
     # Validate manager
     try:
@@ -269,6 +360,61 @@ def maximize_get() -> tuple[dict, int]:
         return maximize_post()
 
 
+# ─── Export endpoint ──────────────────────────────────────────
+@app.post("/api/v1/export")
+@require_api_key
+def export_post() -> tuple[dict, int] | tuple[str, int]:
+    """
+    Maximize packages and return the result in JSON/CSV/GraphML.
+
+    Body is the same as /api/v1/maximize plus an ``format`` field
+    (json | csv | graphml).
+    """
+    from ..utils.exporters import to_json, to_csv, to_graphml
+
+    try:
+        packages, conflicts, weights = validate_maximize_payload(request.get_json(force=True))
+    except ValueError as e:
+        return jsonify({"error": "Bad Request", "message": str(e)}), 400
+
+    data = request.get_json(force=True)
+    manager = data.get("manager", "apt")
+    solver = data.get("solver", "greedy")
+    fmt = (data.get("format") or "json").lower()
+
+    try:
+        manager_enum = PackageManagerType(manager)
+    except ValueError:
+        return jsonify({"error": "Bad Request", "message": f"Unknown manager '{manager}'"}), 400
+
+    from ..solvers import SOLVER_REGISTRY
+
+    if solver not in SOLVER_REGISTRY:
+        return jsonify({"error": "Bad Request", "message": f"Unknown solver '{solver}'"}), 400
+
+    pkg_objs = [Package(name=n, status="candidate") for n in packages]
+    conflict_map: dict[str, list[str]] = {}
+    for c in conflicts:
+        if isinstance(c, (list, tuple)) and len(c) == 2:
+            conflict_map.setdefault(c[0], []).append(c[1])
+            conflict_map.setdefault(c[1], []).append(c[0])
+    for p in pkg_objs:
+        if p.name in conflict_map:
+            p.conflicts = conflict_map[p.name]
+
+    try:
+        maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
+        selected = maximizer.solve(pkg_objs) if not weights else maximizer.solve_with_weights(pkg_objs, weights)
+    except Exception as e:  # pragma: no cover - defensive
+        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
+
+    if fmt == "csv":
+        return to_csv(pkg_objs, selected), 200, {"Content-Type": "text/csv"}
+    if fmt == "graphml":
+        return to_graphml(pkg_objs, selected), 200, {"Content-Type": "application/xml"}
+    return to_json(pkg_objs, selected), 200, {"Content-Type": "application/json"}
+
+
 # ─── Benchmark endpoint ──────────────────────────────────────
 @app.post("/api/v1/benchmark")
 @require_api_key
@@ -371,6 +517,100 @@ def internal_error(e):
         ),
         500,
     )
+
+
+# ─── OpenAPI / API docs (self-documenting, no extra deps) ──
+@app.get("/api/v1/openapi.json")
+def openapi_spec() -> tuple[dict, int]:
+    """Machine-readable API description (OpenAPI 3.0 subset)."""
+    spec = {
+        "openapi": "3.0.3",
+        "info": {
+            "title": "Package Maximizer API",
+            "version": "0.5.0",
+            "description": "Maximize a consistent set of packages across managers.",
+        },
+        "security": [{"ApiKeyAuth": []}],
+        "components": {
+            "securitySchemes": {
+                "ApiKeyAuth": {"type": "apiKey", "in": "header", "name": "X-API-Key"}
+            }
+        },
+        "paths": {
+            "/api/v1/maximize": {
+                "post": {
+                    "summary": "Maximize a set of packages",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "packages": {"type": "array", "items": {"type": "string"}},
+                                        "manager": {"type": "string"},
+                                        "solver": {"type": "string"},
+                                        "conflicts": {"type": "array"},
+                                        "weights": {"type": "object"},
+                                    },
+                                    "required": ["packages"],
+                                }
+                            }
+                        }
+                    },
+                    "responses": {"200": {"description": "Maximized package set"}},
+                }
+            },
+            "/api/v1/export": {
+                "post": {
+                    "summary": "Maximize and export (json|csv|graphml)",
+                    "responses": {"200": {"description": "Exported result"}},
+                }
+            },
+            "/api/v1/benchmark": {
+                "post": {
+                    "summary": "Run solver benchmarks",
+                    "responses": {"200": {"description": "Benchmark results"}},
+                }
+            },
+            "/api/v1/solvers": {
+                "get": {"summary": "List available solvers",
+                        "responses": {"200": {"description": "Solver list"}}}
+            },
+            "/api/v1/parsers": {
+                "get": {"summary": "List available parsers",
+                        "responses": {"200": {"description": "Parser list"}}}
+            },
+            "/api/v1/cache/stats": {
+                "get": {"summary": "Cache statistics",
+                        "responses": {"200": {"description": "Cache stats"}}}
+            },
+        },
+    }
+    return jsonify(spec), 200
+
+
+@app.get("/api/v1/docs")
+def api_docs() -> tuple[str, int]:
+    """Minimal human-readable API documentation page."""
+    html = (
+        "<!doctype html><html><head><meta charset='utf-8'>"
+        "<title>Package Maximizer API</title></head><body>"
+        "<h1>Package Maximizer API</h1>"
+        "<p>All endpoints require header <code>X-API-Key</code>.</p>"
+        "<ul>"
+        "<li><b>POST /api/v1/maximize</b> — maximize a package set</li>"
+        "<li><b>POST /api/v1/export</b> — maximize &amp; export (json/csv/graphml)</li>"
+        "<li><b>POST /api/v1/benchmark</b> — run solver benchmarks</li>"
+        "<li><b>GET /api/v1/solvers</b> — list solvers</li>"
+        "<li><b>GET /api/v1/parsers</b> — list parsers</li>"
+        "<li><b>GET /api/v1/cache/stats</b> — cache statistics</li>"
+        "<li><b>GET /api/v1/openapi.json</b> — OpenAPI spec</li>"
+        "</ul>"
+        "<p>See <a href='/api/v1/openapi.json'>openapi.json</a>.</p>"
+        "</body></html>"
+    )
+    return html, 200, {"Content-Type": "text/html"}
+
 
 
 # ─── Run app ─────────────────────────────────────────────────
