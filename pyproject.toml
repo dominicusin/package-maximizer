@@ -24,10 +24,6 @@ dynamic = ["version"]
 dependencies = [
     "click>=8.0.0",
     "pyyaml>=6.0",
-    "numpy>=1.20.0",
-    "pandas>=1.3.0",
-    "matplotlib>=3.5.0",
-    "seaborn>=0.11.0",
     "psutil>=5.8.0",
     "requests>=2.25.0",
 ]
@@ -43,8 +39,14 @@ solvers = [
     "pulp>=2.5.0",
     "ortools>=9.0.0",
 ]
+viz = [
+    "numpy>=1.20.0",
+    "pandas>=1.3.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+]
 all = [
-    "package-maximizer[web,solvers]",
+    "package-maximizer[web,solvers,viz]",
 ]
 dev = [
     "pytest>=6.2.0",

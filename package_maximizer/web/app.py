@@ -23,6 +23,59 @@ CACHE_TTL = int(os.environ.get("PM_CACHE_TTL", "3600"))
 
 cache = CacheManager() if CACHE_ENABLED else None
 
+# ─── Input validation ────────────────────────────────────────
+MAX_PACKAGES = int(os.environ.get("PM_MAX_PACKAGES", "5000"))
+MAX_NAME_LEN = int(os.environ.get("PM_MAX_NAME_LEN", "256"))
+
+
+def validate_maximize_payload(data: Any) -> tuple[list[str], list, dict | None]:
+    """
+    Validate the JSON body for /api/v1/maximize.
+
+    Returns ``(cleaned_pkgs, conflicts, weights)`` when valid, or raises a
+    ``ValueError`` whose message is client-safe.
+    """
+    if not isinstance(data, dict):
+        raise ValueError("Request body must be a JSON object")
+    if "packages" not in data:
+        raise ValueError("Missing 'packages' field in request body")
+
+    raw_packages = data.get("packages")
+    if not isinstance(raw_packages, list):
+        raise ValueError("'packages' must be a list of strings")
+
+    cleaned: list[str] = []
+    for pkg in raw_packages:
+        if not isinstance(pkg, str):
+            raise ValueError("Each package name must be a string")
+        name = pkg.strip()
+        if not name:
+            raise ValueError("Package names must not be empty")
+        if len(name) > MAX_NAME_LEN:
+            raise ValueError(f"Package name too long (max {MAX_NAME_LEN} chars)")
+        cleaned.append(name)
+
+    if len(cleaned) > MAX_PACKAGES:
+        raise ValueError(f"Too many packages (max {MAX_PACKAGES})")
+
+    conflicts = data.get("conflicts", [])
+    if conflicts is not None and not isinstance(conflicts, list):
+        raise ValueError("'conflicts' must be a list of [a, b] pairs")
+
+    weights = data.get("weights", None)
+    if weights is not None:
+        if not isinstance(weights, dict):
+            raise ValueError("'weights' must be an object mapping name -> number")
+        for k, v in weights.items():
+            if not isinstance(k, str):
+                raise ValueError("Weight keys must be strings")
+            try:
+                float(v)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                raise ValueError(f"Weight for '{k}' must be numeric")
+
+    return cleaned, conflicts, weights  # type: ignore[return-value]
+
 
 # ─── Request timing middleware ───────────────────────────────
 @app.before_request
@@ -139,22 +192,16 @@ def maximize_post() -> tuple[dict, int]:
     }
     """
     data = request.get_json(force=True)
-    if not data or "packages" not in data:
+    try:
+        packages, conflicts, weights = validate_maximize_payload(data)
+    except ValueError as e:
         return (
-            jsonify(
-                {
-                    "error": "Bad Request",
-                    "message": "Missing 'packages' field in request body",
-                }
-            ),
+            jsonify({"error": "Bad Request", "message": str(e)}),
             400,
         )
 
-    packages = data.get("packages", [])
     manager = data.get("manager", "apt")
     solver = data.get("solver", "greedy")
-    conflicts = data.get("conflicts", [])
-    weights = data.get("weights", None)
 
     # Validate manager
     try:

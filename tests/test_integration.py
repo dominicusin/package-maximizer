@@ -352,3 +352,52 @@ class TestWebAPIIntegration:
             headers=auth_headers,
         )
         assert resp.status_code == 200
+
+    # ─── Input validation (security) ──────────────────────────
+    def test_missing_packages_field(self, client, auth_headers):
+        resp = client.post("/api/v1/maximize", json={"manager": "apt"}, headers=auth_headers)
+        assert resp.status_code == 400
+        assert "packages" in resp.get_json()["message"].lower()
+
+    def test_non_string_package_name(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/maximize",
+            json={"packages": ["vim", 123, "nano"]},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 400
+
+    def test_empty_package_name(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/maximize",
+            json={"packages": ["", "vim"]},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 400
+
+    def test_non_numeric_weight(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/maximize",
+            json={"packages": ["vim", "nano"], "weights": {"vim": "heavy"}},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 400
+
+    def test_missing_api_key(self, client):
+        resp = client.post(
+            "/api/v1/maximize",
+            json={"packages": ["vim", "nano"]},
+        )
+        assert resp.status_code == 401
+
+    def test_too_many_packages_rejected(self, client, auth_headers, monkeypatch):
+        import sys
+
+        web_mod = sys.modules["package_maximizer.web.app"]
+        monkeypatch.setattr(web_mod, "MAX_PACKAGES", 3)
+        resp = client.post(
+            "/api/v1/maximize",
+            json={"packages": ["a", "b", "c", "d"]},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 400
