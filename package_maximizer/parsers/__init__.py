@@ -1,6 +1,4 @@
-"""
-Parsers module - Модуль парсеров пакетов.
-"""
+"""Parsers module - Модуль парсеров пакетов."""
 
 from __future__ import annotations
 
@@ -8,6 +6,7 @@ from .apt_parser import APTParser
 from .pacman_parser import PacmanParser
 from .dnf_parser import DNFParser
 from .brew_parser import BrewParser
+from .extra_parsers import SnapParser, FlatpakParser, CargoParser, NpmParser
 
 # Available parsers
 __all__ = [
@@ -15,6 +14,10 @@ __all__ = [
     "PacmanParser",
     "DNFParser",
     "BrewParser",
+    "SnapParser",
+    "FlatpakParser",
+    "CargoParser",
+    "NpmParser",
     "get_parser",
     "PARSER_REGISTRY",
 ]
@@ -25,6 +28,10 @@ PARSER_REGISTRY = {
     "pacman": PacmanParser,
     "dnf": DNFParser,
     "brew": BrewParser,
+    "snap": SnapParser,
+    "flatpak": FlatpakParser,
+    "cargo": CargoParser,
+    "npm": NpmParser,
 }
 
 

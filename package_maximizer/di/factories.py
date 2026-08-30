@@ -153,5 +153,7 @@ def build_default_parser_factory(
 
     factory = ParserFactory(cache=cache)
     for name, cls in PARSER_REGISTRY.items():
-        factory.register(name, lambda c=cls: c())
+        def _build(cls: type = cls) -> "PackageParser":  # type: ignore[name-defined]
+            return cls()  # type: ignore[no-any-return]
+        factory.register(name, _build)
     return factory

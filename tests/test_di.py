@@ -172,4 +172,4 @@ class TestParserFactory:
         import pytest
 
         with pytest.raises(ValueError):
-            factory.create("snap")
+            factory.create("definitely-not-a-parser")

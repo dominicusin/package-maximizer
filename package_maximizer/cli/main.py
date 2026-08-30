@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import click
@@ -526,6 +527,21 @@ def config_command(config, output):
         click.echo(f"Источник конфигурации: {cfg.source}")
         for key, value in data.items():
             click.echo(f"  {key} = {value!r}")
+
+
+@cli.command(name="init-config")
+@click.option('--config', '-C', type=str, default='package-maximizer.json',
+              help='Путь для записи файла конфигурации по умолчанию')
+def init_config_command(config):
+    """Создать файл конфигурации по умолчанию (JSON)."""
+    from ..core.config import Config
+
+    path = Path(config)
+    if path.exists():
+        click.echo(f"Файл {path} уже существует — пропуск.", err=True)
+        sys.exit(1)
+    path.write_text(json.dumps(Config().as_dict(), indent=2), encoding="utf-8")
+    click.echo(f"Создан файл конфигурации: {path}")
 
 
 @cli.command(name="export")
