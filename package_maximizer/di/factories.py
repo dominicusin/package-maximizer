@@ -12,6 +12,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Callable, Optional
 
+from ..utils.lru_cache import lru_cache
+
 if TYPE_CHECKING:
     from ..core.interfaces import ConstraintSolver, PackageParser
     from ..utils.cache import CacheManager
@@ -44,6 +46,7 @@ class SolverFactory:
         """Return the list of registered solver names."""
         return sorted(self._registry.keys())
 
+    @lru_cache(maxsize=256)
     def create(self, name: str) -> "ConstraintSolver":
         """
         Create a solver instance by name.
@@ -92,6 +95,7 @@ class ParserFactory:
         """Return the list of registered parser names."""
         return sorted(self._registry.keys())
 
+    @lru_cache(maxsize=256)
     def create(self, name: str) -> "PackageParser":
         """
         Create a parser instance by name.
@@ -114,7 +118,6 @@ class ParserFactory:
             try:
                 return builder(cache=self._cache)
             except TypeError:
-                # Builder does not accept a cache kwarg; create without it.
                 return builder()
         return builder()
 

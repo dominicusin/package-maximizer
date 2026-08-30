@@ -225,14 +225,15 @@ def maximize_post() -> tuple[dict, int]:
     """
     Maximize packages from JSON body.
 
-    Expected JSON body:
-    {
-        "packages": ["pkg1", "pkg2", "pkg3"],
-        "manager": "apt",
-        "solver": "greedy",
-        "conflicts": [["pkg1", "pkg2"]],
-        "weights": {"pkg1": 2.0, "pkg2": 1.5}
-    }
+    Expected JSON body::
+
+        {
+            "packages": ["pkg1", "pkg2", "pkg3"],
+            "manager": "apt",
+            "solver": "greedy",
+            "conflicts": [["pkg1", "pkg2"]],
+            "weights": {"pkg1": 2.0, "pkg2": 1.5}
+        }
     """
     data = request.get_json(force=True)
     try:

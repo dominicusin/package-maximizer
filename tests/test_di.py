@@ -75,6 +75,26 @@ class TestServiceLocator:
         c2 = ServiceLocator.container()
         assert c1 is c2
 
+
+class TestLRUCache:
+    """LRU cache helper should wrap callables and actually cache."""
+
+    def test_lru_cache_hits(self):
+        from package_maximizer.utils.lru_cache import lru_cache
+
+        calls = {"n": 0}
+
+        @lru_cache(maxsize=2)
+        def slow(x: int) -> int:
+            calls["n"] += 1
+            return x * 2
+
+        assert slow(1) == 2
+        assert slow(1) == 2
+        assert calls["n"] == 1
+        assert slow(2) == 4
+        assert calls["n"] == 2
+
     def test_register_instance_and_resolve(self):
         """register_instance on the container makes resolve return that instance."""
         container = ServiceLocator.container()
