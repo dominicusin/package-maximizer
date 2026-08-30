@@ -133,9 +133,11 @@ def build_default_solver_factory() -> SolverFactory:
     from ..solvers import SOLVER_REGISTRY
 
     factory = SolverFactory()
-    for name, cls in SOLVER_REGISTRY.items():
-        def _build(cls: type = cls) -> "ConstraintSolver":
-            return cls()  # type: ignore[no-any-return]
+    for name in SOLVER_REGISTRY.keys():
+        def _build(name: str = name) -> "ConstraintSolver":  # type: ignore[name-defined]
+            from ..solvers import get_solver
+
+            return get_solver(name)  # type: ignore[no-any-return]
         factory.register(name, _build)
     return factory
 
@@ -152,8 +154,10 @@ def build_default_parser_factory(
     from ..parsers import PARSER_REGISTRY
 
     factory = ParserFactory(cache=cache)
-    for name, cls in PARSER_REGISTRY.items():
-        def _build(cls: type = cls) -> "PackageParser":  # type: ignore[name-defined]
-            return cls()  # type: ignore[no-any-return]
+    for name in PARSER_REGISTRY.keys():
+        def _build(name: str = name) -> "PackageParser":  # type: ignore[name-defined]
+            from ..parsers import get_parser
+
+            return get_parser(name)  # type: ignore[no-any-return]
         factory.register(name, _build)
     return factory
