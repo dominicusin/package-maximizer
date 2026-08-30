@@ -5,10 +5,16 @@ Parsers module - Модуль парсеров пакетов.
 from __future__ import annotations
 
 from .apt_parser import APTParser
+from .pacman_parser import PacmanParser
+from .dnf_parser import DNFParser
+from .brew_parser import BrewParser
 
 # Available parsers
 __all__ = [
     "APTParser",
+    "PacmanParser",
+    "DNFParser",
+    "BrewParser",
     "get_parser",
     "PARSER_REGISTRY",
 ]
@@ -16,6 +22,9 @@ __all__ = [
 # Parser registry for easy access
 PARSER_REGISTRY = {
     "apt": APTParser,
+    "pacman": PacmanParser,
+    "dnf": DNFParser,
+    "brew": BrewParser,
 }
 
 
