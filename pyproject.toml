@@ -65,10 +65,11 @@ package-maximizer = "package_maximizer.cli.main:cli"
 pm-web = "package_maximizer.web.app:run_app"
 
 [project.urls]
-Homepage = "https://github.com/package-maximizer/package-maximizer"
+Homepage = "https://github.com/dominicusin/package-maximizer"
 Documentation = "https://package-maximizer.readthedocs.io/"
-Repository = "https://github.com/package-maximizer/package-maximizer.git"
-"Bug Tracker" = "https://github.com/package-maximizer/package-maximizer/issues"
+Repository = "https://github.com/dominicusin/package-maximizer.git"
+"Bug Tracker" = "https://github.com/dominicusin/package-maximizer/issues"
+PyPI = "https://pypi.org/project/package-maximizer/"
 
 [tool.setuptools_scm]
 fallback_version = "0.1.0"

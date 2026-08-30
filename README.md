@@ -2,6 +2,8 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/package-maximizer?logo=pypi)](https://pypi.org/project/package-maximizer/)
+[![PyPI Downloads](https://static.pepy.tech/badge/package-maximizer)](https://pepy.tech/project/package-maximizer)
 [![GitHub Issues](https://img.shields.io/github/issues/dominicusin/package-maximizer)](https://github.com/dominicusin/package-maximizer/issues)
 [![GitHub Stars](https://img.shields.io/github/stars/dominicusin/package-maximizer)](https://github.com/dominicusin/package-maximizer/stargazers)
 
