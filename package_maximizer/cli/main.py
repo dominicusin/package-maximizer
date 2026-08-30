@@ -603,5 +603,20 @@ def export_command(packages, manager, solver, conflicts, format, output_file):
         click.echo(content)
 
 
+
+@cli.command(name="tui")
+def tui_command() -> None:
+    """
+    Запустить интерактивный TUI (Textual).
+    """
+    try:
+        from ..tui.app import run_tui
+        run_tui()
+    except ImportError as e:
+        click.echo(f"Ошибка: {e}", err=True)
+        sys.exit(1)
+
+
+
 if __name__ == '__main__':
     cli()
