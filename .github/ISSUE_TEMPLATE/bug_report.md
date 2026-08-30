@@ -1,30 +1,28 @@
----
 name: Bug report
-about: Создать отчет об ошибке
-title: '[BUG] '
+about: Create a report to help us improve
+title: ''
 labels: bug
-assignees: ''
----
+assignees: dominicusin
 
-**Описание ошибки**
-Четкое и краткое описание ошибки.
-
-**Шаги для воспроизведения**
-1. Перейти к '...'
-2. Кликнуть на '....'
-3. Прокрутить до '....'
-4. Увидеть ошибку
-
-**Ожидаемое поведение**
-Описание того, что должно происходить.
-
-**Скриншоты**
-При необходимости добавьте скриншоты.
-
-**Окружение:**
- - ОС: [например iOS]
- - Версия Python: [например 3.9]
- - Версия Package Maximizer: [например 0.1.0]
-
-**Дополнительная информация**
-Любая другая информация об ошибке.
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Steps or minimal example
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Package Maximizer version
+    validations:
+      required: true

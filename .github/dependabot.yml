@@ -1,26 +1,12 @@
 version: 2
 updates:
-  - package-ecosystem: "docker"
+  - package-ecosystem: pip
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 99
-    auto-merge: true
-    labels:
-      - "dependencies"
-  - package-ecosystem: "github-actions"
+      interval: weekly
+    allow:
+      - dependency-type: direct
+  - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 99
-    auto-merge: true
-    labels:
-      - "dependencies"
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 99
-    auto-merge: true
-    labels:
-      - "dependencies"
+      interval: weekly
