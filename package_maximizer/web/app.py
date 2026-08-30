@@ -23,47 +23,64 @@ CACHE_TTL = int(os.environ.get("PM_CACHE_TTL", "3600"))
 
 cache = CacheManager() if CACHE_ENABLED else None
 
+
 # ─── Request timing middleware ───────────────────────────────
 @app.before_request
 def before_request():
     g.start_time = time.time()
 
+
 @app.after_request
 def after_request(response):
-    if hasattr(g, 'start_time'):
+    if hasattr(g, "start_time"):
         elapsed = time.time() - g.start_time
         response.headers["X-Response-Time"] = f"{elapsed:.4f}s"
     return response
 
+
 # ─── Authentication decorator ────────────────────────────────
 def require_api_key(f):
     """Simple API key authentication."""
+
     @wraps(f)
     def decorated(*args, **kwargs):
         # Skip auth for health check
         if request.endpoint == "health":
             return f(*args, **kwargs)
-        
+
         # Check API key
         api_key = request.headers.get("X-API-Key") or request.args.get("api_key")
         if not api_key or api_key != API_KEY:
-            return jsonify({
-                "error": "Unauthorized",
-                "message": "Missing or invalid API key. Provide X-API-Key header."
-            }), 401
+            return (
+                jsonify(
+                    {
+                        "error": "Unauthorized",
+                        "message": "Missing or invalid API key. Provide X-API-Key header.",
+                    }
+                ),
+                401,
+            )
         return f(*args, **kwargs)
+
     return decorated
+
 
 # ─── Health check ────────────────────────────────────────────
 @app.get("/api/health")
 def health() -> tuple[dict, int]:
     """Health check endpoint."""
-    return jsonify({
-        "status": "ok",
-        "version": "0.5.0",
-        "cache_enabled": CACHE_ENABLED,
-        "timestamp": time.time()
-    }), 200
+    return (
+        jsonify(
+            {
+                "status": "ok",
+                "version": "0.5.0",
+                "cache_enabled": CACHE_ENABLED,
+                "timestamp": time.time(),
+            }
+        ),
+        200,
+    )
+
 
 # ─── List available solvers ──────────────────────────────────
 @app.get("/api/v1/solvers")
@@ -71,15 +88,19 @@ def health() -> tuple[dict, int]:
 def list_solvers() -> tuple[dict, int]:
     """List all available solvers."""
     from ..solvers import SOLVER_REGISTRY
+
     solvers = []
     for name, cls in SOLVER_REGISTRY.items():
         doc = cls.__doc__ or "No description"
-        solvers.append({
-            "name": name,
-            "description": doc.strip().split("\n")[0],
-            "class": cls.__name__
-        })
+        solvers.append(
+            {
+                "name": name,
+                "description": doc.strip().split("\n")[0],
+                "class": cls.__name__,
+            }
+        )
     return jsonify({"solvers": solvers}), 200
+
 
 # ─── List available parsers ──────────────────────────────────
 @app.get("/api/v1/parsers")
@@ -87,15 +108,19 @@ def list_solvers() -> tuple[dict, int]:
 def list_parsers() -> tuple[dict, int]:
     """List all available parsers."""
     from ..parsers import PARSER_REGISTRY
+
     parsers = []
     for name, cls in PARSER_REGISTRY.items():
         doc = cls.__doc__ or "No description"
-        parsers.append({
-            "name": name,
-            "description": doc.strip().split("\n")[0],
-            "class": cls.__name__
-        })
+        parsers.append(
+            {
+                "name": name,
+                "description": doc.strip().split("\n")[0],
+                "class": cls.__name__,
+            }
+        )
     return jsonify({"parsers": parsers}), 200
+
 
 # ─── Maximize packages ───────────────────────────────────────
 @app.post("/api/v1/maximize")
@@ -103,7 +128,7 @@ def list_parsers() -> tuple[dict, int]:
 def maximize_post() -> tuple[dict, int]:
     """
     Maximize packages from JSON body.
-    
+
     Expected JSON body:
     {
         "packages": ["pkg1", "pkg2", "pkg3"],
@@ -115,74 +140,93 @@ def maximize_post() -> tuple[dict, int]:
     """
     data = request.get_json(force=True)
     if not data or "packages" not in data:
-        return jsonify({
-            "error": "Bad Request",
-            "message": "Missing 'packages' field in request body"
-        }), 400
-    
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": "Missing 'packages' field in request body",
+                }
+            ),
+            400,
+        )
+
     packages = data.get("packages", [])
     manager = data.get("manager", "apt")
     solver = data.get("solver", "greedy")
     conflicts = data.get("conflicts", [])
     weights = data.get("weights", None)
-    
+
     # Validate manager
     try:
         manager_enum = PackageManagerType(manager)
     except ValueError:
         valid = [m.value for m in PackageManagerType]
-        return jsonify({
-            "error": "Bad Request",
-            "message": f"Unknown manager '{manager}'. Valid: {valid}"
-        }), 400
-    
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": f"Unknown manager '{manager}'. Valid: {valid}",
+                }
+            ),
+            400,
+        )
+
     # Validate solver
     from ..solvers import SOLVER_REGISTRY
+
     if solver not in SOLVER_REGISTRY:
-        return jsonify({
-            "error": "Bad Request",
-            "message": f"Unknown solver '{solver}'. Valid: {list(SOLVER_REGISTRY.keys())}"
-        }), 400
-    
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": f"Unknown solver '{solver}'. Valid: {list(SOLVER_REGISTRY.keys())}",
+                }
+            ),
+            400,
+        )
+
     # Build package objects
     package_objs = []
     conflict_map: dict[str, list[str]] = {}
     for pkg_name in packages:
         pkg = Package(name=pkg_name, status="candidate")
         package_objs.append(pkg)
-    
+
     # Apply conflicts
     for c in conflicts:
         if isinstance(c, (list, tuple)) and len(c) == 2:
             conflict_map.setdefault(c[0], []).append(c[1])
             conflict_map.setdefault(c[1], []).append(c[0])
-    
+
     for pkg in package_objs:
         if pkg.name in conflict_map:
             pkg.conflicts = conflict_map[pkg.name]
-    
+
     # Solve
     try:
         maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
-        
+
         if weights:
             result = maximizer.solve_with_weights(package_objs, weights)
         else:
             result = maximizer.solve(package_objs)
     except Exception as e:
-        return jsonify({
-            "error": "Internal Server Error",
-            "message": str(e)
-        }), 500
-    
-    return jsonify({
-        "manager": manager,
-        "solver": solver,
-        "input_count": len(packages),
-        "output_count": len(result),
-        "selected": result,
-        "input": packages,
-    }), 200
+        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
+
+    return (
+        jsonify(
+            {
+                "manager": manager,
+                "solver": solver,
+                "input_count": len(packages),
+                "output_count": len(result),
+                "selected": result,
+                "input": packages,
+            }
+        ),
+        200,
+    )
+
 
 # ─── GET version (for backward compat) ───────────────────────
 @app.get("/api/maximize")
@@ -192,15 +236,20 @@ def maximize_get() -> tuple[dict, int]:
     raw = request.args.get("packages", "")
     names = [n.strip() for n in raw.split(",") if n.strip()]
     if not names:
-        return jsonify({
-            "error": "Bad Request",
-            "message": "Query parameter 'packages' is required"
-        }), 400
-    
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": "Query parameter 'packages' is required",
+                }
+            ),
+            400,
+        )
+
     manager = request.args.get("manager", "apt")
     solver = request.args.get("solver", "greedy")
     weights_raw = request.args.get("weights")
-    
+
     weights = None
     if weights_raw:
         weights = {}
@@ -211,20 +260,14 @@ def maximize_get() -> tuple[dict, int]:
                     weights[parts[0]] = float(parts[1])
                 except ValueError:
                     pass
-    
+
     # Forward to POST handler logic
-    data = {
-        "packages": names,
-        "manager": manager,
-        "solver": solver,
-        "weights": weights
-    }
+    data = {"packages": names, "manager": manager, "solver": solver, "weights": weights}
     with app.test_request_context(
-        method="POST",
-        json=data,
-        headers=dict(request.headers)
+        method="POST", json=data, headers=dict(request.headers)
     ):
         return maximize_post()
+
 
 # ─── Benchmark endpoint ──────────────────────────────────────
 @app.post("/api/v1/benchmark")
@@ -234,36 +277,44 @@ def benchmark_post() -> tuple[dict, int]:
     from ..solvers import SOLVER_REGISTRY
 
     data = request.get_json(force=True) or {}
-    
+
     solver_names = data.get("solvers", list(SOLVER_REGISTRY.keys()))
     package_count = data.get("package_count", 100)
     runs = data.get("runs", 3)
-    
+
     runner = BenchmarkRunner(runs=runs)
     packages = runner.generate_test_packages(package_count)
-    
+
     results = []
     for solver_name in solver_names:
         result = runner.run_benchmark(solver_name, packages)
-        results.append({
-            "solver": result.solver_name,
-            "avg_time": result.avg_time,
-            "min_time": result.min_time,
-            "max_time": result.max_time,
-            "selected": result.selected_count,
-            "success": result.success,
-            "error": result.error
-        })
-    
+        results.append(
+            {
+                "solver": result.solver_name,
+                "avg_time": result.avg_time,
+                "min_time": result.min_time,
+                "max_time": result.max_time,
+                "selected": result.selected_count,
+                "success": result.success,
+                "error": result.error,
+            }
+        )
+
     # Sort by avg_time
     results.sort(key=lambda r: r["avg_time"])
-    
-    return jsonify({
-        "results": results,
-        "package_count": package_count,
-        "runs_per_solver": runs,
-        "best_solver": results[0]["solver"] if results else None
-    }), 200
+
+    return (
+        jsonify(
+            {
+                "results": results,
+                "package_count": package_count,
+                "runs_per_solver": runs,
+                "best_solver": results[0]["solver"] if results else None,
+            }
+        ),
+        200,
+    )
+
 
 # ─── Cache stats endpoint ────────────────────────────────────
 @app.get("/api/v1/cache/stats")
@@ -274,6 +325,7 @@ def cache_stats() -> tuple[dict, int]:
         return jsonify({"cache_enabled": False}), 200
     return jsonify(cache.get_stats()), 200
 
+
 @app.delete("/api/v1/cache")
 @require_api_key
 def cache_clear() -> tuple[dict, int]:
@@ -283,32 +335,49 @@ def cache_clear() -> tuple[dict, int]:
     count = cache.clear()
     return jsonify({"cleared": count}), 200
 
+
 # ─── Error handlers ──────────────────────────────────────────
 @app.errorhandler(404)
 def not_found(e):
-    return jsonify({
-        "error": "Not Found",
-        "message": "The requested resource was not found"
-    }), 404
+    return (
+        jsonify(
+            {"error": "Not Found", "message": "The requested resource was not found"}
+        ),
+        404,
+    )
+
 
 @app.errorhandler(405)
 def method_not_allowed(e):
-    return jsonify({
-        "error": "Method Not Allowed",
-        "message": "The HTTP method is not allowed for this endpoint"
-    }), 405
+    return (
+        jsonify(
+            {
+                "error": "Method Not Allowed",
+                "message": "The HTTP method is not allowed for this endpoint",
+            }
+        ),
+        405,
+    )
+
 
 @app.errorhandler(500)
 def internal_error(e):
-    return jsonify({
-        "error": "Internal Server Error",
-        "message": "An unexpected error occurred"
-    }), 500
+    return (
+        jsonify(
+            {
+                "error": "Internal Server Error",
+                "message": "An unexpected error occurred",
+            }
+        ),
+        500,
+    )
+
 
 # ─── Run app ─────────────────────────────────────────────────
 def run_app(host: str = "127.0.0.1", port: int = 5000, debug: bool = False) -> None:
     """Run the Flask application."""
     app.run(host=host, port=port, debug=debug)
+
 
 # Backward compatibility
 run = run_app

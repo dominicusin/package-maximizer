@@ -30,7 +30,7 @@ class TestMaximizerEndToEnd:
         pkg_b = Package(name="emacs")
         pkg_a.conflicts = ["emacs"]
         pkg_b.conflicts = ["vim"]
-        
+
         maximizer = PackageMaximizer(solver="greedy")
         result = maximizer.maximize([pkg_a, pkg_b])
         assert len(result) == 1
@@ -39,8 +39,9 @@ class TestMaximizerEndToEnd:
     def test_large_package_set(self):
         """Test with 200 packages and random conflicts."""
         import random
+
         random.seed(42)
-        
+
         packages = []
         for i in range(200):
             pkg = Package(name=f"pkg-{i:03d}")
@@ -50,7 +51,7 @@ class TestMaximizerEndToEnd:
                 if target != i:
                     pkg.conflicts = [f"pkg-{target:03d}"]
             packages.append(pkg)
-        
+
         maximizer = PackageMaximizer(solver="greedy")
         result = maximizer.maximize(packages)
         # With ~5% conflict rate, should select most packages
@@ -64,7 +65,7 @@ class TestMaximizerEndToEnd:
         ]
         # Give high-priority a much higher weight
         weights = {"low-priority": 1.0, "high-priority": 100.0}
-        
+
         # No conflicts, both should be selected
         maximizer = PackageMaximizer(solver="greedy")
         result = maximizer.solve_with_weights(pkgs, weights)
@@ -75,9 +76,9 @@ class TestMaximizerEndToEnd:
         """When forced to choose, higher weight should win."""
         pkg_low = Package(name="low", conflicts=["high"])
         pkg_high = Package(name="high", conflicts=["low"])
-        
+
         weights = {"low": 1.0, "high": 10.0}
-        
+
         maximizer = PackageMaximizer(solver="greedy")
         result = maximizer.solve_with_weights([pkg_low, pkg_high], weights)
         assert "high" in result
@@ -91,21 +92,20 @@ class TestMaximizerEndToEnd:
     def test_solver_switching(self):
         """Test that switching solvers at runtime works."""
         pkgs = [Package(name="a"), Package(name="b"), Package(name="c")]
-        
+
         maximizer = PackageMaximizer(solver="greedy")
         r1 = maximizer.maximize(pkgs)
-        
+
         maximizer.set_solver("greedy")
         r2 = maximizer.maximize(pkgs)
-        
+
         assert len(r1) == len(r2)
 
     def test_analyze_results(self):
         """Test result analysis."""
         maximizer = PackageMaximizer(solver="greedy")
         analysis = maximizer.analyze(
-            installed=["vim", "git"],
-            proposed=["vim", "nano", "git", "curl"]
+            installed=["vim", "git"], proposed=["vim", "nano", "git", "curl"]
         )
         assert isinstance(analysis, dict)
 
@@ -131,7 +131,7 @@ class TestSolverComparison:
         """No solver should select conflicting packages together."""
         solver = get_solver(solver_name)
         result = solver.solve(conflict_scenario)
-        
+
         result_set = set(result)
         # a and b can't both be in result
         assert not ("a" in result_set and "b" in result_set)
@@ -153,11 +153,7 @@ class TestConstraintIntegration:
 
     def test_version_satisfaction(self):
         """Version constraint should correctly check versions."""
-        constraint = VersionConstraint(
-            package="python",
-            operator=">=",
-            version="3.8"
-        )
+        constraint = VersionConstraint(package="python", operator=">=", version="3.8")
         assert constraint.satisfied_by("3.9")
         assert constraint.satisfied_by("3.10")
         assert not constraint.satisfied_by("3.7")
@@ -249,6 +245,7 @@ class TestWebAPIIntegration:
     @pytest.fixture
     def client(self):
         from package_maximizer.web.app import app
+
         app.config["TESTING"] = True
         with app.test_client() as client:
             yield client
