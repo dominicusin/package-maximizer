@@ -430,3 +430,26 @@ class TestWebAPIIntegration:
         )
         assert resp.status_code == 200
         assert "<graphml" in resp.data.decode()
+
+    # ─── OpenAPI / docs / rate-limit (PM-23 ergonomics) ──────
+    def test_openapi_spec(self, client):
+        resp = client.get("/api/v1/openapi.json")
+        assert resp.status_code == 200
+        spec = resp.get_json()
+        assert spec["openapi"].startswith("3.")
+        assert "/api/v1/maximize" in spec["paths"]
+
+    def test_docs_page(self, client):
+        resp = client.get("/api/v1/docs")
+        assert resp.status_code == 200
+        assert b"Package Maximizer API" in resp.data
+
+    def test_rate_limit_returns_429(self, client, auth_headers, monkeypatch):
+        import sys
+
+        web_mod = sys.modules["package_maximizer.web.app"]
+        # Tiny limit so repeated calls trip 429
+        monkeypatch.setattr(web_mod, "RATE_LIMITER", web_mod.RateLimiter(max_requests=2, window=60))
+        for _ in range(3):
+            resp = client.get("/api/v1/solvers", headers=auth_headers)
+        assert resp.status_code == 429

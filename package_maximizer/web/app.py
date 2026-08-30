@@ -23,6 +23,36 @@ CACHE_TTL = int(os.environ.get("PM_CACHE_TTL", "3600"))
 
 cache = CacheManager() if CACHE_ENABLED else None
 
+# ─── Rate limiting (in-memory, per API key) ────────────────
+class RateLimiter:
+    """Fixed-window rate limiter keyed by client identity."""
+
+    def __init__(self, max_requests: int = 100, window: float = 60.0) -> None:
+        self.max_requests = max_requests
+        self.window = window
+        self._hits: dict[str, list[float]] = {}
+
+    def is_allowed(self, key: str) -> bool:
+        now = time.monotonic()
+        hits = self._hits.get(key, [])
+        hits = [t for t in hits if now - t < self.window]
+        if len(hits) >= self.max_requests:
+            self._hits[key] = hits
+            return False
+        hits.append(now)
+        self._hits[key] = hits
+        return True
+
+    def reset(self, key: str) -> None:
+        self._hits.pop(key, None)
+
+
+RATE_LIMITER = RateLimiter(
+    max_requests=int(os.environ.get("PM_RATE_LIMIT", "100")),
+    window=float(os.environ.get("PM_RATE_WINDOW", "60")),
+)
+
+
 # ─── Input validation ────────────────────────────────────────
 MAX_PACKAGES = int(os.environ.get("PM_MAX_PACKAGES", "5000"))
 MAX_NAME_LEN = int(os.environ.get("PM_MAX_NAME_LEN", "256"))
@@ -113,6 +143,19 @@ def require_api_key(f):
                 ),
                 401,
             )
+        # Rate limiting (per API key)
+        if not RATE_LIMITER.is_allowed(api_key):
+            return (
+                jsonify(
+                    {
+                        "error": "Too Many Requests",
+                        "message": f"Rate limit exceeded ({RATE_LIMITER.max_requests} per "
+                        f"{int(RATE_LIMITER.window)}s).",
+                    }
+                ),
+                429,
+            )
+
         return f(*args, **kwargs)
 
     return decorated
@@ -473,6 +516,100 @@ def internal_error(e):
         ),
         500,
     )
+
+
+# ─── OpenAPI / API docs (self-documenting, no extra deps) ──
+@app.get("/api/v1/openapi.json")
+def openapi_spec() -> tuple[dict, int]:
+    """Machine-readable API description (OpenAPI 3.0 subset)."""
+    spec = {
+        "openapi": "3.0.3",
+        "info": {
+            "title": "Package Maximizer API",
+            "version": "0.5.0",
+            "description": "Maximize a consistent set of packages across managers.",
+        },
+        "security": [{"ApiKeyAuth": []}],
+        "components": {
+            "securitySchemes": {
+                "ApiKeyAuth": {"type": "apiKey", "in": "header", "name": "X-API-Key"}
+            }
+        },
+        "paths": {
+            "/api/v1/maximize": {
+                "post": {
+                    "summary": "Maximize a set of packages",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "packages": {"type": "array", "items": {"type": "string"}},
+                                        "manager": {"type": "string"},
+                                        "solver": {"type": "string"},
+                                        "conflicts": {"type": "array"},
+                                        "weights": {"type": "object"},
+                                    },
+                                    "required": ["packages"],
+                                }
+                            }
+                        }
+                    },
+                    "responses": {"200": {"description": "Maximized package set"}},
+                }
+            },
+            "/api/v1/export": {
+                "post": {
+                    "summary": "Maximize and export (json|csv|graphml)",
+                    "responses": {"200": {"description": "Exported result"}},
+                }
+            },
+            "/api/v1/benchmark": {
+                "post": {
+                    "summary": "Run solver benchmarks",
+                    "responses": {"200": {"description": "Benchmark results"}},
+                }
+            },
+            "/api/v1/solvers": {
+                "get": {"summary": "List available solvers",
+                        "responses": {"200": {"description": "Solver list"}}}
+            },
+            "/api/v1/parsers": {
+                "get": {"summary": "List available parsers",
+                        "responses": {"200": {"description": "Parser list"}}}
+            },
+            "/api/v1/cache/stats": {
+                "get": {"summary": "Cache statistics",
+                        "responses": {"200": {"description": "Cache stats"}}}
+            },
+        },
+    }
+    return jsonify(spec), 200
+
+
+@app.get("/api/v1/docs")
+def api_docs() -> tuple[str, int]:
+    """Minimal human-readable API documentation page."""
+    html = (
+        "<!doctype html><html><head><meta charset='utf-8'>"
+        "<title>Package Maximizer API</title></head><body>"
+        "<h1>Package Maximizer API</h1>"
+        "<p>All endpoints require header <code>X-API-Key</code>.</p>"
+        "<ul>"
+        "<li><b>POST /api/v1/maximize</b> — maximize a package set</li>"
+        "<li><b>POST /api/v1/export</b> — maximize &amp; export (json/csv/graphml)</li>"
+        "<li><b>POST /api/v1/benchmark</b> — run solver benchmarks</li>"
+        "<li><b>GET /api/v1/solvers</b> — list solvers</li>"
+        "<li><b>GET /api/v1/parsers</b> — list parsers</li>"
+        "<li><b>GET /api/v1/cache/stats</b> — cache statistics</li>"
+        "<li><b>GET /api/v1/openapi.json</b> — OpenAPI spec</li>"
+        "</ul>"
+        "<p>See <a href='/api/v1/openapi.json'>openapi.json</a>.</p>"
+        "</body></html>"
+    )
+    return html, 200, {"Content-Type": "text/html"}
+
 
 
 # ─── Run app ─────────────────────────────────────────────────
