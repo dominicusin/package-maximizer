@@ -66,18 +66,33 @@ class Container:
                 if origin is not None:
                     hint = origin
 
-                if hint in self._singletons and self._singletons[hint] is not None:
-                    deps.append(self._singletons[hint])
-                elif hint in self._factories:
+                # ``from __future__ import annotations`` makes annotations strings;
+                # we can only auto-resolve real types, not string annotations.
+                if isinstance(hint, type) and hint in self._singletons:
+                    if self._singletons[hint] is not None:
+                        deps.append(self._singletons[hint])
+                    else:
+                        # Singleton registered but not yet constructed.
+                        deps.append(self.resolve(hint))
+                elif isinstance(hint, type) and hint in self._factories:
                     deps.append(self._factories[hint]())
-                else:
-                    # Try to construct directly
+                elif isinstance(hint, type):
+                    # Unknown real type: try to construct it directly.
                     deps.append(self.resolve(hint))
+                elif param.default is not inspect.Parameter.empty:
+                    # String annotation or non-type hint: fall back to default.
+                    deps.append(param.default)
+                else:
+                    raise ValueError(
+                        f"Cannot resolve parameter '{name}' for "
+                        f"{getattr(cls, '__name__', cls)}"
+                    )
             elif param.default is not inspect.Parameter.empty:
                 deps.append(param.default)
             else:
                 raise ValueError(
-                    f"Cannot resolve parameter '{name}' for {cls.__name__}"
+                    f"Cannot resolve parameter '{name}' for "
+                    f"{getattr(cls, '__name__', cls)}"
                 )
 
         return deps
