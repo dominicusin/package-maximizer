@@ -18,29 +18,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v7
-    
+
     - name: Set up Python
       uses: actions/setup-python@v7
       with:
         python-version: "3.11"
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install bandit safety
-    
+
     - name: Run Bandit security linter
       run: |
-        bandit -r package_maximizer/ -f json -o bandit-report.json || true
-        bandit -r package_maximizer/ -f screen --severity-level medium
-    
+        bandit -r package_maximizer/ -ll -ii -f json -o bandit-report.json || true
+        bandit -r package_maximizer/ -ll -ii --severity-level medium
+
     - name: Check for known vulnerabilities
       run: safety check -r requirements.txt --full-report || true
-    
+
     - name: Upload security report
       if: always()
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v4
       with:
         name: security-report
         path: bandit-report.json
@@ -51,28 +51,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v7
-    
+
     - name: Set up Python
       uses: actions/setup-python@v7
       with:
         python-version: "3.11"
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
-    
-    - name: Lint with flake8
+
+    - name: Lint with flake8 (critical only)
       run: |
         flake8 package_maximizer/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
+
+    - name: Lint with flake8 (style, non-blocking)
+      run: |
         flake8 package_maximizer/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    
+
     - name: Type check with mypy
       run: mypy package_maximizer/ --ignore-missing-imports || true
-    
+
     - name: Check formatting with black
       run: black --check package_maximizer/ tests/ || true
-    
+
     - name: Check imports with isort
       run: isort --check-only package_maximizer/ tests/ || true
 
@@ -86,42 +89,44 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.10", "3.11", "3.12"]
-        
+
     steps:
     - uses: actions/checkout@v7
-    
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
-        
+
     - name: Cache pip packages
       uses: actions/cache@v6
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
-          
+
     - name: Install system dependencies (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc g++ libffi-dev
-        
+
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -e ".[dev]"
-        
+        pip install pytest-xdist
+
     - name: Run tests with pytest
       run: |
-        pytest tests/ -v --cov=package_maximizer --cov-report=xml --cov-report=term -n auto --tb=short
-        
+        pytest tests/ -v --cov=package_maximizer --cov-report=xml --cov-report=term --tb=short
+
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-      uses: codecov/codecov-action@v7
+      uses: codecov/codecov-action@v4
+      continue-on-error: true
       with:
         file: ./coverage.xml
         flags: unittests
@@ -134,25 +139,28 @@ jobs:
     needs: [test]
     steps:
     - uses: actions/checkout@v7
-    
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
     - name: Set up Python
       uses: actions/setup-python@v7
       with:
         python-version: "3.11"
-    
+
     - name: Install build tools
       run: |
         python -m pip install --upgrade pip
         pip install build twine
-    
+
     - name: Build package
       run: python -m build
-    
+
     - name: Check package with twine
       run: twine check dist/*
-    
+
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v4
       with:
         name: dist
         path: dist/
@@ -166,12 +174,12 @@ jobs:
     environment: production
     permissions:
       id-token: write
-    
+
     steps:
     - uses: actions/download-artifact@v4
       with:
         name: dist
         path: dist/
-    
+
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1

@@ -4,6 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/package-maximizer?logo=pypi)](https://pypi.org/project/package-maximizer/)
 [![PyPI Downloads](https://static.pepy.tech/badge/package-maximizer)](https://pepy.tech/project/package-maximizer)
+[![ReadTheDocs](https://readthedocs.org/projects/package-maximizer/badge/?version=latest)](https://package-maximizer.readthedocs.io/en/latest/?badge=latest)
 [![GitHub Issues](https://img.shields.io/github/issues/dominicusin/package-maximizer)](https://github.com/dominicusin/package-maximizer/issues)
 [![GitHub Stars](https://img.shields.io/github/stars/dominicusin/package-maximizer)](https://github.com/dominicusin/package-maximizer/stargazers)
 
@@ -215,9 +216,13 @@ python -m pytest tests/ --cov=package_maximizer --cov-report=html
 
 ## 📞 Контакты
 
-- GitHub: [dominicusin/package-maximizer](https://github.com/dominicusin/package-maximizer)
-- WWW: [https://dominicusin.github.io/package-maximizer/](https://dominicusin.github.io/package-maximizer/)
-- Email: team@package-maximizer.dev
+| Ссылка | Описание |
+|--------|----------|
+| GitHub | [dominicusin/package-maximizer](https://github.com/dominicusin/package-maximizer) |
+| WWW | [dominicusin.github.io/package-maximizer](https://dominicusin.github.io/package-maximizer/) |
+| PyPI | [package-maximizer](https://pypi.org/project/package-maximizer/) |
+| ReadTheDocs | [docs](https://package-maximizer.readthedocs.io/) |
+| Email | [team@package-maximizer.dev](mailto:team@package-maximizer.dev) |
 
 ## 🎉 Благодарности
 

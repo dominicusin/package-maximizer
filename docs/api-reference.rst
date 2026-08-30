@@ -5,10 +5,12 @@ API Reference
    :maxdepth: 2
    :caption: Modules:
 
+   core
    cli
    web
    tui
    solvers
    parsers
-   core
-   utils-lru
+   analyzers
+   integrations
+   utils
