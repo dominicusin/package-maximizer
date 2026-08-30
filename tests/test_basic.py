@@ -1,25 +1,33 @@
-"""Базовые тесты для проверки работоспособности"""
+"""
+Basic tests for Package Maximizer
+"""
 
 
 def test_import():
-    """Тест импорта основных модулей"""
+    """
+    Test import of package_maximizer module
+    """
     try:
         import package_maximizer
 
         assert hasattr(package_maximizer, "__version__")
-        assert package_maximizer.__version__ == "0.1.0"
+        assert package_maximizer.__version__ == "0.2.0"
     except ImportError:
-        assert False, "Не удалось импортировать package_maximizer"
+        assert False, "Failed to import package_maximizer"
 
 
 def test_basic_functionality():
-    """Тест базовой функциональности"""
-    # Пока простая проверка
+    """
+    Test basic functionality
+    """
+    # Simple test
     assert 1 + 1 == 2
 
 
 def test_version():
-    """Тест версии пакета"""
+    """
+    Test version information
+    """
     from package_maximizer import __version__
 
     assert __version__ is not None
