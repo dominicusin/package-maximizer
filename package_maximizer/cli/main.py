@@ -14,6 +14,8 @@ import click
 from ..core.enums import PackageManagerType, SolverType
 from ..core.maximizer import PackageMaximizer
 from ..core.package import Package
+from ..core.config import load_config
+from ..utils.logging_config import configure_logging
 from ..integrations import RealRepoIntegration
 
 if TYPE_CHECKING:
@@ -25,24 +27,23 @@ logger = logging.getLogger(__name__)
 @click.group()
 @click.option('--verbose', '-v', is_flag=True, help='Включить подробный вывод')
 @click.option('--quiet', '-q', is_flag=True, help='Отключить вывод')
-def cli(verbose: bool, quiet: bool):
+@click.option('--config', '-C', type=str, default=None,
+              help='Путь к файлу конфигурации (YAML/JSON)')
+def cli(verbose: bool, quiet: bool, config: str | None):
     """
     Package Maximizer - Система максимизации непротиворечивого множества пакетов.
     
     Использует различные SAT/ILP/SMT солверы для решения задачи.
     """
+    level = "INFO"
     if quiet:
-        logging.getLogger().setLevel(logging.ERROR)
+        level = "ERROR"
     elif verbose:
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
-    else:
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(levelname)s - %(message)s'
-        )
+        level = "DEBUG"
+    cfg = load_config(config)
+    # CLI flags take precedence over config/env for log level.
+    configure_logging(level, json_output=cfg.log_json)
+
 
 
 @cli.command()
@@ -503,6 +504,28 @@ def system_info(manager, output):
     except Exception as e:
         click.echo(f"Ошибка: {e}", err=True)
         sys.exit(1)
+
+
+@cli.command(name="config")
+@click.option('--config', '-C', type=str, default=None,
+              help='Путь к файлу конфигурации (YAML/JSON)')
+@click.option('--output', '-o', type=click.Choice(['text', 'yaml', 'json']), default='text')
+def config_command(config, output):
+    """Показать итоговую конфигурацию (с учётом файла и переменных окружения)."""
+    cfg = load_config(config)
+    data = cfg.as_dict()
+    if output == 'json':
+        click.echo(json.dumps(data, indent=2))
+    elif output == 'yaml':
+        try:
+            import yaml
+            click.echo(yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
+        except ImportError:
+            click.echo(json.dumps(data, indent=2))
+    else:
+        click.echo(f"Источник конфигурации: {cfg.source}")
+        for key, value in data.items():
+            click.echo(f"  {key} = {value!r}")
 
 
 if __name__ == '__main__':
