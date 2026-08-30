@@ -1,34 +1,14 @@
-# Основные зависимости
-click>=8.0.0
-pyyaml>=6.0
-numpy>=1.20.0
-pandas>=1.3.0
-matplotlib>=3.5.0
-seaborn>=0.11.0
-psutil>=5.8.0
+# All-in-one: core + solvers + web + dev
+# For convenience, includes all dependencies
 
-# Веб-интерфейс
-flask>=2.0.0
-werkzeug>=2.0,<4
+# Core
+-r requirements-core.txt
 
-# Солверы (опционально)
-z3-solver>=4.8.0
-pulp>=2.5.0
-ortools>=9.0.0
+# Solvers
+-r requirements-solvers.txt
 
-# Для работы с различными пакетными менеджерами
-requests>=2.25.0
-lxml>=6.1.2
-beautifulsoup4>=4.15.0
+# Web
+-r requirements-web.txt
 
-# Тестирование
-pytest>=6.2.0
-pytest-cov>=3.0.0
-
-# Разработка
-black>=21.0.0
-flake8>=4.0.0
-mypy>=0.910
-fonttools>=4.63.0 ; python_version >= "3.10" # Snyk: transitive vuln fix (4.61 needs py3.9)
-urllib3>=2.7.0 ; python_version >= "3.10" # Snyk: transitive vuln fix (2.6 needs py3.9)
-urllib3>=1.26.18,<2 ; python_version < "3.9" # legacy branch
+# Dev
+-r requirements-dev.txt

@@ -100,20 +100,22 @@ class VersionConstraint:
     
     def _get_next_major(self, version: tuple) -> tuple:
         """
-        Получить следующую мажорную версию.
+        Получить следующую минорную версию (для оператора ~).
+        
+        Для версии 1.2.3 возвращает (1, 3, 0) — следующая минорная.
         
         Args:
             version: Текущая версия
             
         Returns:
-            Следующая мажорная версия
+            Следующая минорная версия
         """
         if len(version) == 1:
             return (version[0] + 1,)
         elif len(version) == 2:
-            return (version[0] + 1, 0)
+            return (version[0], version[1] + 1)
         else:
-            return (version[0] + 1, 0, 0)
+            return (version[0], version[1] + 1, 0)
 
 
 @dataclass

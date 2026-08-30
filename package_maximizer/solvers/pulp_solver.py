@@ -18,10 +18,11 @@ logger = logging.getLogger(__name__)
 
 
 try:
+    import pulp
     from pulp import (
-        LpProblem, 
-        LpVariable, 
-        LpBinary, 
+        LpProblem,
+        LpVariable,
+        LpBinary,
         LpMaximize,
         LpStatus,
         lpSum,
