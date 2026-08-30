@@ -181,3 +181,67 @@ class TestCLICommandsExist:
         
         for cmd in expected_commands:
             assert cmd in commands, f"Command '{cmd}' not found in CLI"
+
+
+class TestCLICommandBehavior:
+    """Exercise CLI command behavior via Click CliRunner."""
+
+    def test_maximize_help(self):
+        from click.testing import CliRunner
+        from package_maximizer.cli import cli
+        runner = CliRunner()
+        result = runner.invoke(cli, ["maximize", "--help"])
+        assert result.exit_code == 0
+        assert "[PACKAGES]" in result.output
+
+    def test_maximize_basic_passes(self):
+        from click.testing import CliRunner
+        from package_maximizer.cli import cli
+        runner = CliRunner()
+        result = runner.invoke(cli, ["maximize", "pkg-a", "pkg-b", "--manager", "apt"])
+        assert result.exit_code == 0
+
+    def test_list_solvers_contains_greedy(self):
+        from click.testing import CliRunner
+        from package_maximizer.cli import cli
+        runner = CliRunner()
+        result = runner.invoke(cli, ["list-solvers"])
+        assert result.exit_code == 0
+        assert "greedy" in result.output.lower()
+
+    def test_list_parsers_contains_apt(self):
+        from click.testing import CliRunner
+        from package_maximizer.cli import cli
+        runner = CliRunner()
+        result = runner.invoke(cli, ["list-parsers"])
+        assert result.exit_code == 0
+        assert "apt" in result.output.lower()
+
+    def test_benchmark_help(self):
+        from click.testing import CliRunner
+        from package_maximizer.cli import cli
+        runner = CliRunner()
+        result = runner.invoke(cli, ["benchmark", "--help"])
+        assert result.exit_code == 0
+
+    def test_export_help(self):
+        from click.testing import CliRunner
+        from package_maximizer.cli import cli
+        runner = CliRunner()
+        result = runner.invoke(cli, ["export", "--help"])
+        assert result.exit_code == 0
+
+    def test_tui_help(self):
+        from click.testing import CliRunner
+        from package_maximizer.cli import cli
+        runner = CliRunner()
+        result = runner.invoke(cli, ["tui", "--help"])
+        assert result.exit_code == 0
+
+    def test_version_reports_package_version(self):
+        from click.testing import CliRunner
+        from package_maximizer.cli import cli
+        runner = CliRunner()
+        result = runner.invoke(cli, ["version"])
+        assert result.exit_code == 0
+        assert "0.5" in result.output
