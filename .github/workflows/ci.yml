@@ -32,8 +32,8 @@ jobs:
 
     - name: Run Bandit security linter
       run: |
-        bandit -r package_maximizer/ -ll -ii -f json -o bandit-report.json || true
-        bandit -r package_maximizer/ -ll -ii --severity-level medium
+        bandit -r package_maximizer/ -ii -f json -o bandit-report.json || true
+        bandit -r package_maximizer/ -ii --severity-level medium
 
     - name: Check for known vulnerabilities
       run: safety check -r requirements.txt --full-report || true
