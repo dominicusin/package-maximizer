@@ -208,3 +208,55 @@ class NpmParser(PackageParser):
                     Package(name=m.group(1), version=m.group(2), status="candidate")
                 )
         return packages
+
+
+class CondaParser(PackageParser):
+    """
+    Parser for ``conda list`` output.
+
+    Example::
+
+        numpy              1.23.5  conda-forge
+        pandas             2.0.0   defaults
+    """
+
+    def parse(self, raw: str) -> list[Package]:
+        if not raw.strip():
+            return []
+
+        packages: list[Package] = []
+        for line in raw.strip().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            if len(parts) >= 2:
+                name = parts[0]
+                version = parts[1]
+                packages.append(Package(name=name, version=version, status="installed"))
+        return packages
+
+
+class PortageParser(PackageParser):
+    """
+    Parser for ``emerge -p`` / portage output.
+
+    Example::
+
+        [ebuild   r] app-editors/vim-8.2.0
+        [ebuild   r] sys-apps/less-590
+    """
+
+    def parse(self, raw: str) -> list[Package]:
+        if not raw.strip():
+            return []
+
+        packages: list[Package] = []
+        for line in raw.strip().splitlines():
+            if "[" in line and "]" in line:
+                pkg_part = line.split("]")[-1].strip()
+                if "/" in pkg_part:
+                    name = pkg_part.split("/")[-1].split("-")[0]
+                    version = pkg_part.split("/")[-1].split("-", 1)[-1]
+                    packages.append(Package(name=name, version=version, status="candidate"))
+        return packages

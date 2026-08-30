@@ -52,6 +52,8 @@ _PUBLIC_PARSER_NAMES = {
     "FlatpakParser": (".extra_parsers", "FlatpakParser"),
     "CargoParser": (".extra_parsers", "CargoParser"),
     "NpmParser": (".extra_parsers", "NpmParser"),
+    "CondaParser": (".extra_parsers", "CondaParser"),
+    "PortageParser": (".extra_parsers", "PortageParser"),
 }
 
 
