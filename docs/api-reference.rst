@@ -7,6 +7,8 @@ API Reference
 
    cli
    web
+   tui
    solvers
    parsers
    core
+   utils-lru
