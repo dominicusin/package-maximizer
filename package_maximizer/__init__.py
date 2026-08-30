@@ -4,7 +4,7 @@ Package Maximizer - Модульная система для максимиза�
 Использует различные SAT/ILP/SMT солверы для множественных пакетных менеджеров.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "Package Maximizer Team"
 __email__ = "team@package-maximizer.dev"
 __license__ = "MIT"
@@ -21,6 +21,8 @@ from .solvers import (
     Z3Solver,
     PulPSolver,
     ORToolsSolver,
+    MaxSatSolver,
+    MiniSatSolver,
     get_solver,
     SOLVER_REGISTRY,
 )
@@ -28,8 +30,18 @@ from .solvers import (
 # Parsers
 from .parsers import (
     APTParser,
+    PacmanParser,
+    DNFParser,
+    BrewParser,
     get_parser,
     PARSER_REGISTRY,
+)
+
+# Analyzers
+from .analyzers import (
+    ResultAnalyzer,
+    get_analyzer,
+    ANALYZER_REGISTRY,
 )
 
 __all__ = [
@@ -59,11 +71,21 @@ __all__ = [
     "Z3Solver",
     "PulPSolver",
     "ORToolsSolver",
+    "MaxSatSolver",
+    "MiniSatSolver",
     "get_solver",
     "SOLVER_REGISTRY",
     
     # Parsers
     "APTParser",
+    "PacmanParser",
+    "DNFParser",
+    "BrewParser",
     "get_parser",
     "PARSER_REGISTRY",
+    
+    # Analyzers
+    "ResultAnalyzer",
+    "get_analyzer",
+    "ANALYZER_REGISTRY",
 ]

@@ -30,7 +30,7 @@ class GreedySolver(ConstraintSolver):
     Сложность: O(n^2) в худшем случае, где n - количество пакетов.
     """
 
-    def __init__(self, conflict_resolution: str = "skip") -> None:
+    def __init__(self, conflict_resolution: str = "skip", time_limit: int = 10000) -> None:
         """
         Инициализация солвера.
 
@@ -38,8 +38,10 @@ class GreedySolver(ConstraintSolver):
             conflict_resolution: Стратегия разрешения конфликтов.
                 'skip' - пропускать конфликтующие пакеты (по умолчанию)
                 'remove' - удалять ранее выбранные конфликтующие пакеты
+            time_limit: Ограничение по времени (не используется, для совместимости)
         """
         self.conflict_resolution = conflict_resolution
+        self.time_limit = time_limit
 
     def solve(self, packages: Iterable[Package]) -> list[str]:
         """

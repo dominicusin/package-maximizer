@@ -8,6 +8,8 @@ from .greedy import GreedySolver
 from .z3_solver import Z3Solver
 from .pulp_solver import PulPSolver
 from .ortools_solver import ORToolsSolver
+from .maxsat_solver import MaxSatSolver
+from .minisat_solver import MiniSatSolver
 
 # Available solvers
 __all__ = [
@@ -15,6 +17,8 @@ __all__ = [
     "Z3Solver",
     "PulPSolver",
     "ORToolsSolver",
+    "MaxSatSolver",
+    "MiniSatSolver",
     "get_solver",
     "SOLVER_REGISTRY",
 ]
@@ -25,6 +29,8 @@ SOLVER_REGISTRY = {
     "z3": Z3Solver,
     "pulp": PulPSolver,
     "ortools": ORToolsSolver,
+    "maxsat": MaxSatSolver,
+    "minisat": MiniSatSolver,
 }
 
 
