@@ -28,7 +28,7 @@ jobs:
       name: testpypi
       url: https://test.pypi.org/p/package-maximizer
     permissions:
-      contents: read
+      id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with: {name: dist-test, path: dist}
@@ -36,4 +36,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@v1.14.2
         with:
           repository-url: https://test.pypi.org/legacy/
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        # Uses GitHub OIDC Trusted Publishing (permissions: id-token: write above).
+        # The TestPyPI project "package-maximizer" must have a trusted publisher configured.
