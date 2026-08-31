@@ -38,9 +38,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with: {name: dist, path: dist}
-      - name: Publish to PyPI
+      - name: Publish to PyPI (Trusted Publishing / OIDC)
         uses: pypa/gh-action-pypi-publish@v1.14.2
-        with:
-          # Prefer Trusted Publishing (OIDC). Falls back to token when the
-          # project's trusted publisher is not configured.
-          password: ${{ secrets.PYPI_API_TOKEN }}
+        # Uses GitHub OIDC Trusted Publishing (permissions: id-token: write above).
+        # The PyPI project "package-maximizer" must have a trusted publisher
+        # configured for this repository (Settings > Publishing). No API token needed.
