@@ -52,7 +52,7 @@ def cli(verbose: bool, quiet: bool, config: str | None):
 @cli.command()
 @click.argument('packages', nargs=-1)
 @click.option('--manager', '-m', type=str, default=None,
-              help='Тип пакетного менеджера (apt, pacman, dnf, brew, snap, flatpak, cargo, npm)')
+              help='Тип пакетного менеджера (apt, pacman, dnf, brew, snap, flatpak, cargo, npm, pip, gem, apk, zypper, yum, yarn, composer, vcpkg, nuget, winget, scoop, choco, conda, portage)')
 @click.option('--solver', '-s', type=str, default=None,
               help='Тип солвера (greedy, z3, pulp, ortools, maxsat, minisat, enhanced_greedy)')
 @click.option('--conflicts', '-c', type=(str, str), multiple=True,
@@ -164,12 +164,26 @@ def list_solvers():
 
 
 @cli.command()
+def list_managers():
+    """
+    Показать поддерживаемые пакетные менеджеры.
+    """
+    from ..parsers import PARSER_REGISTRY
+
+    click.echo("Поддерживаемые пакетные менеджеры:")
+    for name, parser_class in PARSER_REGISTRY.items():
+        doc = parser_class.__doc__ or 'No description'
+        first_line = doc.split('\n')[0] if doc else ''
+        click.echo(f"  - {name}: {first_line}")
+
+
+@cli.command()
 def list_parsers():
     """
     Показать доступные парсеры.
     """
     from ..parsers import PARSER_REGISTRY
-    
+
     click.echo("Доступные парсеры:")
     for name, parser_class in PARSER_REGISTRY.items():
         doc = parser_class.__doc__ or 'No description'

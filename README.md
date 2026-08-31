@@ -15,18 +15,50 @@
 Система позволяет:
 - Находить максимальное непротиворечивое подмножество пакетов
 - Учитывать конфликты между пакетами
-- Работать с разными пакетными менеджерами (APT, Pacman, DNF, Brew, Snap, Flatpak, Cargo, npm)
+- Работать с разными пакетными менеджерами (APT, Pacman, DNF, Brew, Snap, Flatpak, Cargo, npm, pip, gem и др.)
 - Использовать различные алгоритмы решения (жадный, SAT, ILP, SMT, CP-SAT)
 - Учитывать версионные ограничения и зависимости
 - Экспортировать результаты в JSON, CSV и GraphML
+- Парсить вывод 22+ систем управления пакетами
 
 ## ✨ Возможности
 
-### 🔧 Поддерживаемые пакетные менеджеры
-- ✅ **APT** (Debian/Ubuntu)
-- ✅ **Pacman** (Arch Linux)
-- ✅ **DNF** (Fedora/RHEL/CentOS)
-- ✅ **Brew** (macOS)
+### 🔧 Поддерживаемые пакетные менеджеры (22)
+
+**Linux:**
+- ✅ **APT** (Debian/Ubuntu) — `apt list --installed`
+- ✅ **Pacman** (Arch Linux) — `pacman -Q`
+- ✅ **DNF** (Fedora/RHEL 8+) — `dnf list installed`
+- ✅ **Yum** (RHEL/CentOS 7) — `yum list installed`
+- ✅ **Zypper** (openSUSE/SUSE) — `zypper search`
+- ✅ **Apk** (Alpine Linux) — `apk list`
+
+**macOS:**
+- ✅ **Brew** (Homebrew) — `brew list`
+
+**Windows:**
+- ✅ **Winget** (Windows 10+) — `winget list`
+- ✅ **Scoop** — `scoop list`
+- ✅ **Chocolatey** — `choco list`
+
+**Кроссплатформенные (языковые):**
+- ✅ **Cargo** (Rust) — `cargo metadata` / `Cargo.lock`
+- ✅ **Npm** (Node.js) — `npm ls --json`
+- ✅ **Yarn** (Node.js) — `yarn list --depth=0`
+- ✅ **Pip** (Python) — `pip list` / `pip freeze`
+- ✅ **Gem** (Ruby) — `gem list`
+- ✅ **Composer** (PHP) — `composer show --installed`
+
+**C++:**
+- ✅ **Vcpkg** — `vcpkg list`
+- ✅ **Conan** — `conan search`
+- ✅ **NuGet** (.NET) — `dotnet list package`
+
+**Контейнеры / универсальные:**
+- ✅ **Snap** — `snap list`
+- ✅ **Flatpak** — `flatpak list`
+- ✅ **Conda** (Python) — `conda list`
+- ✅ **Portage** (Gentoo) — `emerge -p`
 
 ### 🧠 Поддерживаемые солверы
 - ✅ **GreedySolver** — Базовый жадный алгоритм
@@ -109,6 +141,9 @@ package-maximizer list-solvers
 
 # Просмотр доступных парсеров
 package-maximizer list-parsers
+
+# Просмотр поддерживаемых пакетных менеджеров (22)
+package-maximizer list-managers
 
 # Проверка версии
 package-maximizer version
