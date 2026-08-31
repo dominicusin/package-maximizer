@@ -1,55 +1,91 @@
 <!DOCTYPE html>
-<html lang="ru"><head><meta charset="utf-8">
+<html lang="ru">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>package-maximizer — справка</title>
+<title>package-maximizer — максимизация непротиворечивого множества пакетов</title>
+<meta name="description" content="Модульная система для максимизации непротиворечивого множества пакетов с использованием SAT/ILP/SMT/MaxSAT солверов для множественных пакетных менеджеров.">
 <style>
-:root{--bg:#0d1117;--fg:#e6edf3;--mut:#8b949e;--acc:#58a6ff;--card:#161b22;--bd:#30363d}
+:root{--bg:#0d1117;--fg:#e6edf3;--mut:#8b949e;--acc:#58a6ff;--card:#161b22;--bd:#30363d;--grn:#3fb950}
 *{box-sizing:border-box;margin:0}
-body{background:var(--bg);color:var(--fg);font:16px/1.65 -apple-system,'Segoe UI',Roboto,sans-serif;max-width:860px;margin:0 auto;padding:2.5rem 1.25rem 4rem}
-a{color:var(--acc);text-decoration:none} a:hover{text-decoration:underline}
+body{background:var(--bg);color:var(--fg);font:16px/1.65 -apple-system,'Segoe UI',Roboto,sans-serif;max-width:900px;margin:0 auto;padding:2.5rem 1.25rem 4rem}
+a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
 code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--card);border-radius:6px}
-code{padding:.15em .4em;font-size:.9em} pre{padding:1rem;overflow-x:auto;margin:.75rem 0} pre code{padding:0;background:none}
-h1{font-size:1.9rem;line-height:1.2;margin-bottom:.35rem;border-bottom:1px solid var(--bd);padding-bottom:.6rem}
-h2{font-size:1.35rem;margin:1.8rem 0 .6rem} h3{font-size:1.1rem;margin:1.4rem 0 .4rem}
-.meta{display:flex;flex-wrap:wrap;gap:.45rem;margin:1rem 0 1.6rem}
-.tag{background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:.18rem .75rem;font-size:.82rem;color:var(--mut)}
-.tag.acc{color:var(--acc);border-color:var(--acc)}
-.tag.warn{color:#f85149;border-color:#f85149}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:1rem 1.25rem;margin:1.2rem 0;color:var(--mut);font-size:.92rem}
-.muted{color:var(--mut)}
-.btn{display:inline-block;background:var(--acc);color:#04121f;font-weight:600;padding:.55rem 1.1rem;border-radius:8px;margin-top:1rem}
-ul{padding-left:1.4rem;margin:.5rem 0} li{margin:.2rem 0}
+code{padding:.15em .4em;font-size:.9em}
+pre{padding:1rem;overflow-x:auto;margin:.75rem 0}pre code{padding:0;background:none}
+h1{font-size:2rem;line-height:1.15;margin-bottom:.4rem;border-bottom:1px solid var(--bd);padding-bottom:.6rem}
+h2{font-size:1.4rem;margin:2rem 0 .6rem}
+h3{font-size:1.1rem;margin:1.4rem 0 .4rem}
+.badges{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.1rem 0}
+.badges img{height:20px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:1.1rem 1.3rem;margin:1.2rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.2rem 0}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:1rem 1.2rem}
+.box h3{margin-top:0;color:var(--acc)}
+.btn{display:inline-block;background:var(--acc);color:#04121f;font-weight:600;padding:.6rem 1.2rem;border-radius:8px;margin:.4rem .5rem .4rem 0}
+.btn.sec{background:var(--card);color:var(--fg);border:1px solid var(--bd)}
+.muted{color:var(--mut)}ul{padding-left:1.4rem;margin:.5rem 0}li{margin:.25rem 0}
 footer{margin-top:3rem;border-top:1px solid var(--bd);padding-top:1rem;color:var(--mut);font-size:.85rem}
-</style></head><body>
-<h1>package-maximizer</h1>
-<div class=meta><span class="tag acc">dominicusin</span><span class=tag>Python</span><span class=tag>MIT</span><span class=tag>обновлено 2026-08-25</span></div>
-<p class=muted>Модульная система для максимизации непротиворечивого множества пакетов</p>
-<div class=card>&#128230; Справочная страница репозитория <a href="https://github.com/dominicusin/package-maximizer" target="_blank"><code>dominicusin/package-maximizer</code></a>. Ниже — выдержка из README; полная документация — в репозитории.</div>
-<h2>О проекте / Documentation</h2>
-<h2>Package Maximizer 📦🔍</h2>
-<p>Модульная система для решения задачи максимизации непротиворечивого множества пакетов с использованием различных SAT/ILP/SMT солверов для множественных пакетных менеджеров.</p>
-<h3>🚀 Возможности</h3>
-<ul>
-<li><strong>Поддержка множественных пакетных менеджеров</strong>: pacman, apt, dnf, zypper, brew, Spack и другие</li>
-<li><strong>Различные солверы</strong>: Z3, PuLP, OR-Tools, MaxSAT, MiniSat</li>
-<li><strong>Параллельное решение</strong>: одновременный запуск нескольких солверов</li>
-<li><strong>Веб-интерфейс</strong>: интуитивный веб-интерфейс с визуализацией</li>
-<li><strong>CLI инструменты</strong>: мощный командный интерфейс</li>
-<li><strong>Бенчмаркинг</strong>: сравнение производительности солверов</li>
-<li><strong>Модульная архитектура</strong>: легко расширяемая система</li>
-</ul>
-<h3>📋 Требования</h3>
-<ul>
-<li>Python 3.8+</li>
-<li>Один или несколько поддерживаемых солверов</li>
-</ul>
-<h3>🔧 Установка</h3>
-<pre>
-# Из исходного кода
+.tag{display:inline-block;background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:.18rem .75rem;font-size:.82rem;color:var(--mut);margin:.2rem}
+</style>
+</head>
+<body>
+<h1>📦 package-maximizer</h1>
+<div class="badges">
+  <a href="https://pypi.org/project/package-maximizer/"><img src="https://img.shields.io/pypi/v/package-maximizer?logo=pypi&color=blue" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/package-maximizer/"><img src="https://static.pepy.tech/badge/package-maximizer" alt="PyPI downloads"></a>
+  <a href="https://python.org"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python"></a>
+  <a href="https://github.com/dominicusin/package-maximizer/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+  <a href="https://package-maximizer.readthedocs.io/en/latest/?badge=latest"><img src="https://readthedocs.org/projects/package-maximizer/badge/?version=latest" alt="Documentation status"></a>
+</div>
+
+<p class="muted">Модульная система для решения задачи <strong>максимизации непротиворечивого множества пакетов</strong> с использованием различных SAT/ILP/SMT/MaxSAT солверов для множественных пакетных менеджеров.</p>
+
+<div class="card">
+  <strong>📖 Полная документация:</strong>
+  <a href="https://package-maximizer.readthedocs.io/en/latest/">package-maximizer.readthedocs.io</a>
+  <span class="muted">— основной источник справки (API, руководства, туториалы).</span>
+</div>
+
+<h2>🚀 Установка</h2>
+<pre><code># Из PyPI
+pip install package-maximizer
+
+# Из исходного кода (с доп. зависимостями)
 git clone https://github.com/dominicusin/package-maximizer.git
 cd package-maximizer
-pip install -e &quot;.[all]&quot;
-</pre>
-<a class=btn href="https://github.com/dominicusin/package-maximizer" target="_blank">Открыть репозиторий на GitHub &#8599;</a>
-<footer>Сгенерировано автоматически · 2026-08-25 · <a href="https://github.com/dominicusin?tab=repositories" target="_blank">все репозитории dominicusin</a></footer>
-</body></html>
+pip install -e ".[all]"</code></pre>
+
+<h2>🎯 Назначение</h2>
+<ul>
+  <li>Находить максимальное непротиворечивое подмножество пакетов</li>
+  <li>Учитывать конфликты, версионные ограничения и зависимости между пакетами</li>
+  <li>Работать с разными пакетными менеджерами (APT, Pacman, DNF, Brew, Snap, Flatpak, Cargo, npm)</li>
+  <li>Экспортировать результаты в JSON, CSV и GraphML</li>
+</ul>
+
+<h2>🧠 Поддерживаемые солверы</h2>
+<div class="grid">
+  <div class="box"><h3>GreedySolver</h3>Базовый жадный алгоритм</div>
+  <div class="box"><h3>EnhancedGreedySolver</h3>Жадный с поддержкой версий</div>
+  <div class="box"><h3>Z3Solver</h3>SMT-солвер на основе Z3</div>
+  <div class="box"><h3>PulPSolver</h3>ILP-солвер на основе PuLP</div>
+  <div class="box"><h3>ORToolsSolver</h3>CP-SAT на основе OR-Tools</div>
+  <div class="box"><h3>MaxSatSolver</h3>MaxSAT-солвер</div>
+  <div class="box"><h3>MiniSatSolver</h3>SAT-солвер на основе MiniSat</div>
+</div>
+
+<h2>🔗 Ресурсы</h2>
+<div>
+  <a class="btn" href="https://package-maximizer.readthedocs.io/en/latest/">📖 Документация (RTD)</a>
+  <a class="btn sec" href="https://pypi.org/project/package-maximizer/">📦 Страница на PyPI</a>
+  <a class="btn sec" href="https://github.com/dominicusin/package-maximizer">💻 Репозиторий GitHub</a>
+  <a class="btn sec" href="https://github.com/dominicusin/package-maximizer/issues">🐛 Сообщить об ошибке</a>
+</div>
+
+<footer>
+  <span class="tag">dominicusin</span><span class="tag">Python</span><span class="tag">MIT</span>
+  <br>Сайт сгенерирован для <a href="https://github.com/dominicusin/package-maximizer">dominicusin/package-maximizer</a> · документация на <a href="https://package-maximizer.readthedocs.io/">ReadTheDocs</a>.
+</footer>
+</body>
+</html>
