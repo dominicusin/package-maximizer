@@ -85,7 +85,7 @@ class MiniSatSolver(ConstraintSolver):
             for conflict in pkg.conflicts:
                 if conflict in var_map:
                     # Добавляем ограничение: не (x[pkg] и x[conflict])
-                    cnf.add_clause([-var_map[pkg.name], -var_map[conflict]])
+                    cnf.append([-var_map[pkg.name], -var_map[conflict]])
         
         # Бинарный поиск для нахождения максимального числа пакетов
         low = 0
@@ -177,7 +177,7 @@ class MiniSatSolver(ConstraintSolver):
             for p in test_packages:
                 for conflict in p.conflicts:
                     if conflict in var_map:
-                        cnf.add_clause([-var_map[p.name], -var_map[conflict]])
+                        cnf.append([-var_map[p.name], -var_map[conflict]])
             
             # Проверяем, есть ли решение
             with Solver(name=self.solver_name) as solver:
