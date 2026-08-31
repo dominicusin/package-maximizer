@@ -1,4 +1,4 @@
-"""Package Maximizer Web API — FastAPI-based REST API with authentication."""
+"""Package Maximizer Web API — Flask-based REST API with API-key authentication."""
 
 from __future__ import annotations
 

@@ -13,12 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LRU cache decorators for solver/parser factory lookups.
 - Benchmark report export (`json`, `csv`).
 - Sphinx documentation with ReadTheDocs config (`.readthedocs.yaml`).
-- CI coverage gate (`--cov-fail-under=85`).
-- JWT authentication support alongside API key.
-- Rate limiting for web API (Flask-Limiter / in-memory fallback).
+- CI coverage gate (`--cov-fail-under=85`, currently non-blocking at ~76%).
+- Rate limiting for web API (in-memory, per API key).
 - Conda and Portage parsers.
 - Result exporters: JSON, CSV, GraphML.
 - Config-driven CLI defaults via `-C/--config`.
+
+### Planned (not yet implemented)
+- JWT authentication support alongside API key.
+- Flask-Limiter based rate limiting (currently in-memory fallback).
 
 ### Changed
 - Lazy solver/parser registries to avoid optional-dependency import failures.
