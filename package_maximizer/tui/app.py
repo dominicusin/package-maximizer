@@ -50,14 +50,14 @@ class MaximizerApp(App):
             with Vertical(id="results"):
                 yield Static("Results will appear here.", id="result_text")
         with Container(id="log"):
-            yield Log(id="log")
+            yield Log(id="log_output")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id != "run":
             return
         packages_text = self.query_one("#packages", Input).value
         solver = self.query_one("#solver", Select).value
-        log = self.query_one("#log", Log)
+        log = self.query_one("#log_output", Log)
         result_text = self.query_one("#result_text", Static)
 
         packages = [p.strip() for p in packages_text.split(",") if p.strip()]
