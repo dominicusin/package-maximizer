@@ -32,3 +32,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Z3Solver `Solver` → `Optimize` critical bug.
 - `pulp_solver` import compatibility.
 - Makefile `PYTHON` override for venv compatibility.
+
+## [0.6.0] - 2026-09-02
+
+### Added
+- 12 new package managers: apk, zypper, yum, pip, gem, yarn, composer, vcpkg, nuget, winget, scoop, choco.
+- Registered CondaParser and PortageParser (were implemented but not registered).
+- Total registered package managers: **8 → 22**.
+- CLI `list-managers` command shows all supported package managers.
+- Updated README with full list of 22 package managers.
+
+### Changed
+- Updated `--manager` help text with all 22 options.
+- Updated package description to reflect 22+ package manager support.
+
+### Tests
+- Added 24 tests for all new parsers.
+- Added tests for `list-managers` CLI command.
+- Total: 492 passed, 2 skipped.
+- Coverage: **85%**.
