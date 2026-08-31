@@ -16,6 +16,7 @@ from package_maximizer.cli.main import (
     config_command,
     init_config_command,
     tui_command,
+    list_managers,
 )
 
 
@@ -112,3 +113,18 @@ class TestTuiCommand:
         runner = CliRunner()
         result = runner.invoke(tui_command, [])
         assert result.exit_code != 0
+
+
+class TestListManagersCommand:
+    """list_managers shows all 22 registered package managers."""
+
+    def test_list_managers_text(self):
+        runner = CliRunner()
+        result = runner.invoke(list_managers, [])
+        assert result.exit_code == 0
+        assert "apt" in result.output
+        assert "pacman" in result.output
+        assert "brew" in result.output
+        assert "pip" in result.output
+        assert "conda" in result.output
+        assert "choco" in result.output
