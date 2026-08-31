@@ -28,16 +28,18 @@ jobs:
           path: dist/
 
   pypi-publish:
-    name: Upload to PyPI (trusted publishing)
+    name: Upload to PyPI
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/package-maximizer
     permissions:
-      id-token: write
+      contents: read
     steps:
       - uses: actions/download-artifact@v4
         with: {name: dist, path: dist}
-      - name: Publish
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.14.2
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
