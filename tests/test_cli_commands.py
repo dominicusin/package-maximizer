@@ -16,6 +16,10 @@ from package_maximizer.cli.main import (
     config_command,
     init_config_command,
     tui_command,
+    list_managers,
+    maximize,
+    list_solvers,
+    version,
 )
 
 
@@ -112,3 +116,75 @@ class TestTuiCommand:
         runner = CliRunner()
         result = runner.invoke(tui_command, [])
         assert result.exit_code != 0
+
+
+class TestListManagersCommand:
+    """list_managers shows all 22 registered package managers."""
+
+    def test_list_managers_text(self):
+        runner = CliRunner()
+        result = runner.invoke(list_managers, [])
+        assert result.exit_code == 0
+        assert "apt" in result.output
+        assert "pacman" in result.output
+        assert "brew" in result.output
+        assert "pip" in result.output
+        assert "conda" in result.output
+        assert "choco" in result.output
+
+
+class TestMaximizeCommand:
+    """maximize covers solver + error branches."""
+
+    def test_maximize_basic(self):
+        runner = CliRunner()
+        result = runner.invoke(maximize, ["alpha", "beta", "--solver", "greedy", "--output", "text"])
+        assert result.exit_code == 0
+        assert "alpha" in result.output or "beta" in result.output
+
+    def test_maximize_json(self):
+        runner = CliRunner()
+        result = runner.invoke(maximize, ["alpha", "beta", "--solver", "greedy", "--output", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "output" in data
+
+    def test_maximize_unknown_manager(self):
+        runner = CliRunner()
+        result = runner.invoke(maximize, ["alpha", "--manager", "unknown_xyz"])
+        assert result.exit_code != 0
+
+    def test_maximize_unknown_solver(self):
+        runner = CliRunner()
+        result = runner.invoke(maximize, ["alpha", "--solver", "unknown_xyz"])
+        assert result.exit_code != 0
+
+    def test_maximize_with_conflicts(self):
+        runner = CliRunner()
+        result = runner.invoke(maximize, ["alpha", "beta", "--solver", "greedy", "-c", "alpha", "beta"])
+        assert result.exit_code == 0
+
+    def test_maximize_with_weights(self):
+        runner = CliRunner()
+        result = runner.invoke(maximize, ["alpha", "beta", "--solver", "greedy", "-w", "alpha", "2.0", "-w", "beta", "1.0"])
+        assert result.exit_code == 0
+
+
+class TestListSolversCommand:
+    """list_solvers shows all registered solvers."""
+
+    def test_list_solvers(self):
+        runner = CliRunner()
+        result = runner.invoke(list_solvers, [])
+        assert result.exit_code == 0
+        assert "greedy" in result.output
+
+
+class TestVersionCommand:
+    """version prints the version string."""
+
+    def test_version(self):
+        runner = CliRunner()
+        result = runner.invoke(version, [])
+        assert result.exit_code == 0
+        assert "version" in result.output.lower()
