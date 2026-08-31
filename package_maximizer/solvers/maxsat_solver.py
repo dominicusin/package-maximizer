@@ -82,58 +82,50 @@ class MaxSatSolver(ConstraintSolver):
                 if conflict in var_map:
                     # Добавляем ограничение: не (x[pkg] и x[conflict])
                     # Это эквивалентно: (-x[pkg] или -x[conflict])
-                    cnf.add_clause([-var_map[pkg.name], -var_map[conflict]])
+                    cnf.append([-var_map[pkg.name], -var_map[conflict]])
         
-        # Создаем кардинальное ограничение для максимизации
-        # Мы хотим максимизировать сумму x[i], поэтому добавляем
-        # ограничение, что сумма >= k для увеличивающегося k
-        
-        # Используем бинарный поиск для нахождения максимального k
+        # Максимизируем число выбранных пакетов.
+        # Бинарный поиск по k: существует ли решение, в котором выбрано
+        # не менее k пакетов (CardEnc.atmost по инвертированным литералам
+        # задаёт "сумма >= k").
+        lits = [var_map[pkg.name] for pkg in package_list]
+
         with Solver(name='g3') as solver:
-            # Добавляем CNF ограничения
-            solver.add_clause([-var_map[pkg.name]] * len(package_list))  # Пустое ограничение
-            
             for clause in cnf.clauses:
                 solver.add_clause(clause)
-            
-            # Пытаемся найти решение с максимальным числом пакетов
-            # Используем бинарный поиск
-            low = 0
+
+            low = 1
             high = len(package_list)
             best_solution = []
-            
+
             while low <= high:
                 mid = (low + high) // 2
-                
-                # Создаем новое ограничение: сумма x[i] >= mid
-                # Это кардинальное ограничение
-                card_enc = CardEnc.equals(lits=[var_map[pkg.name] for pkg in package_list], 
-                                          bound=mid, 
-                                          encoding=EncType.seqcounter)
-                
-                # Создаем новый солвер для этой итерации
+
+                # Ограничение "выбрано >= mid пакетов":
+                # инвертируем литералы и требуем "at most (n - mid) ложных".
+                neg_lits = [-lit for lit in lits]
+                card_enc = CardEnc.atmost(
+                    lits=neg_lits,
+                    bound=len(package_list) - mid,
+                    encoding=EncType.seqcounter,
+                )
+
                 with Solver(name='g3') as temp_solver:
-                    # Добавляем исходные ограничения
                     for clause in cnf.clauses:
                         temp_solver.add_clause(clause)
-                    
-                    # Добавляем кардинальное ограничение
                     for clause in card_enc.clauses:
                         temp_solver.add_clause(clause)
-                    
-                    # Пытаемся решить
+
                     if temp_solver.solve():
-                        # Нашли решение с mid пакетами
                         solution = temp_solver.get_model()
-                        selected = [
+                        best_solution = [
                             pkg.name for pkg in package_list
-                            if solution[var_map[pkg.name]-1] > 0
+                            if solution[var_map[pkg.name] - 1] > 0
                         ]
-                        best_solution = selected
                         low = mid + 1
                     else:
                         high = mid - 1
-            
+
             return best_solution
 
     def solve_with_weights(
@@ -169,37 +161,41 @@ class MaxSatSolver(ConstraintSolver):
             reverse=True
         )
         
-        # Используем жадный подход с MaxSAT для проверки
+        # Жадный отбор по весу с проверкой совместимости через SAT-солвер.
+        # При проверке кандидата принудительно удерживаем уже выбранные
+        # пакеты (unit-клаузами), чтобы модель не могла «выкинуть» их и
+        # тем самым замаскировать конфликт с кандидатом.
         selected = []
         selected_names = set()
-        
+
         for pkg in package_list:
-            # Проверяем, можно ли добавить этот пакет
-            test_packages = selected + [pkg]
-            
-            # Создаем временный список пакетов
+            # Множество из уже выбранных пакетов плюс текущий кандидат
             temp_pkg_list = [
                 p for p in package_list
                 if p.name in selected_names or p.name == pkg.name
             ]
-            
-            # Проверяем совместимость
+
             cnf = CNF()
-            var_map = {p.name: i+1 for i, p in enumerate(temp_pkg_list)}
-            
+            var_map = {p.name: i + 1 for i, p in enumerate(temp_pkg_list)}
+
             for p in temp_pkg_list:
                 for conflict in p.conflicts:
                     if conflict in var_map:
-                        cnf.add_clause([-var_map[p.name], -var_map[conflict]])
-            
-            # Проверяем, есть ли решение
+                        cnf.append([-var_map[p.name], -var_map[conflict]])
+
+            # Принудительно удерживаем выбранные и включаем кандидата
+            for name in selected_names:
+                cnf.append([var_map[name]])
+            cnf.append([var_map[pkg.name]])
+
+            # Проверяем совместимость
             with Solver(name='g3') as solver:
                 for clause in cnf.clauses:
                     solver.add_clause(clause)
-                
+
                 if solver.solve():
-                    # Можно добавить
+                    # Кандидат совместим с уже выбранными — добавляем
                     selected.append(pkg.name)
                     selected_names.add(pkg.name)
-        
+
         return selected

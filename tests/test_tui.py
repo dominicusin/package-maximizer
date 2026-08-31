@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+textual = pytest.importorskip("textual")
+
 
 def test_tui_app_importable():
     """MaximizerApp should be importable when textual is installed."""
