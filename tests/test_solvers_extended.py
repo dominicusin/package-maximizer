@@ -68,14 +68,13 @@ class TestMaxSatSolver:
         # pkg4 and pkg5 have no conflicts, so they should both be selected
         assert "pkg4" in result
         assert "pkg5" in result
-        
-        # Check that conflicting packages are not all selected
-        has_pkg1 = "pkg1" in result
-        has_pkg2 = "pkg2" in result
-        has_pkg3 = "pkg3" in result
-        
-        # At most one of the conflicting packages can be selected
-        assert sum([has_pkg1, has_pkg2, has_pkg3]) <= 1
+
+        # pkg1 conflicts with pkg2 AND pkg3, so pkg1 cannot coexist with
+        # either of them. pkg2 and pkg3 do NOT conflict with each other,
+        # so both may be selected together.
+        if "pkg1" in result:
+            assert "pkg2" not in result
+            assert "pkg3" not in result
 
     def test_solve_with_weights(self):
         """Test solve with weights"""

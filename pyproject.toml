@@ -36,10 +36,14 @@ web = [
     "werkzeug>=2.0,<4",
     "gunicorn>=20.0.0",
 ]
+tui = [
+    "textual>=0.40.0",
+]
 solvers = [
     "z3-solver>=4.8.0",
     "pulp>=2.5.0",
     "ortools>=9.0.0",
+    "python-sat>=0.1.7.dev6",
 ]
 viz = [
     "numpy>=1.20.0",
@@ -48,7 +52,7 @@ viz = [
     "seaborn>=0.11.0",
 ]
 all = [
-    "package-maximizer[web,solvers,viz]",
+    "package-maximizer[web,solvers,viz,tui]",
 ]
 dev = [
     "pytest>=6.2.0",
