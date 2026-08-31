@@ -116,12 +116,22 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install -e ".[dev,web,solvers]"
+        pip install -e ".[dev,web,solvers,tui]"
         pip install pytest-xdist
 
     - name: Run tests with pytest
+      env:
+        # Fatals coverage gate only where all heavy solvers build (ubuntu).
+        # On macOS/Windows ortools/pysat cannot always compile, so their
+        # modules stay uncovered and a hard gate would always fail there.
+        COV_FAIL_UNDER: ${{ matrix.os == 'ubuntu-latest' && '85' || '' }}
+      shell: bash
       run: |
-        pytest tests/ -v --cov=package_maximizer --cov-report=xml --cov-report=term --tb=short
+        GATE_FLAG=""
+        if [ -n "$COV_FAIL_UNDER" ]; then
+          GATE_FLAG="--cov-fail-under=$COV_FAIL_UNDER"
+        fi
+        pytest tests/ -v --cov=package_maximizer --cov-report=xml --cov-report=term $GATE_FLAG --tb=short
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
