@@ -135,7 +135,18 @@ class EnhancedGreedySolver(ConstraintSolver):
                 if self.conflict_strategy == 'skip':
                     continue
                 elif self.conflict_strategy == 'remove':
-                    # Удаляем конфликтующие пакеты
+                    # В weighted-режиме не вытесняем более тяжёлые пакеты:
+                    # если добавляемый pkg легче любого конфликтующего уже
+                    # выбранного — пропускаем его (оставляем тяжёлые).
+                    if weights:
+                        pkg_w = weights.get(pkg.name, 1.0)
+                        heavier_conflict = any(
+                            weights.get(c, 1.0) > pkg_w
+                            for c in (pkg.conflicts or [])
+                            if c in selected_set
+                        )
+                        if heavier_conflict:
+                            continue
                     selected = self._remove_conflicting(pkg, selected, selected_set, selected_versions)
             
             # Проверяем зависимости

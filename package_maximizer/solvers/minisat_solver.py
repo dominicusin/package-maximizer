@@ -164,6 +164,9 @@ class MiniSatSolver(ConstraintSolver):
         selected_names = set()
         
         for pkg in package_list:
+            # Не добавляем, если pkg конфликтует с уже выбранными
+            if any(c in selected_names for c in (pkg.conflicts or [])):
+                continue
             # Проверяем, можно ли добавить этот пакет
             test_packages = [
                 p for p in package_list

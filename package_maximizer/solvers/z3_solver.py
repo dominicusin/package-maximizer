@@ -131,7 +131,7 @@ class Z3Solver(ConstraintSolver):
 
             return GreedySolver().solve_with_weights(packages, weights)
 
-        from z3 import Real, If
+        from z3 import Real, RealVal, If
 
         package_list = list(packages)
 
@@ -150,7 +150,7 @@ class Z3Solver(ConstraintSolver):
         # Create weight variables (as reals for weighted sum)
         # Objective: Maximize weighted sum
         weighted_sum = sum(
-            If(x[pkg.name], Real(weights.get(pkg.name, 1.0)), Real(0))
+            If(x[pkg.name], RealVal(weights.get(pkg.name, 1.0)), RealVal(0))
             for pkg in package_list
         )
         solver.maximize(weighted_sum)
