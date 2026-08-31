@@ -5,8 +5,7 @@ on:
     types: [published]
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   build:
@@ -29,18 +28,18 @@ jobs:
           path: dist/
 
   pypi-publish:
-    name: Upload to PyPI
+    name: Upload to PyPI (Trusted Publishing)
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/package-maximizer
     permissions:
-      contents: read
+      id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with: {name: dist, path: dist}
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.14.2
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+        # Uses GitHub OIDC Trusted Publishing (permissions: id-token: write above).
+        # The PyPI project "package-maximizer" must have a trusted publisher configured.
