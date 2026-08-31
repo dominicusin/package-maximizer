@@ -21,6 +21,8 @@ jobs:
         run: python -m pip install --upgrade build setuptools_scm
       - name: Build sdist and wheel
         run: python -m build
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: 0.1.0
       - uses: actions/upload-artifact@v4
         with:
           name: dist
@@ -34,12 +36,11 @@ jobs:
       name: pypi
       url: https://pypi.org/p/package-maximizer
     permissions:
-      id-token: write
+      contents: read
     steps:
       - uses: actions/download-artifact@v4
         with: {name: dist, path: dist}
-      - name: Publish to PyPI (Trusted Publishing / OIDC)
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.14.2
-        # Uses GitHub OIDC Trusted Publishing (permissions: id-token: write above).
-        # The PyPI project "package-maximizer" must have a trusted publisher
-        # configured for this repository (Settings > Publishing). No API token needed.
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
