@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-textual = pytest.importorskip("textual")
-
 from package_maximizer.tui.app import MaximizerApp
 
 
