@@ -218,6 +218,26 @@ def list_parsers() -> tuple[dict, int]:
     return jsonify({"parsers": parsers}), 200
 
 
+# ─── List available managers (package managers) ──────────────
+@app.get("/api/v1/managers")
+@require_api_key
+def list_managers() -> tuple[dict, int]:
+    """List all available package managers (parsers)."""
+    from ..parsers import PARSER_REGISTRY
+
+    managers = []
+    for name, cls in PARSER_REGISTRY.items():
+        doc = cls.__doc__ or "No description"
+        managers.append(
+            {
+                "name": name,
+                "description": doc.strip().split("\n")[0],
+                "class": cls.__name__,
+            }
+        )
+    return jsonify({"managers": managers, "count": len(managers)}), 200
+
+
 # ─── Maximize packages ───────────────────────────────────────
 @app.post("/api/v1/maximize")
 @require_api_key
