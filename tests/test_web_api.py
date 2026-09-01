@@ -65,6 +65,19 @@ def test_list_parsers(client):
     assert "parsers" in r.get_json()
 
 
+def test_list_managers(client):
+    r = client.get("/api/v1/managers", headers=auth_headers())
+    assert r.status_code == 200
+    body = r.get_json()
+    assert "managers" in body
+    assert "count" in body
+    assert body["count"] >= 22
+    names = {m["name"] for m in body["managers"]}
+    assert "apt" in names
+    assert "pip" in names
+    assert "conda" in names
+
+
 def test_openapi_spec(client):
     r = client.get("/api/v1/openapi.json", headers=auth_headers())
     assert r.status_code == 200
