@@ -76,7 +76,7 @@ Repository = "https://github.com/dominicusin/package-maximizer.git"
 PyPI = "https://pypi.org/project/package-maximizer/"
 
 [tool.setuptools_scm]
-fallback_version = "0.6.0"
+fallback_version = "0.6.1"
 
 [tool.package-maximizer]
 plugin-metadata-version = "1"

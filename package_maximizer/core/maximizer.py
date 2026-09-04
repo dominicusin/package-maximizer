@@ -106,6 +106,7 @@ class PackageMaximizer:
         # Соответствие имен классов типам солверов
         solver_map = {
             'greedysolver': SolverType.GREEDY,
+            'enhancedgreedysolver': SolverType.ENHANCED_GREEDY,
             'z3solver': SolverType.Z3,
             'pulpsolver': SolverType.PULP,
             'ortoolssolver': SolverType.ORTOOLS,
@@ -120,22 +121,17 @@ class PackageMaximizer:
         Получение экземпляра парсера.
         """
         if parser is None:
-            # Автоматический выбор парсера по менеджеру
-            parser_map = {
-                PackageManagerType.APT: "apt",
-                PackageManagerType.PACMAN: "pacman",
-                PackageManagerType.DNF: "dnf",
-                PackageManagerType.BREW: "brew",
-            }
-            parser_name = parser_map.get(self.manager, "apt")
+            # Автоматический выбор парсера по менеджеру (через registry)
             from ..parsers import get_parser
+
             try:
-                return get_parser(parser_name)
+                return get_parser(self.manager.value)
             except ValueError:
                 return None
         
         if isinstance(parser, str):
             from ..parsers import get_parser
+
             try:
                 return get_parser(parser)
             except ValueError:

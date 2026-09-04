@@ -10,11 +10,10 @@ import os
 
 import pytest
 
-# NOTE: do NOT override PM_API_KEY here — package_maximizer.web.app reads it once
-# at import time. The default dev key is used, matching tests/test_integration.py.
+# NOTE: PM_API_KEY is set via tests/conftest.py before this module imports.
 from package_maximizer.web.app import app
 
-DEFAULT_KEY = "dev-key-change-in-production"
+DEFAULT_KEY = os.environ.get("PM_API_KEY", "test-key-for-tests")
 
 
 @pytest.fixture

@@ -62,6 +62,7 @@ class TestConfigFile:
 
     def test_load_yaml_file(self, tmp_path, monkeypatch):
         monkeypatch.delenv("PM_CONFIG", raising=False)
+        monkeypatch.delenv("PM_API_KEY", raising=False)
         p = tmp_path / "cfg.yaml"
         p.write_text("default_manager: dnf\napi_key: secret-123\n")
         cfg = load_config(p)
