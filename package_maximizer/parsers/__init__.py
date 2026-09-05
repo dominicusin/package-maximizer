@@ -8,12 +8,26 @@ if TYPE_CHECKING:
     from .apt_parser import APTParser
     from .brew_parser import BrewParser
     from .dnf_parser import DNFParser
-    from .extra_parsers import (ApkParser, CargoParser, ChocoParser,
-                                ComposerParser, CondaParser, FlatpakParser,
-                                GemParser, NpmParser, NuGetParser, PipParser,
-                                PortageParser, ScoopParser, SnapParser,
-                                VcpkgParser, WingetParser, YarnParser,
-                                YumParser, ZypperParser)
+    from .extra_parsers import (
+        ApkParser,
+        CargoParser,
+        ChocoParser,
+        ComposerParser,
+        CondaParser,
+        FlatpakParser,
+        GemParser,
+        NpmParser,
+        NuGetParser,
+        PipParser,
+        PortageParser,
+        ScoopParser,
+        SnapParser,
+        VcpkgParser,
+        WingetParser,
+        YarnParser,
+        YumParser,
+        ZypperParser,
+    )
     from .pacman_parser import PacmanParser
 
 # Available parsers (names re-exported for typing convenience)

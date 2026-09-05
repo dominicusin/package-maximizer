@@ -20,27 +20,62 @@ __license__ = "MIT"
 
 # Analyzers
 from .analyzers import ANALYZER_REGISTRY, ResultAnalyzer, get_analyzer
+
 # CLI
-from .cli import (benchmark, check_updates, cli, from_file, info,
-                  list_installed, list_parsers, list_solvers, maximize, search,
-                  system_info, version)
-from .core.constraints import (ConflictConstraint, ConstraintParser,
-                               DependencyConstraint, VersionConstraint)
+from .cli import (
+    benchmark,
+    check_updates,
+    cli,
+    from_file,
+    info,
+    list_installed,
+    list_parsers,
+    list_solvers,
+    maximize,
+    search,
+    system_info,
+    version,
+)
+from .core.constraints import (
+    ConflictConstraint,
+    ConstraintParser,
+    DependencyConstraint,
+    VersionConstraint,
+)
+
 # Core components
 from .core.enums import PackageManagerType, PackageStatus, SolverType
 from .core.interfaces import ConstraintSolver, PackageParser
 from .core.interfaces import ResultAnalyzer as ResultAnalyzerInterface
 from .core.maximizer import PackageMaximizer
 from .core.package import Package, PackageConstraint
+
 # Integrations
 from .integrations import RealRepoIntegration
+
 # Parsers
-from .parsers import (PARSER_REGISTRY, APTParser, BrewParser, DNFParser,
-                      PacmanParser, get_parser)
+from .parsers import (
+    PARSER_REGISTRY,
+    APTParser,
+    BrewParser,
+    DNFParser,
+    PacmanParser,
+    get_parser,
+)
+
 # Solvers
-from .solvers import (SOLVER_REGISTRY, EnhancedGreedySolver, GreedySolver,
-                      MaxSatSolver, MiniSatSolver, ORToolsSolver, PulPSolver,
-                      Z3Solver, get_solver)
+from .solvers import (
+    SOLVER_REGISTRY,
+    EnhancedGreedySolver,
+    GreedySolver,
+    MaxSatSolver,
+    MiniSatSolver,
+    ORToolsSolver,
+    PulPSolver,
+    Z3Solver,
+    get_solver,
+)
+
 # Utilities
 from .utils import BenchmarkRunner, CacheManager
 
