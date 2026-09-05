@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.0] - 2026-08-31
+## [0.6.1] - 2026-09-04
+
+### Fixed
+- Version sync: `__init__.py`, `CITATION.cff`, web health/OpenAPI now read from `importlib.metadata` (single source of truth).
+- `PackageManagerType` enum now matches `PARSER_REGISTRY` keys exactly (removed Nix/Guix/Spack/XBPS without parsers; added pip/npm/cargo/etc.).
+- Auto parser selection via `get_parser(self.manager.value)` instead of hardcoded 4-entry map.
+- `EnhancedGreedySolver` now correctly inferred from instance (was falling back to `GREEDY`).
+- Web server now refuses to start without `PM_API_KEY` set (no more `dev-key-change-in-production` default).
+
+### Changed
+- CHANGELOG order: `[0.6.0]` moved above `[0.5.0]`.
+- Removed "Planned" section from `[0.6.0]` (JWT/Flask-Limiter are debt, not features).
+
+## [0.6.0] - 2026-09-02
 
 ### Added
 - Textual TUI (`pm tui`) for interactive terminal UX.

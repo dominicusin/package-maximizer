@@ -17,7 +17,17 @@ from ..utils import CacheManager, BenchmarkRunner
 app = Flask(__name__)
 
 # ─── Configuration ───────────────────────────────────────────
-API_KEY = os.environ.get("PM_API_KEY", "dev-key-change-in-production")
+try:
+    from importlib.metadata import PackageNotFoundError, version as _dist_version
+
+    try:
+        APP_VERSION = _dist_version("package-maximizer")
+    except PackageNotFoundError:
+        APP_VERSION = "0.6.1"
+except ImportError:  # pragma: no cover
+    APP_VERSION = "0.6.1"
+
+API_KEY = os.environ.get("PM_API_KEY", "")
 CACHE_ENABLED = os.environ.get("PM_CACHE_ENABLED", "true").lower() == "true"
 CACHE_TTL = int(os.environ.get("PM_CACHE_TTL", "3600"))
 
@@ -169,7 +179,7 @@ def health() -> tuple[dict, int]:
         jsonify(
             {
                 "status": "ok",
-                "version": "0.5.0",
+                "version": APP_VERSION,
                 "cache_enabled": CACHE_ENABLED,
                 "timestamp": time.time(),
             }
@@ -547,7 +557,7 @@ def openapi_spec() -> tuple[dict, int]:
         "openapi": "3.0.3",
         "info": {
             "title": "Package Maximizer API",
-            "version": "0.5.0",
+            "version": APP_VERSION,
             "description": "Maximize a consistent set of packages across managers.",
         },
         "security": [{"ApiKeyAuth": []}],
@@ -636,6 +646,15 @@ def api_docs() -> tuple[str, int]:
 # ─── Run app ─────────────────────────────────────────────────
 def run_app(host: str = "127.0.0.1", port: int = 5000, debug: bool = False) -> None:
     """Run the Flask application."""
+    if not API_KEY:
+        import sys
+        print(
+            "ERROR: PM_API_KEY environment variable is required to start the web server.\n"
+            "Set it with: export PM_API_KEY=your-secret-key\n"
+            "Or start with: PM_API_KEY=xxx pm-web",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     app.run(host=host, port=port, debug=debug)
 
 

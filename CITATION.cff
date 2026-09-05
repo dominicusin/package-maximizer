@@ -8,4 +8,4 @@ license: MIT
 repository-code: "https://github.com/dominicusin/package-maximizer"
 url: "https://pypi.org/project/package-maximizer/"
 keywords: [packaging, dependency-resolution, optimization]
-version: 0.1.0
+version: 0.6.1

@@ -82,6 +82,11 @@ class TestInferSolverType:
         from package_maximizer.solvers import MiniSatSolver
         assert pm._infer_solver_type(MiniSatSolver()) == SolverType.MINISAT
 
+    def test_enhanced_greedy(self):
+        pm = PackageMaximizer(manager="apt", solver="greedy")
+        from package_maximizer.solvers import EnhancedGreedySolver
+        assert pm._infer_solver_type(EnhancedGreedySolver()) == SolverType.ENHANCED_GREEDY
+
     def test_unknown_defaults_to_greedy(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         assert pm._infer_solver_type(object()) == SolverType.GREEDY
@@ -113,6 +118,22 @@ class TestGetParserInstance:
         result = pm._get_parser_instance(parser_obj)
         assert result is parser_obj
 
+    def test_pip_manager_gets_pip_parser(self):
+        """Regression: manager='pip' should auto-select PipParser, not APTParser."""
+        pm = PackageMaximizer(manager="pip", solver="greedy")
+        assert pm.parser is not None
+        assert pm.parser.__class__.__name__ == "PipParser"
+
+    def test_npm_manager_gets_npm_parser(self):
+        """Regression: manager='npm' should auto-select NpmParser."""
+        pm = PackageMaximizer(manager="npm", solver="greedy")
+        assert pm.parser is not None
+        assert pm.parser.__class__.__name__ == "NpmParser"
+
+    def test_unknown_string_returns_none(self):
+        pm = PackageMaximizer(manager="apt", solver="greedy")
+        parser = pm._get_parser_instance("totally_unknown_parser_zzz")
+        assert parser is None
 
 class TestGetAnalyzerInstance:
     """_get_analyzer_instance with None, str, and object."""

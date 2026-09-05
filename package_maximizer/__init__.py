@@ -4,7 +4,15 @@ Package Maximizer - Модульная система для максимиза�
 Использует различные SAT/ILP/SMT солверы для множественных пакетных менеджеров.
 """
 
-__version__ = "0.5.0"
+try:
+    from importlib.metadata import PackageNotFoundError, version as _dist_version
+
+    try:
+        __version__ = _dist_version("package-maximizer")
+    except PackageNotFoundError:
+        __version__ = "0.6.1"
+except ImportError:  # pragma: no cover — Python < 3.8
+    __version__ = "0.6.1"
 __author__ = "Package Maximizer Team"
 __email__ = "team@package-maximizer.dev"
 __license__ = "MIT"

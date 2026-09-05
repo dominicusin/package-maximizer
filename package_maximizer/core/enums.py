@@ -4,18 +4,33 @@ from enum import Enum
 
 
 class PackageManagerType(Enum):
+    """Package managers supported by the parser registry.
+
+    Every value must have a matching entry in ``parsers.PARSER_REGISTRY``.
+    """
+
     APT = "apt"
     PACMAN = "pacman"
     DNF = "dnf"
-    ZYPPER = "zypper"
     BREW = "brew"
-    SPACK = "spack"
-    FLATPAK = "flatpak"
     SNAP = "snap"
-    NIX = "nix"
-    GUIX = "guix"
+    FLATPAK = "flatpak"
+    CARGO = "cargo"
+    NPM = "npm"
+    CONDA = "conda"
     PORTAGE = "portage"
-    XBS = "xbps"
+    APK = "apk"
+    ZYPPER = "zypper"
+    YUM = "yum"
+    PIP = "pip"
+    GEM = "gem"
+    YARN = "yarn"
+    COMPOSER = "composer"
+    VCPKG = "vcpkg"
+    NUGET = "nuget"
+    WINGET = "winget"
+    SCOOP = "scoop"
+    CHOCO = "choco"
 
 
 class SolverType(Enum):

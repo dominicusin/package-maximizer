@@ -32,6 +32,12 @@ class TestPulPSolverAvailable:
     def test_pulp_available_true_when_imported(self):
         from package_maximizer.solvers import pulp_solver
         # If we can import pulp_solver, PULP_AVAILABLE should be True
+        # Skip when pulp is not installed
+        import importlib
+        try:
+            importlib.import_module("pulp")
+        except ImportError:
+            pytest.skip("pulp not installed")
         assert pulp_solver.PULP_AVAILABLE is True
 
 

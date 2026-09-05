@@ -252,7 +252,8 @@ class TestWebAPIIntegration:
 
     @pytest.fixture
     def auth_headers(self):
-        return {"X-API-Key": "dev-key-change-in-production"}
+        import os
+        return {"X-API-Key": os.environ.get("PM_API_KEY", "test-key-for-tests")}
 
     def test_health_check(self, client):
         """Health endpoint should work without auth."""
