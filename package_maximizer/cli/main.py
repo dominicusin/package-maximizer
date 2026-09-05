@@ -61,7 +61,11 @@ def cli(verbose: bool, quiet: bool, config: str | None):
               help='Формат вывода')
 @click.option('--weights', '-w', type=(str, float), multiple=True,
               help='Веса пакетов (имя,вес)')
-def maximize(packages, manager, solver, conflicts, output, weights):
+@click.option('--depends', '-d', type=(str, str), multiple=True,
+              help='Зависимости пакетов (имя,зависимость)')
+@click.option('--explain', '-e', is_flag=True, default=False,
+              help='Показать причины отбора/отклонения пакетов')
+def maximize(packages, manager, solver, conflicts, output, weights, depends, explain):
     """
     Максимизировать множество пакетов.
     
@@ -105,6 +109,16 @@ def maximize(packages, manager, solver, conflicts, output, weights):
         for pkg in package_objs:
             if pkg.name in conflict_map:
                 pkg.conflicts = conflict_map[pkg.name]
+
+        # Добавление зависимостей
+        dep_map = {}
+        for pkg_name, dep_name in depends:
+            dep_map.setdefault(pkg_name, []).append(dep_name)
+
+        # Применение зависимостей к пакетам
+        for pkg in package_objs:
+            if pkg.name in dep_map:
+                pkg.depends = dep_map[pkg.name]
         
         # Создание словаря весов
         weights_dict = dict(weights) if weights else None
@@ -141,7 +155,38 @@ def maximize(packages, manager, solver, conflicts, output, weights):
             click.echo(f"Входные пакеты: {len(package_objs)}")
             click.echo(f"Выбранные пакеты: {len(result)}")
             click.echo(f"Результат: {', '.join(result)}")
-    
+
+            if explain:
+                # Анализ причин
+                selected_set = set(result)
+                all_names = {p.name for p in package_objs}
+                excluded = all_names - selected_set
+
+                if excluded:
+                    click.echo(f"\nПричины отклонения:")
+                    # Используем encoder для получения ограничений
+                    from ..core.model_encoder import encode_packages
+                    constraints = encode_packages(package_objs)
+
+                    for name in sorted(excluded):
+                        reasons = []
+                        # Проверяем конфликты
+                        for a, b in constraints.conflicts:
+                            if a == name and b in selected_set:
+                                reasons.append(f"конфликт с {b}")
+                            elif b == name and a in selected_set:
+                                reasons.append(f"конфликт с {a}")
+
+                        # Проверяем зависимости (если pkg исключён, возможно его зависимости не выбраны)
+                        deps = constraints.dependencies.get(name, [])
+                        for dep in deps:
+                            if dep not in selected_set:
+                                reasons.append(f"не выбрана зависимость {dep}")
+
+                        if reasons:
+                            click.echo(f"  - {name}: {'; '.join(reasons)}")
+                        else:
+                            click.echo(f"  - {name}: не оптимально для данного солвера")
     except Exception as e:
         logger.error(f"Ошибка: {e}", exc_info=True)
         click.echo(f"Ошибка: {e}", err=True)
