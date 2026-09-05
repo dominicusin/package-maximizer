@@ -10,9 +10,11 @@ import pytest
 
 from package_maximizer.core.package import Package
 from package_maximizer.utils import CacheManager
-from package_maximizer.utils.benchmark import (BenchmarkReport,
-                                               BenchmarkResult,
-                                               BenchmarkRunner)
+from package_maximizer.utils.benchmark import (
+    BenchmarkReport,
+    BenchmarkResult,
+    BenchmarkRunner,
+)
 
 
 class TestCacheManager:
