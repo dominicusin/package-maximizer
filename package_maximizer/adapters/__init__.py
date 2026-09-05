@@ -67,7 +67,7 @@ class APTMetadataAdapter:
             if result.returncode == 0:
                 packages = self.parse_multi(result.stdout)
                 return packages[0] if packages else None
-        except subprocess.TimeoutExpired, FileNotFoundError:
+        except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
         return None
 
@@ -129,7 +129,7 @@ class APTMetadataAdapter:
         elif field_lower == "installed-size":
             try:
                 metadata.size = int(value.split()[0])
-            except ValueError, IndexError:
+            except (ValueError, IndexError):
                 pass
         elif field_lower == "homepage":
             metadata.homepage = value.strip()
@@ -184,7 +184,7 @@ class PipMetadataAdapter:
             )
             if result.returncode == 0:
                 return self.parse(result.stdout)
-        except subprocess.TimeoutExpired, FileNotFoundError:
+        except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
         return None
 
@@ -274,7 +274,7 @@ class PacmanMetadataAdapter:
             )
             if result.returncode == 0:
                 return self.parse(result.stdout)
-        except subprocess.TimeoutExpired, FileNotFoundError:
+        except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
         return None
 
