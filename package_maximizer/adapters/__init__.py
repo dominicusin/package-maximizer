@@ -9,6 +9,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from ..core.package import Package
+
 
 @dataclass
 class PackageMetadata:
@@ -23,9 +25,7 @@ class PackageMetadata:
     size: int = 0
     homepage: str = ""
 
-    def to_package(self) -> "Package":
-        from ..core.package import Package
-
+    def to_package(self) -> Package:
         return Package(
             name=self.name,
             version=self.version,
@@ -96,7 +96,7 @@ class APTMetadataAdapter:
         elif field_lower == "installed-size":
             try:
                 metadata.size = int(value.split()[0])
-            except ValueError, IndexError:
+            except (ValueError, IndexError):
                 pass
         elif field_lower == "homepage":
             metadata.homepage = value.strip()
