@@ -262,7 +262,9 @@ def maximize_post() -> tuple[dict, int]:
             "manager": "apt",
             "solver": "greedy",
             "conflicts": [["pkg1", "pkg2"]],
-            "weights": {"pkg1": 2.0, "pkg2": 1.5}
+            "depends": [["pkg1", "pkg2"]],
+            "weights": {"pkg1": 2.0, "pkg2": 1.5},
+            "explain": false
         }
     """
     data = request.get_json(force=True)
@@ -323,6 +325,20 @@ def maximize_post() -> tuple[dict, int]:
         if pkg.name in conflict_map:
             pkg.conflicts = conflict_map[pkg.name]
 
+    # Apply dependencies from 'depends' field
+    depends_raw = data.get("depends", [])
+    dep_map: dict[str, list[str]] = {}
+    for dep_entry in depends_raw:
+        if isinstance(dep_entry, (list, tuple)) and len(dep_entry) == 2:
+            pkg_name, dep_name = dep_entry
+            dep_map.setdefault(pkg_name, []).append(dep_name)
+
+    for pkg in package_objs:
+        if pkg.name in dep_map:
+            pkg.depends = dep_map[pkg.name]
+
+    explain = data.get("explain", False)
+
     # Solve
     try:
         maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
@@ -334,17 +350,41 @@ def maximize_post() -> tuple[dict, int]:
     except Exception as e:
         return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
 
+    response_data = {
+        "manager": manager,
+        "solver": solver,
+        "input_count": len(packages),
+        "output_count": len(result),
+        "selected": result,
+        "input": packages,
+    }
+
+    if explain:
+        from ..core.model_encoder import encode_packages
+
+        constraints = encode_packages(package_objs)
+        selected_set = set(result)
+        all_names = {p.name for p in package_objs}
+        excluded = all_names - selected_set
+
+        excluded_reasons = {}
+        for name in sorted(excluded):
+            reasons = []
+            for a, b in constraints.conflicts:
+                if a == name and b in selected_set:
+                    reasons.append(f"conflict with {b}")
+                elif b == name and a in selected_set:
+                    reasons.append(f"conflict with {a}")
+            deps = constraints.dependencies.get(name, [])
+            for dep in deps:
+                if dep not in selected_set:
+                    reasons.append(f"dependency not selected: {dep}")
+            excluded_reasons[name] = reasons if reasons else ["not optimal"]
+
+        response_data["excluded"] = excluded_reasons
+
     return (
-        jsonify(
-            {
-                "manager": manager,
-                "solver": solver,
-                "input_count": len(packages),
-                "output_count": len(result),
-                "selected": result,
-                "input": packages,
-            }
-        ),
+        jsonify(response_data),
         200,
     )
 

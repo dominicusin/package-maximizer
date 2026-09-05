@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-09-05
+
+### Added
+- **Dependency support**: `depends` field now properly encoded as implications in all solvers.
+  - `Package(depends=["pkg2"])` → `selected(pkg1) ⇒ selected(pkg2)`
+  - Greedy, EnhancedGreedy, Z3, PuLP, OR-Tools, MaxSAT, MiniSAT all respect dependencies
+- **Model encoder** (`core/model_encoder.py`): intermediate constraint layer shared by all solvers
+- **CLI `--depends` flag**: specify dependencies via `-d pkg dep`
+- **CLI `--explain` flag**: shows why packages were excluded (conflicts, missing deps)
+- **Web API `depends` field**: POST `/api/v1/maximize` accepts `depends: [["pkg", "dep"]]`
+- **Web API `explain` flag**: returns exclusion reasons in response
+
+### Changed
+- Solvers now use `ModelConstraints` from `encode_packages()` for consistent constraint encoding
+- Greedy solver sorts by weight (descending) in weighted mode
+
 ## [0.6.1] - 2026-09-04
 
 ### Fixed

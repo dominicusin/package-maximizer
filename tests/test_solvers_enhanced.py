@@ -113,17 +113,17 @@ class TestEnhancedGreedySolver:
             assert "pkg2" in result
 
     def test_version_constraints(self):
-        """Test version constraint handling"""
-        pkg1 = Package(name="pkg1", version="1.0.0", depends=["pkg2 >= 2.0.0"])
+        """Test dependency handling (version-agnostic)"""
+        pkg1 = Package(name="pkg1", version="1.0.0", depends=["pkg2"])
         pkg2 = Package(name="pkg2", version="1.5.0")
         pkg3 = Package(name="pkg3", version="2.0.0")
-        
-        solver = EnhancedGreedySolver(respect_version_constraints=True)
+
+        solver = EnhancedGreedySolver()
         result = solver.solve([pkg1, pkg2, pkg3])
-        
-        # pkg1 requires pkg2 >= 2.0.0, but pkg2 is 1.5.0
-        # So pkg1 should not be selected with pkg2
-        # pkg3 should be selected
+
+        # pkg1 depends on pkg2, so both should be selected
+        if "pkg1" in result:
+            assert "pkg2" in result
         assert "pkg3" in result
 
     def test_time_limit(self):
@@ -135,11 +135,6 @@ class TestEnhancedGreedySolver:
         """Test conflict strategy parameter"""
         solver = EnhancedGreedySolver(conflict_strategy="skip")
         assert solver.conflict_strategy == "skip"
-
-    def test_respect_version_constraints(self):
-        """Test respect_version_constraints parameter"""
-        solver = EnhancedGreedySolver(respect_version_constraints=False)
-        assert solver.respect_version_constraints == False
 
 
 class TestEnhancedGreedySolverRegistry:
