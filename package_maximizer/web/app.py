@@ -391,6 +391,161 @@ def maximize_post() -> tuple[dict, int]:
     )
 
 
+# ─── Propose packages ─────────────────────────────────────────
+@app.post("/api/v1/propose")
+@require_api_key
+def propose_post() -> tuple[dict, int]:
+    """
+    Propose optimal package set with automatic metadata extraction.
+
+    Expected JSON body::
+
+        {
+            "packages": ["requests", "certifi"],
+            "manager": "apt",
+            "solver": "greedy",
+            "explain": false
+        }
+    """
+    data = request.get_json(force=True)
+    if not isinstance(data, dict):
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": "Request body must be a JSON object",
+                }
+            ),
+            400,
+        )
+    if "packages" not in data:
+        return (
+            jsonify({"error": "Bad Request", "message": "Missing 'packages' field"}),
+            400,
+        )
+
+    packages = data.get("packages")
+    if not isinstance(packages, list):
+        return (
+            jsonify({"error": "Bad Request", "message": "'packages' must be a list"}),
+            400,
+        )
+
+    manager = data.get("manager", "apt")
+    solver = data.get("solver", "greedy")
+    explain = data.get("explain", False)
+
+    # Validate manager
+    try:
+        manager_enum = PackageManagerType(manager)
+    except ValueError:
+        valid = [m.value for m in PackageManagerType]
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": f"Unknown manager '{manager}'. Valid: {valid}",
+                }
+            ),
+            400,
+        )
+
+    # Validate solver
+    from ..solvers import SOLVER_REGISTRY
+
+    if solver not in SOLVER_REGISTRY:
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": f"Unknown solver '{solver}'. Valid: {list(SOLVER_REGISTRY.keys())}",
+                }
+            ),
+            400,
+        )
+
+    # Get adapter for metadata extraction
+    from ..adapters import get_adapter
+
+    try:
+        adapter = get_adapter(manager)
+    except ValueError as e:
+        return jsonify({"error": "Bad Request", "message": str(e)}), 400
+
+    package_objs = []
+    not_found = []
+    metadata_summary = []
+    for pkg_name in packages:
+        if not isinstance(pkg_name, str):
+            continue
+        metadata = adapter.fetch(pkg_name)
+        if metadata and metadata.name:
+            package_objs.append(metadata.to_package())
+            metadata_summary.append(
+                {
+                    "name": metadata.name,
+                    "version": metadata.version,
+                    "depends": metadata.depends,
+                    "conflicts": metadata.conflicts,
+                }
+            )
+        else:
+            not_found.append(pkg_name)
+            package_objs.append(Package(name=pkg_name, status="candidate"))
+            metadata_summary.append({"name": pkg_name, "depends": [], "conflicts": []})
+
+    if not package_objs:
+        return (
+            jsonify({"error": "Bad Request", "message": "No packages to process"}),
+            400,
+        )
+
+    try:
+        maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
+        result = maximizer.solve(package_objs)
+    except Exception as e:
+        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
+
+    response_data = {
+        "manager": manager,
+        "solver": solver,
+        "input_count": len(packages),
+        "output_count": len(result),
+        "selected": result,
+        "input": packages,
+        "metadata_fetched": len(packages) - len(not_found),
+        "metadata": metadata_summary,
+    }
+
+    if not_found:
+        response_data["not_found"] = not_found
+
+    if explain:
+        from ..core.model_encoder import encode_packages
+
+        constraints = encode_packages(package_objs)
+        selected_set = set(result)
+        all_names = {p.name for p in package_objs}
+        excluded = all_names - selected_set
+
+        excluded_reasons = {}
+        for name in sorted(excluded):
+            reasons = []
+            for a, b in constraints.conflicts:
+                if a == name and b in selected_set:
+                    reasons.append(f"conflict with {b}")
+                elif b == name and a in selected_set:
+                    reasons.append(f"conflict with {a}")
+            deps = constraints.dependencies.get(name, [])
+            for dep in deps:
+                if dep not in selected_set:
+                    reasons.append(f"dependency not selected: {dep}")
+            excluded_reasons[name] = reasons if reasons else ["not optimal"]
+        response_data["excluded"] = excluded_reasons
+
+    return jsonify(response_data), 200
+
+
 # ─── GET version (for backward compat) ───────────────────────
 @app.get("/api/maximize")
 @require_api_key

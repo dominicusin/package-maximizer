@@ -730,6 +730,158 @@ def export_command(packages, manager, solver, conflicts, format, output_file):
         click.echo(content)
 
 
+@cli.command(name="propose")
+@click.argument("packages", nargs=-1)
+@click.option(
+    "--manager",
+    "-m",
+    type=str,
+    default=None,
+    help="Тип пакетного менеджера (apt, pip, pacman)",
+)
+@click.option(
+    "--solver",
+    "-s",
+    type=str,
+    default=None,
+    help="Тип солвера (greedy, z3, pulp, ortools, maxsat, minisat, enhanced_greedy)",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    help="Формат вывода",
+)
+@click.option(
+    "--explain",
+    "-e",
+    is_flag=True,
+    default=False,
+    help="Показать причины отбора/отклонения пакетов",
+)
+def propose(packages, manager, solver, output, explain):
+    """
+    Предложить оптимальный набор пакетов с автоматическим извлечением метаданных.
+
+    Автоматически извлекает depends/conflicts из репозитория и выбирает
+    максимальное совместное множество.
+
+    Примеры:
+
+        package-maximizer propose nginx apache2 php-fpm --manager apt --explain
+
+        package-maximizer propose requests urllib3 --manager pip --solver z3
+    """
+    obj = click.get_current_context().obj or {}
+    cfg = obj.get("config")
+    if manager is None:
+        manager = cfg.default_manager if cfg else "apt"
+    if solver is None:
+        solver = cfg.default_solver if cfg else "greedy"
+
+    try:
+        try:
+            manager_enum = PackageManagerType(manager)
+        except ValueError:
+            click.echo(f"Ошибка: Неизвестный пакетный менеджер '{manager}'", err=True)
+            sys.exit(1)
+
+        from ..adapters import get_adapter
+
+        try:
+            adapter = get_adapter(manager)
+        except ValueError as e:
+            click.echo(f"Ошибка: {e}", err=True)
+            sys.exit(1)
+
+        click.echo(f"Извлечение метаданных для {len(packages)} пакетов ({manager})...")
+
+        package_objs = []
+        not_found = []
+        for pkg_name in packages:
+            metadata = adapter.fetch(pkg_name)
+            if metadata and metadata.name:
+                package_objs.append(metadata.to_package())
+                click.echo(
+                    f"  ✓ {pkg_name}: {len(metadata.depends)} зависимостей, "
+                    f"{len(metadata.conflicts)} конфликтов"
+                )
+            else:
+                not_found.append(pkg_name)
+                package_objs.append(Package(name=pkg_name, status="candidate"))
+                click.echo(f"  ⚠ {pkg_name}: метаданные не найдены")
+
+        if not_found:
+            click.echo(
+                f"\nПредупреждение: метаданные не найдены для: {', '.join(not_found)}"
+            )
+
+        if not package_objs:
+            click.echo("Ошибка: нет пакетов для обработки", err=True)
+            sys.exit(1)
+
+        try:
+            maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
+        except ValueError:
+            click.echo(f"Ошибка: Неизвестный солвер '{solver}'", err=True)
+            sys.exit(1)
+
+        result = maximizer.solve(package_objs)
+
+        if output == "json":
+            output_data = {
+                "manager": manager,
+                "solver": solver,
+                "input": [p.name for p in package_objs],
+                "output": result,
+                "count": len(result),
+                "metadata_fetched": len(packages) - len(not_found),
+            }
+            click.echo(json.dumps(output_data, indent=2))
+        else:
+            click.echo(f"\nМенеджер: {manager}")
+            click.echo(f"Солвер: {solver}")
+            click.echo(f"Входные пакеты: {len(package_objs)}")
+            click.echo(f"Выбранные пакеты: {len(result)}")
+            click.echo(f"Результат: {', '.join(result)}")
+
+            if explain:
+                selected_set = set(result)
+                all_names = {p.name for p in package_objs}
+                excluded = all_names - selected_set
+
+                if excluded:
+                    click.echo(f"\nПричины отклонения:")
+                    from ..core.model_encoder import encode_packages
+
+                    constraints = encode_packages(package_objs)
+
+                    for name in sorted(excluded):
+                        reasons = []
+                        for a, b in constraints.conflicts:
+                            if a == name and b in selected_set:
+                                reasons.append(f"конфликт с {b}")
+                            elif b == name and a in selected_set:
+                                reasons.append(f"конфликт с {a}")
+
+                        deps = constraints.dependencies.get(name, [])
+                        for dep in deps:
+                            if dep not in selected_set:
+                                reasons.append(f"не выбрана зависимость {dep}")
+
+                        if reasons:
+                            click.echo(f"  - {name}: {'; '.join(reasons)}")
+                        else:
+                            click.echo(f"  - {name}: не оптимально для данного солвера")
+                else:
+                    click.echo(f"\nВсе пакеты выбраны!")
+    except Exception as e:
+        logger.error(f"Ошибка: {e}", exc_info=True)
+        click.echo(f"Ошибка: {e}", err=True)
+        sys.exit(1)
+
+
 @cli.command(name="tui")
 def tui_command() -> None:
     """
