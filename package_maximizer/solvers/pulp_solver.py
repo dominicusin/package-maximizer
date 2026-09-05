@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 
 try:
     import pulp
-    from pulp import LpBinary, LpMaximize, LpProblem, LpStatus, LpVariable, lpSum, value
+    from pulp import (LpBinary, LpMaximize, LpProblem, LpStatus, LpVariable,
+                      lpSum, value)
 
     PULP_AVAILABLE = True
 except ImportError:

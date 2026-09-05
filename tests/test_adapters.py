@@ -4,12 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from package_maximizer.adapters import (
-    APTMetadataAdapter,
-    PackageMetadata,
-    PacmanMetadataAdapter,
-    PipMetadataAdapter,
-)
+from package_maximizer.adapters import (APTMetadataAdapter, PackageMetadata,
+                                        PacmanMetadataAdapter,
+                                        PipMetadataAdapter)
 
 # ─── Fixtures ───────────────────────────────────────────────────────────
 

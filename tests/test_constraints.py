@@ -4,12 +4,10 @@ Tests for constraints module
 
 import pytest
 
-from package_maximizer.core.constraints import (
-    ConflictConstraint,
-    ConstraintParser,
-    DependencyConstraint,
-    VersionConstraint,
-)
+from package_maximizer.core.constraints import (ConflictConstraint,
+                                                ConstraintParser,
+                                                DependencyConstraint,
+                                                VersionConstraint)
 
 
 class TestVersionConstraint:

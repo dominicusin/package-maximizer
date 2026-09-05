@@ -13,7 +13,8 @@ import pytest
 
 from package_maximizer.core.package import Package
 from package_maximizer.integrations import RealRepoIntegration
-from package_maximizer.integrations.real_repo_integration import PackageInfo, RepoConfig
+from package_maximizer.integrations.real_repo_integration import (PackageInfo,
+                                                                  RepoConfig)
 
 MANAGERS = ["apt", "pacman", "dnf", "brew"]
 
