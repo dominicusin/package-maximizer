@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 try:
-    from pysat.solvers import Solver
     from pysat.card import CardEnc, EncType
     from pysat.formula import CNF
+    from pysat.solvers import Solver
 
     MAXSAT_AVAILABLE = True
 except ImportError:
@@ -117,8 +117,8 @@ class MaxSatSolver(ConstraintSolver):
         constraints = encode_packages(package_list)
         var_map = {name: i + 1 for i, name in enumerate(constraints.packages)}
 
-        selected = []
-        selected_names = set()
+        selected: list[str] = []
+        selected_names: set[str] = set()
 
         for pkg in package_list:
             temp_pkg_list = [
@@ -137,7 +137,7 @@ class MaxSatSolver(ConstraintSolver):
 
             # Зависимости
             for p in temp_pkg_list:
-                for dep in (constraints.dependencies.get(p.name) or []):
+                for dep in constraints.dependencies.get(p.name) or []:
                     if dep in temp_var_map:
                         cnf.append([-temp_var_map[p.name], temp_var_map[dep]])
 

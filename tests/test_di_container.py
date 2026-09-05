@@ -226,6 +226,7 @@ class TestInject:
 
     def test_inject_stacked_decorators(self):
         """Stacked injects: outermost wins (same key 'my_func')."""
+
         @inject(int)
         @inject(str)
         def my_func():

@@ -3,8 +3,9 @@ Tests for EnhancedGreedySolver
 """
 
 import pytest
-from package_maximizer.solvers import EnhancedGreedySolver
+
 from package_maximizer.core.package import Package
+from package_maximizer.solvers import EnhancedGreedySolver
 
 
 class TestEnhancedGreedySolver:
@@ -21,7 +22,7 @@ class TestEnhancedGreedySolver:
         pkg1 = Package(name="pkg1")
         solver = EnhancedGreedySolver()
         result = solver.solve([pkg1])
-        
+
         assert len(result) == 1
         assert "pkg1" in result
 
@@ -30,10 +31,10 @@ class TestEnhancedGreedySolver:
         pkg1 = Package(name="pkg1")
         pkg2 = Package(name="pkg2")
         pkg3 = Package(name="pkg3")
-        
+
         solver = EnhancedGreedySolver()
         result = solver.solve([pkg1, pkg2, pkg3])
-        
+
         # All packages should be selected
         assert len(result) == 3
         assert "pkg1" in result
@@ -45,10 +46,10 @@ class TestEnhancedGreedySolver:
         pkg1 = Package(name="pkg1", conflicts=["pkg2"])
         pkg2 = Package(name="pkg2", conflicts=["pkg1"])
         pkg3 = Package(name="pkg3")
-        
+
         solver = EnhancedGreedySolver(conflict_strategy="skip")
         result = solver.solve([pkg1, pkg2, pkg3])
-        
+
         # pkg3 should be selected, and one of pkg1 or pkg2 (whichever comes first)
         assert len(result) >= 1
         assert "pkg3" in result
@@ -59,10 +60,10 @@ class TestEnhancedGreedySolver:
         pkg1 = Package(name="pkg1", conflicts=["pkg2"])
         pkg2 = Package(name="pkg2", conflicts=["pkg1"])
         pkg3 = Package(name="pkg3")
-        
+
         solver = EnhancedGreedySolver(conflict_strategy="remove")
         result = solver.solve([pkg1, pkg2, pkg3])
-        
+
         # Should have all packages or at least pkg3
         assert len(result) >= 1
         assert "pkg3" in result
@@ -74,10 +75,10 @@ class TestEnhancedGreedySolver:
         pkg3 = Package(name="pkg3", conflicts=["pkg1"])
         pkg4 = Package(name="pkg4")
         pkg5 = Package(name="pkg5")
-        
+
         solver = EnhancedGreedySolver()
         result = solver.solve([pkg1, pkg2, pkg3, pkg4, pkg5])
-        
+
         # pkg4 and pkg5 have no conflicts, so they should both be selected
         assert "pkg4" in result
         assert "pkg5" in result
@@ -87,12 +88,12 @@ class TestEnhancedGreedySolver:
         pkg1 = Package(name="pkg1", conflicts=["pkg2"])
         pkg2 = Package(name="pkg2", conflicts=["pkg1"])
         pkg3 = Package(name="pkg3")
-        
+
         solver = EnhancedGreedySolver()
         weights = {"pkg1": 10.0, "pkg2": 1.0, "pkg3": 5.0}
-        
+
         result = solver.solve_with_weights([pkg1, pkg2, pkg3], weights)
-        
+
         # With these weights, pkg1 (10) and pkg3 (5) should be preferred
         assert len(result) >= 2
 
@@ -101,10 +102,10 @@ class TestEnhancedGreedySolver:
         pkg1 = Package(name="pkg1", depends=["pkg2"])
         pkg2 = Package(name="pkg2")
         pkg3 = Package(name="pkg3")
-        
+
         solver = EnhancedGreedySolver()
         result = solver.solve([pkg1, pkg2, pkg3])
-        
+
         # pkg2 should be selected before pkg1 (dependency)
         # Both should be selected
         assert "pkg2" in result
@@ -143,11 +144,13 @@ class TestEnhancedGreedySolverRegistry:
     def test_get_solver_enhanced_greedy(self):
         """Test getting EnhancedGreedySolver from registry"""
         from package_maximizer.solvers import get_solver
+
         solver = get_solver("enhanced_greedy")
         assert isinstance(solver, EnhancedGreedySolver)
 
     def test_get_solver_case_insensitive(self):
         """Test case insensitive lookup"""
         from package_maximizer.solvers import get_solver
+
         solver = get_solver("ENHANCED_GREEDY")
         assert isinstance(solver, EnhancedGreedySolver)

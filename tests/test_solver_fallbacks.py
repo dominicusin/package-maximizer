@@ -21,6 +21,7 @@ class TestOptionalSolverBehavior:
     @pytest.mark.parametrize("module_name,class_name", _optional_solver_modules())
     def test_solver_instantiable(self, module_name, class_name):
         import importlib
+
         mod = importlib.import_module(module_name)
         cls = getattr(mod, class_name)
         solver = cls()
@@ -29,6 +30,7 @@ class TestOptionalSolverBehavior:
     @pytest.mark.parametrize("module_name,class_name", _optional_solver_modules())
     def test_solver_returns_list_on_empty_input(self, module_name, class_name):
         import importlib
+
         mod = importlib.import_module(module_name)
         cls = getattr(mod, class_name)
         result = cls().solve([])

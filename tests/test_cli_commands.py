@@ -9,18 +9,10 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from package_maximizer.cli.main import (
-    cli,
-    from_file,
-    export_command,
-    config_command,
-    init_config_command,
-    tui_command,
-    list_managers,
-    maximize,
-    list_solvers,
-    version,
-)
+from package_maximizer.cli.main import (cli, config_command, export_command,
+                                        from_file, init_config_command,
+                                        list_managers, list_solvers, maximize,
+                                        tui_command, version)
 
 
 class TestFromFileCommand:
@@ -29,10 +21,12 @@ class TestFromFileCommand:
     def test_from_file_json_output(self, tmp_path):
         pkg_file = tmp_path / "packages.json"
         pkg_file.write_text(
-            json.dumps([
-                {"name": "alpha", "version": "1.0", "conflicts": ["beta"]},
-                {"name": "beta", "version": "2.0"},
-            ]),
+            json.dumps(
+                [
+                    {"name": "alpha", "version": "1.0", "conflicts": ["beta"]},
+                    {"name": "beta", "version": "2.0"},
+                ]
+            ),
             encoding="utf-8",
         )
         runner = CliRunner()
@@ -65,7 +59,9 @@ class TestExportCommand:
     def test_export_with_output_file(self, tmp_path):
         out = tmp_path / "result.json"
         runner = CliRunner()
-        result = runner.invoke(export_command, ["alpha", "--format", "json", "--output-file", str(out)])
+        result = runner.invoke(
+            export_command, ["alpha", "--format", "json", "--output-file", str(out)]
+        )
         assert result.exit_code == 0
         assert out.exists()
         assert "alpha" in out.read_text(encoding="utf-8")
@@ -137,13 +133,17 @@ class TestMaximizeCommand:
 
     def test_maximize_basic(self):
         runner = CliRunner()
-        result = runner.invoke(maximize, ["alpha", "beta", "--solver", "greedy", "--output", "text"])
+        result = runner.invoke(
+            maximize, ["alpha", "beta", "--solver", "greedy", "--output", "text"]
+        )
         assert result.exit_code == 0
         assert "alpha" in result.output or "beta" in result.output
 
     def test_maximize_json(self):
         runner = CliRunner()
-        result = runner.invoke(maximize, ["alpha", "beta", "--solver", "greedy", "--output", "json"])
+        result = runner.invoke(
+            maximize, ["alpha", "beta", "--solver", "greedy", "--output", "json"]
+        )
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert "output" in data
@@ -160,12 +160,28 @@ class TestMaximizeCommand:
 
     def test_maximize_with_conflicts(self):
         runner = CliRunner()
-        result = runner.invoke(maximize, ["alpha", "beta", "--solver", "greedy", "-c", "alpha", "beta"])
+        result = runner.invoke(
+            maximize, ["alpha", "beta", "--solver", "greedy", "-c", "alpha", "beta"]
+        )
         assert result.exit_code == 0
 
     def test_maximize_with_weights(self):
         runner = CliRunner()
-        result = runner.invoke(maximize, ["alpha", "beta", "--solver", "greedy", "-w", "alpha", "2.0", "-w", "beta", "1.0"])
+        result = runner.invoke(
+            maximize,
+            [
+                "alpha",
+                "beta",
+                "--solver",
+                "greedy",
+                "-w",
+                "alpha",
+                "2.0",
+                "-w",
+                "beta",
+                "1.0",
+            ],
+        )
         assert result.exit_code == 0
 
 

@@ -36,7 +36,9 @@ class SolverFactory:
         registry: Optional[dict[str, Callable[[], "ConstraintSolver"]]] = None,
     ) -> None:
         # registry maps lowercase name -> a zero-arg callable returning a solver
-        self._registry: dict[str, Callable[[], "ConstraintSolver"]] = dict(registry or {})
+        self._registry: dict[str, Callable[[], "ConstraintSolver"]] = dict(
+            registry or {}
+        )
 
     def register(self, name: str, builder: Callable[[], "ConstraintSolver"]) -> None:
         """Register a new solver builder under ``name`` (case-insensitive)."""
@@ -137,10 +139,12 @@ def build_default_solver_factory() -> SolverFactory:
 
     factory = SolverFactory()
     for name in SOLVER_REGISTRY.keys():
+
         def _build(name: str = name) -> "ConstraintSolver":  # type: ignore[name-defined]
             from ..solvers import get_solver
 
             return get_solver(name)  # type: ignore[no-any-return]
+
         factory.register(name, _build)
     return factory
 
@@ -158,9 +162,11 @@ def build_default_parser_factory(
 
     factory = ParserFactory(cache=cache)
     for name in PARSER_REGISTRY.keys():
+
         def _build(name: str = name) -> "PackageParser":  # type: ignore[name-defined]
             from ..parsers import get_parser
 
             return get_parser(name)  # type: ignore[no-any-return]
+
         factory.register(name, _build)
     return factory

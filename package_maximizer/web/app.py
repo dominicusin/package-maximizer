@@ -4,21 +4,22 @@ from __future__ import annotations
 
 import os
 import time
+from functools import wraps
 from typing import Any
 
-from flask import Flask, jsonify, request, g
-from functools import wraps
+from flask import Flask, g, jsonify, request
 
 from ..core.enums import PackageManagerType, SolverType
 from ..core.maximizer import PackageMaximizer
 from ..core.package import Package
-from ..utils import CacheManager, BenchmarkRunner
+from ..utils import BenchmarkRunner, CacheManager
 
 app = Flask(__name__)
 
 # ─── Configuration ───────────────────────────────────────────
 try:
-    from importlib.metadata import PackageNotFoundError, version as _dist_version
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as _dist_version
 
     try:
         APP_VERSION = _dist_version("package-maximizer")
@@ -32,6 +33,7 @@ CACHE_ENABLED = os.environ.get("PM_CACHE_ENABLED", "true").lower() == "true"
 CACHE_TTL = int(os.environ.get("PM_CACHE_TTL", "3600"))
 
 cache = CacheManager() if CACHE_ENABLED else None
+
 
 # ─── Rate limiting (in-memory, per API key) ────────────────
 class RateLimiter:
@@ -433,17 +435,21 @@ def maximize_get() -> tuple[dict, int]:
 # ─── Export endpoint ──────────────────────────────────────────
 @app.post("/api/v1/export")
 @require_api_key
-def export_post() -> tuple[dict, int] | tuple[str, int]:
+def export_post() -> (
+    tuple[dict, int] | tuple[str, int] | tuple[str, int, dict[str, str]]
+):
     """
     Maximize packages and return the result in JSON/CSV/GraphML.
 
     Body is the same as /api/v1/maximize plus an ``format`` field
     (json | csv | graphml).
     """
-    from ..utils.exporters import to_json, to_csv, to_graphml
+    from ..utils.exporters import to_csv, to_graphml, to_json
 
     try:
-        packages, conflicts, weights = validate_maximize_payload(request.get_json(force=True))
+        packages, conflicts, weights = validate_maximize_payload(
+            request.get_json(force=True)
+        )
     except ValueError as e:
         return jsonify({"error": "Bad Request", "message": str(e)}), 400
 
@@ -455,12 +461,20 @@ def export_post() -> tuple[dict, int] | tuple[str, int]:
     try:
         manager_enum = PackageManagerType(manager)
     except ValueError:
-        return jsonify({"error": "Bad Request", "message": f"Unknown manager '{manager}'"}), 400
+        return (
+            jsonify(
+                {"error": "Bad Request", "message": f"Unknown manager '{manager}'"}
+            ),
+            400,
+        )
 
     from ..solvers import SOLVER_REGISTRY
 
     if solver not in SOLVER_REGISTRY:
-        return jsonify({"error": "Bad Request", "message": f"Unknown solver '{solver}'"}), 400
+        return (
+            jsonify({"error": "Bad Request", "message": f"Unknown solver '{solver}'"}),
+            400,
+        )
 
     pkg_objs = [Package(name=n, status="candidate") for n in packages]
     conflict_map: dict[str, list[str]] = {}
@@ -474,7 +488,11 @@ def export_post() -> tuple[dict, int] | tuple[str, int]:
 
     try:
         maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
-        selected = maximizer.solve(pkg_objs) if not weights else maximizer.solve_with_weights(pkg_objs, weights)
+        selected = (
+            maximizer.solve(pkg_objs)
+            if not weights
+            else maximizer.solve_with_weights(pkg_objs, weights)
+        )
     except Exception as e:  # pragma: no cover - defensive
         return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
 
@@ -516,8 +534,8 @@ def benchmark_post() -> tuple[dict, int]:
             }
         )
 
-    # Sort by avg_time
-    results.sort(key=lambda r: r["avg_time"])
+    # Sort by avg_time (use float() for type safety)
+    results.sort(key=lambda r: float(r["avg_time"]))
 
     return (
         jsonify(
@@ -616,7 +634,10 @@ def openapi_spec() -> tuple[dict, int]:
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "packages": {"type": "array", "items": {"type": "string"}},
+                                        "packages": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
                                         "manager": {"type": "string"},
                                         "solver": {"type": "string"},
                                         "conflicts": {"type": "array"},
@@ -643,16 +664,22 @@ def openapi_spec() -> tuple[dict, int]:
                 }
             },
             "/api/v1/solvers": {
-                "get": {"summary": "List available solvers",
-                        "responses": {"200": {"description": "Solver list"}}}
+                "get": {
+                    "summary": "List available solvers",
+                    "responses": {"200": {"description": "Solver list"}},
+                }
             },
             "/api/v1/parsers": {
-                "get": {"summary": "List available parsers",
-                        "responses": {"200": {"description": "Parser list"}}}
+                "get": {
+                    "summary": "List available parsers",
+                    "responses": {"200": {"description": "Parser list"}},
+                }
             },
             "/api/v1/cache/stats": {
-                "get": {"summary": "Cache statistics",
-                        "responses": {"200": {"description": "Cache stats"}}}
+                "get": {
+                    "summary": "Cache statistics",
+                    "responses": {"200": {"description": "Cache stats"}},
+                }
             },
         },
     }
@@ -682,12 +709,12 @@ def api_docs() -> tuple[str, int]:
     return html, 200, {"Content-Type": "text/html"}
 
 
-
 # ─── Run app ─────────────────────────────────────────────────
 def run_app(host: str = "127.0.0.1", port: int = 5000, debug: bool = False) -> None:
     """Run the Flask application."""
     if not API_KEY:
         import sys
+
         print(
             "ERROR: PM_API_KEY environment variable is required to start the web server.\n"
             "Set it with: export PM_API_KEY=your-secret-key\n"

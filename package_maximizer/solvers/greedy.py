@@ -16,7 +16,9 @@ if TYPE_CHECKING:
 class GreedySolver(ConstraintSolver):
     """Базовый жадный алгоритм максимизации множества пакетов."""
 
-    def __init__(self, conflict_resolution: str = "skip", time_limit: int = 10000) -> None:
+    def __init__(
+        self, conflict_resolution: str = "skip", time_limit: int = 10000
+    ) -> None:
         self.conflict_resolution = conflict_resolution
         self.time_limit = time_limit
 

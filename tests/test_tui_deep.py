@@ -76,6 +76,7 @@ def test_button_run_with_solver_z3():
 
 def test_non_run_button_ignored():
     """Buttons other than #run do not trigger solving."""
+
     async def _drive():
         app = MaximizerApp()
         async with app.run_test() as pilot:

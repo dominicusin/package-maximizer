@@ -10,6 +10,7 @@ textual = pytest.importorskip("textual")
 def test_tui_app_importable():
     """MaximizerApp should be importable when textual is installed."""
     from textual.app import App
+
     from package_maximizer.tui.app import MaximizerApp
 
     assert issubclass(MaximizerApp, App)

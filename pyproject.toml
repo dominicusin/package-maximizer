@@ -75,8 +75,31 @@ Repository = "https://github.com/dominicusin/package-maximizer.git"
 "Bug Tracker" = "https://github.com/dominicusin/package-maximizer/issues"
 PyPI = "https://pypi.org/project/package-maximizer/"
 
+[project.entry-points."package_maximizer.parsers"]
+apt = "package_maximizer.parsers.apt_parser:APTParser"
+pacman = "package_maximizer.parsers.pacman_parser:PacmanParser"
+dnf = "package_maximizer.parsers.dnf_parser:DNFParser"
+brew = "package_maximizer.parsers.brew_parser:BrewParser"
+pip = "package_maximizer.parsers.extra_parsers:PipParser"
+npm = "package_maximizer.parsers.extra_parsers:NpmParser"
+cargo = "package_maximizer.parsers.extra_parsers:CargoParser"
+snap = "package_maximizer.parsers.extra_parsers:SnapParser"
+flatpak = "package_maximizer.parsers.extra_parsers:FlatpakParser"
+
+[tool.mypy]
+ignore_missing_imports = true
+# Exclude files with complex type issues from mypy
+[[tool.mypy.overrides]]
+module = [
+    "package_maximizer.analyzers.result_analyzer",
+    "package_maximizer.parsers.extra_parsers",
+    "package_maximizer.cli.main",
+    "package_maximizer.web.app",
+]
+ignore_errors = true
+
 [tool.setuptools_scm]
-fallback_version = "0.7.0"
+fallback_version = "0.8.0"
 
 [tool.package-maximizer]
 plugin-metadata-version = "1"

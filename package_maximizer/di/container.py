@@ -8,7 +8,7 @@ service registration, and lifecycle management.
 from __future__ import annotations
 
 import inspect
-from typing import Any, Callable, TypeVar, Generic
+from typing import Any, Callable, Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -36,8 +36,10 @@ class Container:
             if lifecycle == "singleton":
                 self._singletons[cls] = None  # type: ignore
             else:
+
                 def _factory(c: type = cls) -> Any:
                     return c()
+
                 self._factories[cls] = _factory
             return cls
 

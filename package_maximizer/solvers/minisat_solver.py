@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 try:
-    from pysat.solvers import Solver
     from pysat.card import CardEnc, EncType
     from pysat.formula import CNF
+    from pysat.solvers import Solver
 
     MINISAT_AVAILABLE = True
 except ImportError:
@@ -138,7 +138,7 @@ class MiniSatSolver(ConstraintSolver):
 
             # Зависимости
             for p in test_packages:
-                for dep in (constraints.dependencies.get(p.name) or []):
+                for dep in constraints.dependencies.get(p.name) or []:
                     if dep in temp_var_map:
                         cnf.append([-temp_var_map[p.name], temp_var_map[dep]])
 

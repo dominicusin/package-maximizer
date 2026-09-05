@@ -126,9 +126,7 @@ class Config:
 
     def as_dict(self) -> dict[str, Any]:
         """Return the config as a plain dict (excludes ``source``)."""
-        return {
-            k: v for k, v in self.__dict__.items() if k != "source"
-        }
+        return {k: v for k, v in self.__dict__.items() if k != "source"}
 
 
 def load_config(path: str | Path | None = None) -> Config:

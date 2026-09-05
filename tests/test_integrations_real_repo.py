@@ -13,10 +13,8 @@ import pytest
 
 from package_maximizer.core.package import Package
 from package_maximizer.integrations import RealRepoIntegration
-from package_maximizer.integrations.real_repo_integration import (
-    PackageInfo,
-    RepoConfig,
-)
+from package_maximizer.integrations.real_repo_integration import (PackageInfo,
+                                                                  RepoConfig)
 
 MANAGERS = ["apt", "pacman", "dnf", "brew"]
 
@@ -123,16 +121,43 @@ def test_unknown_manager_returns_empty():
 
 
 def test_repo_config_get_parser():
-    assert RepoConfig(name="a", url="u", package_manager="apt").get_parser().__class__.__name__ == "APTParser"
-    assert RepoConfig(name="a", url="u", package_manager="pacman").get_parser().__class__.__name__ == "PacmanParser"
-    assert RepoConfig(name="a", url="u", package_manager="dnf").get_parser().__class__.__name__ == "DNFParser"
-    assert RepoConfig(name="a", url="u", package_manager="brew").get_parser().__class__.__name__ == "BrewParser"
+    assert (
+        RepoConfig(name="a", url="u", package_manager="apt")
+        .get_parser()
+        .__class__.__name__
+        == "APTParser"
+    )
+    assert (
+        RepoConfig(name="a", url="u", package_manager="pacman")
+        .get_parser()
+        .__class__.__name__
+        == "PacmanParser"
+    )
+    assert (
+        RepoConfig(name="a", url="u", package_manager="dnf")
+        .get_parser()
+        .__class__.__name__
+        == "DNFParser"
+    )
+    assert (
+        RepoConfig(name="a", url="u", package_manager="brew")
+        .get_parser()
+        .__class__.__name__
+        == "BrewParser"
+    )
     # Unknown manager falls back to APTParser
-    assert RepoConfig(name="a", url="u", package_manager="xyz").get_parser().__class__.__name__ == "APTParser"
+    assert (
+        RepoConfig(name="a", url="u", package_manager="xyz")
+        .get_parser()
+        .__class__.__name__
+        == "APTParser"
+    )
 
 
 def test_package_info_to_package():
-    info = PackageInfo(name="foo", version="1.0", depends=["a"], conflicts=["b"], installed=True)
+    info = PackageInfo(
+        name="foo", version="1.0", depends=["a"], conflicts=["b"], installed=True
+    )
     pkg = info.to_package()
     assert isinstance(pkg, Package)
     assert pkg.name == "foo"
@@ -142,15 +167,21 @@ def test_package_info_to_package():
 
 def test_check_package_installed():
     integration = RealRepoIntegration(package_manager="apt")
-    with patch.object(integration, "get_installed_packages", return_value=[Package(name="vim")]):
+    with patch.object(
+        integration, "get_installed_packages", return_value=[Package(name="vim")]
+    ):
         assert integration.check_package_installed("vim") is True
         assert integration.check_package_installed("nope") is False
 
 
 def test_get_system_info():
     integration = RealRepoIntegration(package_manager="apt")
-    with patch.object(integration, "get_installed_packages", return_value=[Package(name="x")]), \
-         patch.object(integration, "get_available_updates", return_value=[]):
+    with (
+        patch.object(
+            integration, "get_installed_packages", return_value=[Package(name="x")]
+        ),
+        patch.object(integration, "get_available_updates", return_value=[]),
+    ):
         info = integration.get_system_info()
         assert info["package_manager"] == "apt"
         assert info["installed_packages"] == 1

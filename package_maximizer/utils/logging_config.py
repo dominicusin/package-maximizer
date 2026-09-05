@@ -57,7 +57,9 @@ def configure_logging(
         json_output = os.environ.get("PM_LOG_JSON", "false").lower() == "true"
 
     handler = logging.StreamHandler(stream or sys.stderr)
-    handler.setFormatter(JsonFormatter() if json_output else logging.Formatter(_DEFAULT_FORMAT))
+    handler.setFormatter(
+        JsonFormatter() if json_output else logging.Formatter(_DEFAULT_FORMAT)
+    )
 
     root = logging.getLogger()
     # Replace existing handlers to avoid duplicate output.

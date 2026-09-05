@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 
 try:
     import pulp
-    from pulp import LpProblem, LpVariable, LpBinary, LpMaximize, LpStatus, lpSum, value
+    from pulp import (LpBinary, LpMaximize, LpProblem, LpStatus, LpVariable,
+                      lpSum, value)
 
     PULP_AVAILABLE = True
 except ImportError:
@@ -32,7 +33,9 @@ except ImportError:
 class PulPSolver(ConstraintSolver):
     """ILP/MIP-солвер на основе PuLP."""
 
-    def __init__(self, solver_name: Optional[str] = None, time_limit: int = 10000) -> None:
+    def __init__(
+        self, solver_name: Optional[str] = None, time_limit: int = 10000
+    ) -> None:
         self.solver_name = solver_name
         self.time_limit = time_limit
 

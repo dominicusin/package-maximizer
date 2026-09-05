@@ -116,9 +116,15 @@ class CargoParser(PackageParser):
                 for pkg in data.get("packages", []):
                     name = pkg.get("name", "")
                     version = pkg.get("version", "")
-                    deps = [d.get("name") for d in pkg.get("dependencies", []) if d.get("name")]
+                    deps = [
+                        d.get("name")
+                        for d in pkg.get("dependencies", [])
+                        if d.get("name")
+                    ]
                     packages.append(
-                        Package(name=name, version=version, status="candidate", depends=deps)
+                        Package(
+                            name=name, version=version, status="candidate", depends=deps
+                        )
                     )
                 return packages
 
@@ -136,7 +142,9 @@ class CargoParser(PackageParser):
             m = re.match(r"^([A-Za-z0-9_\-]+)\s*(?:v?([0-9][\w.\-]*))?", line)
             if m:
                 packages.append(
-                    Package(name=m.group(1), version=m.group(2) or "", status="candidate")
+                    Package(
+                        name=m.group(1), version=m.group(2) or "", status="candidate"
+                    )
                 )
         return packages
 
@@ -178,9 +186,15 @@ class NpmParser(PackageParser):
                         if name in seen:
                             continue
                         seen.add(name)
-                        version = info.get("version", "") if isinstance(info, dict) else ""
+                        version = (
+                            info.get("version", "") if isinstance(info, dict) else ""
+                        )
                         deps = (
-                            [d for d in info.get("dependencies", {}) if isinstance(info, dict)]
+                            [
+                                d
+                                for d in info.get("dependencies", {})
+                                if isinstance(info, dict)
+                            ]
                             if isinstance(info, dict)
                             else []
                         )
@@ -258,7 +272,9 @@ class PortageParser(PackageParser):
                 if "/" in pkg_part:
                     name = pkg_part.split("/")[-1].split("-")[0]
                     version = pkg_part.split("/")[-1].split("-", 1)[-1]
-                    packages.append(Package(name=name, version=version, status="candidate"))
+                    packages.append(
+                        Package(name=name, version=version, status="candidate")
+                    )
         return packages
 
 
@@ -294,7 +310,9 @@ class ApkParser(PackageParser):
             else:
                 name = full_name
                 version = ""
-            packages.append(Package(name=name, version=version or "", status="installed"))
+            packages.append(
+                Package(name=name, version=version or "", status="installed")
+            )
         return packages
 
 
@@ -326,7 +344,9 @@ class ZypperParser(PackageParser):
                     name = cols[1]
                     version = cols[3]
                     if name and not name.startswith("-") and version:
-                        packages.append(Package(name=name, version=version, status="candidate"))
+                        packages.append(
+                            Package(name=name, version=version, status="candidate")
+                        )
         return packages
 
 
@@ -396,11 +416,15 @@ class PipParser(PackageParser):
                     continue
                 parts = line.split()
                 if len(parts) >= 2:
-                    packages.append(Package(name=parts[0], version=parts[1], status="installed"))
+                    packages.append(
+                        Package(name=parts[0], version=parts[1], status="installed")
+                    )
                 continue
             m = re.match(r"^([A-Za-z0-9_\-\.]+)\s*([><=!~]+)\s*(.+)$", line)
             if m:
-                packages.append(Package(name=m.group(1), version=m.group(3), status="installed"))
+                packages.append(
+                    Package(name=m.group(1), version=m.group(3), status="installed")
+                )
         return packages
 
 
@@ -471,7 +495,9 @@ class YarnParser(PackageParser):
                 continue
             m = re.match(r"^([A-Za-z0-9_@/.\-]+)@([0-9][\w.\-]*)$", clean)
             if m:
-                packages.append(Package(name=m.group(1), version=m.group(2), status="installed"))
+                packages.append(
+                    Package(name=m.group(1), version=m.group(2), status="installed")
+                )
         return packages
 
 
@@ -497,13 +523,25 @@ class ComposerParser(PackageParser):
             line = line.strip()
             if not line:
                 if current_name:
-                    packages.append(Package(name=current_name, version=current_version, status="installed"))
+                    packages.append(
+                        Package(
+                            name=current_name,
+                            version=current_version,
+                            status="installed",
+                        )
+                    )
                     current_name = None
                 continue
             m_name = re.match(r"^name\s*:\s*(.+)$", line)
             if m_name:
                 if current_name:
-                    packages.append(Package(name=current_name, version=current_version, status="installed"))
+                    packages.append(
+                        Package(
+                            name=current_name,
+                            version=current_version,
+                            status="installed",
+                        )
+                    )
                 current_name = m_name.group(1).strip()
                 current_version = ""
                 continue
@@ -513,7 +551,9 @@ class ComposerParser(PackageParser):
                 current_version = m_ver.group(1) if m_ver else ""
 
         if current_name:
-            packages.append(Package(name=current_name, version=current_version, status="installed"))
+            packages.append(
+                Package(name=current_name, version=current_version, status="installed")
+            )
         return packages
 
 
@@ -542,7 +582,9 @@ class VcpkgParser(PackageParser):
                 version = parts[1]
                 name = name_arch.split(":")[0] if ":" in name_arch else name_arch
                 if name and version:
-                    packages.append(Package(name=name, version=version, status="installed"))
+                    packages.append(
+                        Package(name=name, version=version, status="installed")
+                    )
         return packages
 
 
@@ -575,7 +617,9 @@ class NuGetParser(PackageParser):
                     continue
                 parts = line.split()
                 if len(parts) >= 2:
-                    packages.append(Package(name=parts[0], version=parts[1], status="installed"))
+                    packages.append(
+                        Package(name=parts[0], version=parts[1], status="installed")
+                    )
         return packages
 
 
@@ -611,7 +655,9 @@ class WingetParser(PackageParser):
                 name = " ".join(parts[:-2])
                 name = re.sub(r"\s*\([^)]*\)\s*$", "", name).strip()
                 if name and version:
-                    packages.append(Package(name=name, version=version, status="installed"))
+                    packages.append(
+                        Package(name=name, version=version, status="installed")
+                    )
         return packages
 
 
@@ -645,7 +691,9 @@ class ScoopParser(PackageParser):
                 if len(pkg_parts) >= 2:
                     name = pkg_parts[0]
                     version = pkg_parts[-1]
-                    packages.append(Package(name=name, version=version, status="installed"))
+                    packages.append(
+                        Package(name=name, version=version, status="installed")
+                    )
         return packages
 
 

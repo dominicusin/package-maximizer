@@ -10,7 +10,15 @@ import pytest
 from package_maximizer.core.package import Package
 from package_maximizer.solvers import get_solver
 
-SOLVER_NAMES = ["greedy", "enhanced_greedy", "z3", "pulp", "ortools", "maxsat", "minisat"]
+SOLVER_NAMES = [
+    "greedy",
+    "enhanced_greedy",
+    "z3",
+    "pulp",
+    "ortools",
+    "maxsat",
+    "minisat",
+]
 
 
 def _mk(name, conflicts=None, depends=None, version=""):
@@ -56,7 +64,10 @@ class TestSolverWeights:
         assert not (("a" in result) and ("b" in result))
 
 
-@pytest.mark.parametrize("solver_name", ["greedy", "enhanced_greedy", "z3", "pulp", "ortools", "maxsat", "minisat"])
+@pytest.mark.parametrize(
+    "solver_name",
+    ["greedy", "enhanced_greedy", "z3", "pulp", "ortools", "maxsat", "minisat"],
+)
 class TestSolverVersionConstraints:
     def test_version_constraint_keeps_compatible(self, solver_name):
         """A package with a version that satisfies no constraint is still
