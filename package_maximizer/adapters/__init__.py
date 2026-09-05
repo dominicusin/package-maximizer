@@ -96,7 +96,7 @@ class APTMetadataAdapter:
         elif field_lower == "installed-size":
             try:
                 metadata.size = int(value.split()[0])
-            except ValueError, IndexError:
+            except (ValueError, IndexError):
                 pass
         elif field_lower == "homepage":
             metadata.homepage = value.strip()
