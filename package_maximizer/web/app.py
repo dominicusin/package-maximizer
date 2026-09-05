@@ -113,7 +113,7 @@ def validate_maximize_payload(data: Any) -> tuple[list[str], list, dict | None]:
                 raise ValueError("Weight keys must be strings")
             try:
                 float(v)  # type: ignore[arg-type]
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 raise ValueError(f"Weight for '{k}' must be numeric")
 
     return cleaned, conflicts, weights  # type: ignore[return-value]
@@ -409,13 +409,27 @@ def propose_post() -> tuple[dict, int]:
     """
     data = request.get_json(force=True)
     if not isinstance(data, dict):
-        return jsonify({"error": "Bad Request", "message": "Request body must be a JSON object"}), 400
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": "Request body must be a JSON object",
+                }
+            ),
+            400,
+        )
     if "packages" not in data:
-        return jsonify({"error": "Bad Request", "message": "Missing 'packages' field"}), 400
+        return (
+            jsonify({"error": "Bad Request", "message": "Missing 'packages' field"}),
+            400,
+        )
 
     packages = data.get("packages")
     if not isinstance(packages, list):
-        return jsonify({"error": "Bad Request", "message": "'packages' must be a list"}), 400
+        return (
+            jsonify({"error": "Bad Request", "message": "'packages' must be a list"}),
+            400,
+        )
 
     manager = data.get("manager", "apt")
     solver = data.get("solver", "greedy")
@@ -427,20 +441,32 @@ def propose_post() -> tuple[dict, int]:
     except ValueError:
         valid = [m.value for m in PackageManagerType]
         return (
-            jsonify({"error": "Bad Request", "message": f"Unknown manager '{manager}'. Valid: {valid}"}),
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": f"Unknown manager '{manager}'. Valid: {valid}",
+                }
+            ),
             400,
         )
 
     # Validate solver
     from ..solvers import SOLVER_REGISTRY
+
     if solver not in SOLVER_REGISTRY:
         return (
-            jsonify({"error": "Bad Request", "message": f"Unknown solver '{solver}'. Valid: {list(SOLVER_REGISTRY.keys())}"}),
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": f"Unknown solver '{solver}'. Valid: {list(SOLVER_REGISTRY.keys())}",
+                }
+            ),
             400,
         )
 
     # Get adapter for metadata extraction
     from ..adapters import get_adapter
+
     try:
         adapter = get_adapter(manager)
     except ValueError as e:
@@ -455,19 +481,24 @@ def propose_post() -> tuple[dict, int]:
         metadata = adapter.fetch(pkg_name)
         if metadata and metadata.name:
             package_objs.append(metadata.to_package())
-            metadata_summary.append({
-                "name": metadata.name,
-                "version": metadata.version,
-                "depends": metadata.depends,
-                "conflicts": metadata.conflicts,
-            })
+            metadata_summary.append(
+                {
+                    "name": metadata.name,
+                    "version": metadata.version,
+                    "depends": metadata.depends,
+                    "conflicts": metadata.conflicts,
+                }
+            )
         else:
             not_found.append(pkg_name)
             package_objs.append(Package(name=pkg_name, status="candidate"))
             metadata_summary.append({"name": pkg_name, "depends": [], "conflicts": []})
 
     if not package_objs:
-        return jsonify({"error": "Bad Request", "message": "No packages to process"}), 400
+        return (
+            jsonify({"error": "Bad Request", "message": "No packages to process"}),
+            400,
+        )
 
     try:
         maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
@@ -491,6 +522,7 @@ def propose_post() -> tuple[dict, int]:
 
     if explain:
         from ..core.model_encoder import encode_packages
+
         constraints = encode_packages(package_objs)
         selected_set = set(result)
         all_names = {p.name for p in package_objs}
