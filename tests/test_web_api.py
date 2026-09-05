@@ -7,6 +7,7 @@ openapi, docs, and error handlers.
 """
 
 import os
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -182,3 +183,83 @@ def test_rate_limit_kicks_in(client):
     # so we just verify the endpoint still answers 200 with valid key.
     r = client.get("/api/v1/solvers", headers=headers)
     assert r.status_code == 200
+
+
+# --- Propose endpoint ---------------------------------------------------------
+
+
+def test_propose_requires_key(client):
+    r = client.post("/api/v1/propose", json={"packages": ["requests"]})
+    assert r.status_code == 401
+
+
+def test_propose_with_key(client, monkeypatch):
+    """Test propose endpoint with mocked adapter."""
+    from package_maximizer.adapters import PackageMetadata
+
+    mock_metadata = PackageMetadata(
+        name="requests",
+        version="2.31.0",
+        depends=["certifi"],
+        conflicts=[],
+    )
+
+    mock_adapter = MagicMock()
+    mock_adapter.fetch.return_value = mock_metadata
+
+    with patch("package_maximizer.adapters.get_adapter", return_value=mock_adapter):
+        r = client.post(
+            "/api/v1/propose",
+            json={"packages": ["requests"], "manager": "pip", "solver": "greedy"},
+            headers=auth_headers(),
+        )
+
+    assert r.status_code == 200
+    data = r.get_json()
+    assert data["selected"] == ["requests"]
+    assert data["metadata_fetched"] == 1
+
+
+def test_propose_missing_packages(client):
+    r = client.post("/api/v1/propose", json={}, headers=auth_headers())
+    assert r.status_code == 400
+
+
+def test_propose_invalid_manager(client):
+    r = client.post(
+        "/api/v1/propose",
+        json={"packages": ["requests"], "manager": "invalid"},
+        headers=auth_headers(),
+    )
+    assert r.status_code == 400
+
+
+def test_propose_with_explain(client, monkeypatch):
+    """Test propose with explain flag."""
+    from package_maximizer.adapters import PackageMetadata
+
+    mock_metadata = PackageMetadata(
+        name="nginx",
+        version="1.24.0",
+        depends=["libc6"],
+        conflicts=["apache2"],
+    )
+
+    mock_adapter = MagicMock()
+    mock_adapter.fetch.return_value = mock_metadata
+
+    with patch("package_maximizer.adapters.get_adapter", return_value=mock_adapter):
+        r = client.post(
+            "/api/v1/propose",
+            json={
+                "packages": ["nginx", "apache2"],
+                "manager": "apt",
+                "solver": "greedy",
+                "explain": True,
+            },
+            headers=auth_headers(),
+        )
+
+    assert r.status_code == 200
+    data = r.get_json()
+    assert "excluded" in data

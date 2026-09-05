@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-09-05
+
+### Added
+- **CLI `propose` command**: automatic metadata extraction + maximization
+  - `package-maximizer propose nginx apache2 --manager apt --explain`
+  - Auto-fetches depends/conflicts via adapters
+  - `--explain` shows why packages were excluded
+- **Web API `/api/v1/propose`**: POST endpoint with automatic metadata extraction
+  - Accepts `packages`, `manager`, `solver`, `explain` fields
+  - Returns `metadata_fetched`, `metadata` summary, and optional `excluded` reasons
+- **Adapter `fetch()` method**: subprocess call + parse for APT, pip, pacman
+  - `APTMetadataAdapter.fetch()` → `apt-cache show`
+  - `PipMetadataAdapter.fetch()` → `pip show`
+  - `PacmanMetadataAdapter.fetch()` → `pacman -Si`
+- **`get_adapter(manager)` factory**: get adapter by manager name
+- **Tests**: 8 tests for propose CLI, 5 tests for propose web API
+
+### Changed
+- Adapters now support both `parse()` (from raw string) and `fetch()` (from repository)
+
 ## [0.7.1] - 2026-09-05
 
 ### Added
