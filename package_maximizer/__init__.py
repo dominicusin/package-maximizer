@@ -28,7 +28,8 @@ from .core.constraints import (ConflictConstraint, ConstraintParser,
                                DependencyConstraint, VersionConstraint)
 # Core components
 from .core.enums import PackageManagerType, PackageStatus, SolverType
-from .core.interfaces import ConstraintSolver, PackageParser, ResultAnalyzer
+from .core.interfaces import ConstraintSolver, PackageParser
+from .core.interfaces import ResultAnalyzer as ResultAnalyzerInterface
 from .core.maximizer import PackageMaximizer
 from .core.package import Package, PackageConstraint
 # Integrations
