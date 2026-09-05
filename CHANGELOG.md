@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-09-05
+
+### Added
+- **NpmMetadataAdapter**: парсер метаданных npm (package-lock.json v2/v3)
+  - `parse()`: парсит `npm view` JSON и `package-lock.json`
+  - `parse_lockfile()`: разбирает lockfile v2/v3
+  - `fetch()`: зовёт `npm view <pkg> json`
+- **BrewMetadataAdapter**: парсер метаданных brew
+  - `parse()`: парсит JSON от `brew info --json=v2`
+  - `fetch()`: зовёт `brew info --json=v2 <pkg>`
+  - Поддержка dependencies, conflicts_with, versions
+- **get_adapter()** теперь поддерживает npm и brew
+
+### Tests
+- 14 тестов для NpmMetadataAdapter и BrewMetadataAdapter
+- Всего 779 тестов
+
 ## [0.9.0] - 2026-09-05
 
 ### Added
