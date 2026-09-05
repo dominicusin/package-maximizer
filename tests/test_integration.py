@@ -6,7 +6,8 @@ import json
 
 import pytest
 
-from package_maximizer.core.constraints import ConstraintParser, VersionConstraint
+from package_maximizer.core.constraints import (ConstraintParser,
+                                                VersionConstraint)
 from package_maximizer.core.maximizer import PackageMaximizer
 from package_maximizer.core.package import Package
 from package_maximizer.parsers import PARSER_REGISTRY, get_parser

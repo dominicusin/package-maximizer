@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-
 # NOTE: ET.fromstring is used here only to validate Package Maximizer's own
 # generated GraphML (trusted local output), not untrusted external input, so
 # the standard parser is safe in this test context.

@@ -4,7 +4,8 @@ Tests for PackageMaximizer.
 
 import pytest
 
-from package_maximizer import Package, PackageManagerType, PackageMaximizer, SolverType
+from package_maximizer import (Package, PackageManagerType, PackageMaximizer,
+                               SolverType)
 from package_maximizer.solvers import GreedySolver, Z3Solver
 
 

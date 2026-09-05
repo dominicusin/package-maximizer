@@ -7,13 +7,8 @@ import json
 import pytest
 from click.testing import CliRunner
 
-from package_maximizer.cli import (
-    check_updates,
-    info,
-    list_installed,
-    search,
-    system_info,
-)
+from package_maximizer.cli import (check_updates, info, list_installed, search,
+                                   system_info)
 
 
 class TestListInstalledCommand:
@@ -135,20 +130,11 @@ class TestCLICommandsExist:
 
     def test_all_commands_importable(self):
         """Test that all CLI commands can be imported"""
-        from package_maximizer.cli import (
-            benchmark,
-            check_updates,
-            cli,
-            from_file,
-            info,
-            list_installed,
-            list_parsers,
-            list_solvers,
-            maximize,
-            search,
-            system_info,
-            version,
-        )
+        from package_maximizer.cli import (benchmark, check_updates, cli,
+                                           from_file, info, list_installed,
+                                           list_parsers, list_solvers,
+                                           maximize, search, system_info,
+                                           version)
 
         # All should be callable
         assert callable(cli)

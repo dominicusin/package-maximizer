@@ -9,18 +9,10 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from package_maximizer.cli.main import (
-    cli,
-    config_command,
-    export_command,
-    from_file,
-    init_config_command,
-    list_managers,
-    list_solvers,
-    maximize,
-    tui_command,
-    version,
-)
+from package_maximizer.cli.main import (cli, config_command, export_command,
+                                        from_file, init_config_command,
+                                        list_managers, list_solvers, maximize,
+                                        tui_command, version)
 
 
 class TestFromFileCommand:

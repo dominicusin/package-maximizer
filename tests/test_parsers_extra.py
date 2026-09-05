@@ -2,28 +2,13 @@
 
 from __future__ import annotations
 
-from package_maximizer.parsers import (
-    PARSER_REGISTRY,
-    ApkParser,
-    CargoParser,
-    ChocoParser,
-    ComposerParser,
-    CondaParser,
-    FlatpakParser,
-    GemParser,
-    NpmParser,
-    NuGetParser,
-    PipParser,
-    PortageParser,
-    ScoopParser,
-    SnapParser,
-    VcpkgParser,
-    WingetParser,
-    YarnParser,
-    YumParser,
-    ZypperParser,
-    get_parser,
-)
+from package_maximizer.parsers import (PARSER_REGISTRY, ApkParser, CargoParser,
+                                       ChocoParser, ComposerParser,
+                                       CondaParser, FlatpakParser, GemParser,
+                                       NpmParser, NuGetParser, PipParser,
+                                       PortageParser, ScoopParser, SnapParser,
+                                       VcpkgParser, WingetParser, YarnParser,
+                                       YumParser, ZypperParser, get_parser)
 
 SNAP_LIST = """Name           Version          Rev    Tracking         Publisher
 core           16-2.58.3        14936  latest/stable    canonical*

@@ -5,13 +5,8 @@ Tests for solvers module.
 import pytest
 
 from package_maximizer.core.package import Package
-from package_maximizer.solvers import (
-    GreedySolver,
-    ORToolsSolver,
-    PulPSolver,
-    Z3Solver,
-    get_solver,
-)
+from package_maximizer.solvers import (GreedySolver, ORToolsSolver, PulPSolver,
+                                       Z3Solver, get_solver)
 
 
 class TestGreedySolver:
