@@ -11,7 +11,6 @@ from package_maximizer.adapters import (
     PackageMetadata,
 )
 
-
 # ─── Fixtures ───────────────────────────────────────────────────────────
 
 # Реальный вывод apt-cache show nginx (Ubuntu 22.04)
@@ -103,6 +102,7 @@ Validated By    : SHA-256 Sum  Signature
 
 
 # ─── Tests ─────────────────────────────────────────────────────────────
+
 
 class TestAPTMetadataAdapter:
     """Тесты парсера метаданных APT."""
