@@ -7,6 +7,7 @@ Package с заполненными depends и conflicts.
 from __future__ import annotations
 
 import re
+import subprocess
 from dataclasses import dataclass, field
 
 from ..core.package import Package
@@ -35,8 +36,40 @@ class PackageMetadata:
         )
 
 
+def get_adapter(manager: str):
+    """Получить адаптер метаданных по имени менеджера."""
+    adapters = {
+        "apt": APTMetadataAdapter,
+        "pip": PipMetadataAdapter,
+        "pacman": PacmanMetadataAdapter,
+    }
+    cls = adapters.get(manager.lower())
+    if cls is None:
+        raise ValueError(
+            f"No metadata adapter for '{manager}'. "
+            f"Available: {', '.join(adapters.keys())}"
+        )
+    return cls()
+
+
 class APTMetadataAdapter:
     """Парсер метаданных APT (apt-cache show / dpkg -s)."""
+
+    def fetch(self, package_name: str) -> PackageMetadata | None:
+        """Получить метаданные через apt-cache show."""
+        try:
+            result = subprocess.run(
+                ["apt-cache", "show", package_name],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if result.returncode == 0:
+                packages = self.parse_multi(result.stdout)
+                return packages[0] if packages else None
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+        return None
 
     def parse(self, raw: str) -> PackageMetadata | None:
         """Разобрать вывод apt-cache show или dpkg -s."""
@@ -140,6 +173,21 @@ class APTMetadataAdapter:
 class PipMetadataAdapter:
     """Парсер метаданных pip (pip show / METADATA)."""
 
+    def fetch(self, package_name: str) -> PackageMetadata | None:
+        """Получить метаданные через pip show."""
+        try:
+            result = subprocess.run(
+                ["pip", "show", package_name],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if result.returncode == 0:
+                return self.parse(result.stdout)
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+        return None
+
     def parse(self, raw: str) -> PackageMetadata | None:
         """Разобрать вывод pip show."""
         if not raw.strip():
@@ -214,6 +262,21 @@ class PipMetadataAdapter:
 
 class PacmanMetadataAdapter:
     """Парсер метаданных pacman (pacman -Si / -Qi)."""
+
+    def fetch(self, package_name: str) -> PackageMetadata | None:
+        """Получить метаданные через pacman -Si."""
+        try:
+            result = subprocess.run(
+                ["pacman", "-Si", package_name],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if result.returncode == 0:
+                return self.parse(result.stdout)
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+        return None
 
     def parse(self, raw: str) -> PackageMetadata | None:
         """Разобрать вывод pacman -Si или -Qi."""
