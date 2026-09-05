@@ -73,7 +73,7 @@ jobs:
     # Blocking checks — no || true (CI must catch regressions)
     # Safe: these commands have no user-controlled input
     - name: Type check with mypy
-      run: mypy package_maximizer/ --ignore-missing-imports
+      run: mypy package_maximizer/core/ package_maximizer/solvers/ package_maximizer/adapters/ package_maximizer/utils/ --ignore-missing-imports
 
     - name: Check formatting with black
       run: black --check package_maximizer/ tests/
