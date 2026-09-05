@@ -8,9 +8,11 @@ import json
 
 import pytest
 
-from package_maximizer.utils.benchmark import (BenchmarkReport,
-                                               BenchmarkResult,
-                                               BenchmarkRunner)
+from package_maximizer.utils.benchmark import (
+    BenchmarkReport,
+    BenchmarkResult,
+    BenchmarkRunner,
+)
 
 
 def _fake_report() -> BenchmarkReport:
