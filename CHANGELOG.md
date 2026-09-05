@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-09-05
+
+### Added
+- **Metadata adapters** (`adapters/`): парсеры метаданных для APT, pip, pacman
+  - `APTMetadataAdapter`: парсит `apt-cache show` / `dpkg -s`
+  - `PipMetadataAdapter`: парсит `pip show` / METADATA
+  - `PacmanMetadataAdapter`: парсит `pacman -Si` / `-Qi`
+- **E2E tests** на реальных фикстурах: nginx, apache2, requests, certifi, vim
+
 ## [0.7.0] - 2026-09-05
 
 ### Added
