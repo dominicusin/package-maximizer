@@ -11,12 +11,24 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from package_maximizer.cli.main import (benchmark, check_updates, cli,
-                                        config_command, export_command,
-                                        from_file, info, init_config_command,
-                                        list_installed, list_managers,
-                                        list_solvers, maximize, search,
-                                        system_info, tui_command, version)
+from package_maximizer.cli.main import (
+    benchmark,
+    check_updates,
+    cli,
+    config_command,
+    export_command,
+    from_file,
+    info,
+    init_config_command,
+    list_installed,
+    list_managers,
+    list_solvers,
+    maximize,
+    search,
+    system_info,
+    tui_command,
+    version,
+)
 
 
 class TestFromFileExtended:

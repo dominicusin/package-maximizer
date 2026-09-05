@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from package_maximizer.core.model_encoder import (ModelConstraints,
-                                                  encode_packages)
+from package_maximizer.core.model_encoder import ModelConstraints, encode_packages
 from package_maximizer.core.package import Package
 from package_maximizer.solvers.enhanced_greedy import EnhancedGreedySolver
 from package_maximizer.solvers.greedy import GreedySolver

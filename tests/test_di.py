@@ -5,9 +5,13 @@ from __future__ import annotations
 import pytest
 
 from package_maximizer.core.package import Package
-from package_maximizer.di import (Container, ServiceLocator,
-                                  build_default_parser_factory,
-                                  build_default_solver_factory, inject)
+from package_maximizer.di import (
+    Container,
+    ServiceLocator,
+    build_default_parser_factory,
+    build_default_solver_factory,
+    inject,
+)
 from package_maximizer.parsers import get_parser
 from package_maximizer.solvers import SOLVER_REGISTRY, GreedySolver, get_solver
 
