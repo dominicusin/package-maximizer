@@ -5,13 +5,8 @@ Tests for solvers module.
 import pytest
 
 from package_maximizer.core.package import Package
-from package_maximizer.solvers import (
-    GreedySolver,
-    Z3Solver,
-    PulPSolver,
-    ORToolsSolver,
-    get_solver,
-)
+from package_maximizer.solvers import (GreedySolver, ORToolsSolver, PulPSolver,
+                                       Z3Solver, get_solver)
 
 
 class TestGreedySolver:
@@ -48,13 +43,13 @@ class TestGreedySolver:
         pkg1 = Package(name="pkg1")
         pkg2 = Package(name="pkg2")
         pkg3 = Package(name="pkg3")
-        
+
         pkg1.conflicts = ["pkg2"]
         pkg2.conflicts = ["pkg1"]
-        
+
         packages = [pkg1, pkg2, pkg3]
         result = solver.solve(packages)
-        
+
         # Should select either pkg1 or pkg2, plus pkg3
         assert len(result) == 2
         assert "pkg3" in result
@@ -66,15 +61,15 @@ class TestGreedySolver:
         pkg1 = Package(name="pkg1")
         pkg2 = Package(name="pkg2")
         pkg3 = Package(name="pkg3")
-        
+
         pkg1.conflicts = ["pkg2"]
         pkg2.conflicts = ["pkg1"]
-        
+
         packages = [pkg1, pkg2, pkg3]
         weights = {"pkg1": 1.0, "pkg2": 2.0, "pkg3": 1.0}
-        
+
         result = solver.solve_with_weights(packages, weights)
-        
+
         # Should prefer pkg2 (higher weight) over pkg1
         assert "pkg2" in result
         assert "pkg3" in result
@@ -86,14 +81,14 @@ class TestGreedySolver:
         pkg1 = Package(name="pkg1")
         pkg2 = Package(name="pkg2")
         pkg3 = Package(name="pkg3")
-        
+
         pkg1.conflicts = ["pkg2"]
         pkg2.conflicts = ["pkg1"]
         pkg3.conflicts = ["pkg1"]
-        
+
         packages = [pkg1, pkg2, pkg3]
         result = solver.solve(packages)
-        
+
         # With remove strategy, should have at least 1 package
         assert len(result) >= 1
 
@@ -132,13 +127,13 @@ class TestZ3Solver:
         pkg1 = Package(name="pkg1")
         pkg2 = Package(name="pkg2")
         pkg3 = Package(name="pkg3")
-        
+
         pkg1.conflicts = ["pkg2"]
         pkg2.conflicts = ["pkg1"]
-        
+
         packages = [pkg1, pkg2, pkg3]
         result = solver.solve(packages)
-        
+
         # Should select either pkg1 or pkg2, plus pkg3
         assert len(result) == 2
         assert "pkg3" in result
@@ -179,13 +174,13 @@ class TestPulPSolver:
         pkg1 = Package(name="pkg1")
         pkg2 = Package(name="pkg2")
         pkg3 = Package(name="pkg3")
-        
+
         pkg1.conflicts = ["pkg2"]
         pkg2.conflicts = ["pkg1"]
-        
+
         packages = [pkg1, pkg2, pkg3]
         result = solver.solve(packages)
-        
+
         # Should select either pkg1 or pkg2, plus pkg3
         assert len(result) == 2
         assert "pkg3" in result
@@ -226,13 +221,13 @@ class TestORToolsSolver:
         pkg1 = Package(name="pkg1")
         pkg2 = Package(name="pkg2")
         pkg3 = Package(name="pkg3")
-        
+
         pkg1.conflicts = ["pkg2"]
         pkg2.conflicts = ["pkg1"]
-        
+
         packages = [pkg1, pkg2, pkg3]
         result = solver.solve(packages)
-        
+
         # Should select either pkg1 or pkg2, plus pkg3
         assert len(result) == 2
         assert "pkg3" in result

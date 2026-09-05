@@ -12,11 +12,13 @@ class TestZ3SolverInit:
 
     def test_default_init(self):
         from package_maximizer.solvers.z3_solver import Z3Solver
+
         solver = Z3Solver()
         assert solver.timeout == 10000
 
     def test_custom_init(self):
         from package_maximizer.solvers.z3_solver import Z3Solver
+
         solver = Z3Solver(timeout=5000)
         assert solver.timeout == 5000
 
@@ -26,7 +28,8 @@ class TestZ3Available:
 
     def test_z3_available_flag(self):
         from package_maximizer.solvers import z3_solver
-        assert hasattr(z3_solver, 'Z3_AVAILABLE')
+
+        assert hasattr(z3_solver, "Z3_AVAILABLE")
 
 
 class TestZ3Solve:
@@ -34,12 +37,14 @@ class TestZ3Solve:
 
     def test_solve_empty_packages(self):
         from package_maximizer.solvers.z3_solver import Z3Solver
+
         solver = Z3Solver()
         result = solver.solve([])
         assert result == []
 
     def test_solve_single_package(self):
         from package_maximizer.solvers.z3_solver import Z3Solver
+
         solver = Z3Solver()
         pkgs = [Package(name="a")]
         result = solver.solve(pkgs)
@@ -47,6 +52,7 @@ class TestZ3Solve:
 
     def test_solve_no_conflicts(self):
         from package_maximizer.solvers.z3_solver import Z3Solver
+
         solver = Z3Solver()
         pkgs = [Package(name="a"), Package(name="b"), Package(name="c")]
         result = solver.solve(pkgs)
@@ -54,6 +60,7 @@ class TestZ3Solve:
 
     def test_solve_with_conflicts(self):
         from package_maximizer.solvers.z3_solver import Z3Solver
+
         solver = Z3Solver()
         pkgs = [
             Package(name="a", conflicts=["b"]),
@@ -65,6 +72,7 @@ class TestZ3Solve:
 
     def test_solve_all_conflicting(self):
         from package_maximizer.solvers.z3_solver import Z3Solver
+
         solver = Z3Solver()
         pkgs = [
             Package(name="a", conflicts=["b", "c"]),
@@ -80,12 +88,14 @@ class TestZ3SolveWithWeights:
 
     def test_solve_with_weights_empty(self):
         from package_maximizer.solvers.z3_solver import Z3Solver
+
         solver = Z3Solver()
         result = solver.solve_with_weights([], {})
         assert result == []
 
     def test_solve_with_weights_none(self):
         from package_maximizer.solvers.z3_solver import Z3Solver
+
         solver = Z3Solver()
         pkgs = [Package(name="a"), Package(name="b")]
         result = solver.solve_with_weights(pkgs, None)
@@ -93,6 +103,7 @@ class TestZ3SolveWithWeights:
 
     def test_solve_with_weights_prefers_high(self):
         from package_maximizer.solvers.z3_solver import Z3Solver
+
         solver = Z3Solver()
         pkgs = [
             Package(name="low", conflicts=["high"]),
@@ -104,6 +115,7 @@ class TestZ3SolveWithWeights:
 
     def test_solve_with_weights_respects_conflicts(self):
         from package_maximizer.solvers.z3_solver import Z3Solver
+
         solver = Z3Solver()
         pkgs = [
             Package(name="a", conflicts=["b"]),

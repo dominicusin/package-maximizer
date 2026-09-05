@@ -6,15 +6,7 @@ from typing import Any
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import (
-    Button,
-    Footer,
-    Header,
-    Input,
-    Log,
-    Select,
-    Static,
-)
+from textual.widgets import Button, Footer, Header, Input, Log, Select, Static
 
 
 class MaximizerApp(App):
@@ -75,7 +67,9 @@ class MaximizerApp(App):
             selected = maximizer.maximize(pkg_objs)
             selected_names = [p.name for p in selected]
             result_text.update(
-                "Selected: " + ", ".join(selected_names) if selected_names else "No selection"
+                "Selected: " + ", ".join(selected_names)
+                if selected_names
+                else "No selection"
             )
             log.write_line(f"Selected {len(selected_names)}/{len(packages)} packages.")
         except Exception as exc:  # noqa: BLE001

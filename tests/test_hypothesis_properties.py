@@ -3,20 +3,24 @@
 from __future__ import annotations
 
 try:
-    from hypothesis import given, settings, strategies as st
+    from hypothesis import given, settings
+    from hypothesis import strategies as st
 except ImportError:  # pragma: no cover - optional dependency
     import pytest
 
     pytest.skip("hypothesis not installed", allow_module_level=True)
 
 from package_maximizer.core.package import Package
-from package_maximizer.solvers import GreedySolver, EnhancedGreedySolver
-
+from package_maximizer.solvers import EnhancedGreedySolver, GreedySolver
 
 # Strategy for small package names / versions
-names = st.text(min_size=1, max_size=20, alphabet=st.characters(
-    whitelist_categories=('Lu', 'Ll', 'Nd'), whitelist_characters=('_-')
-))
+names = st.text(
+    min_size=1,
+    max_size=20,
+    alphabet=st.characters(
+        whitelist_categories=("Lu", "Ll", "Nd"), whitelist_characters=("_-")
+    ),
+)
 versions = st.one_of(st.none(), st.text(min_size=1, max_size=10))
 
 

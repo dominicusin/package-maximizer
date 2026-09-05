@@ -4,18 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from package_maximizer.di import Container, ServiceLocator, inject
-from package_maximizer.di import (
-    build_default_solver_factory,
-    build_default_parser_factory,
-)
 from package_maximizer.core.package import Package
-from package_maximizer.solvers import (
-    GreedySolver,
-    get_solver,
-    SOLVER_REGISTRY,
-)
+from package_maximizer.di import (Container, ServiceLocator,
+                                  build_default_parser_factory,
+                                  build_default_solver_factory, inject)
 from package_maximizer.parsers import get_parser
+from package_maximizer.solvers import SOLVER_REGISTRY, GreedySolver, get_solver
 
 
 class _ServiceA:
@@ -53,7 +47,9 @@ class TestContainerBasics:
         """Container should auto-resolve constructor dependencies."""
         container = Container()
         container.register_factory(_ServiceA, lambda: _ServiceA())
-        container.register_factory(_ServiceB, lambda: _ServiceB(container.resolve(_ServiceA)))
+        container.register_factory(
+            _ServiceB, lambda: _ServiceB(container.resolve(_ServiceA))
+        )
         b = container.resolve(_ServiceB)
         assert isinstance(b, _ServiceB)
         assert isinstance(b.dep, _ServiceA)

@@ -11,24 +11,12 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from package_maximizer.cli.main import (
-    cli,
-    from_file,
-    export_command,
-    config_command,
-    init_config_command,
-    tui_command,
-    list_managers,
-    maximize,
-    list_solvers,
-    version,
-    benchmark,
-    list_installed,
-    search,
-    info,
-    check_updates,
-    system_info,
-)
+from package_maximizer.cli.main import (benchmark, check_updates, cli,
+                                        config_command, export_command,
+                                        from_file, info, init_config_command,
+                                        list_installed, list_managers,
+                                        list_solvers, maximize, search,
+                                        system_info, tui_command, version)
 
 
 class TestFromFileExtended:
@@ -37,10 +25,12 @@ class TestFromFileExtended:
     def test_from_file_text_output(self, tmp_path):
         pkg_file = tmp_path / "packages.json"
         pkg_file.write_text(
-            json.dumps([
-                {"name": "alpha", "version": "1.0", "conflicts": ["beta"]},
-                {"name": "beta", "version": "2.0"},
-            ]),
+            json.dumps(
+                [
+                    {"name": "alpha", "version": "1.0", "conflicts": ["beta"]},
+                    {"name": "beta", "version": "2.0"},
+                ]
+            ),
             encoding="utf-8",
         )
         runner = CliRunner()
@@ -71,23 +61,42 @@ class TestBenchmarkCommand:
 
     def test_benchmark_text(self):
         runner = CliRunner()
-        result = runner.invoke(benchmark, ["--solvers", "greedy", "--packages", "10", "--runs", "2"])
+        result = runner.invoke(
+            benchmark, ["--solvers", "greedy", "--packages", "10", "--runs", "2"]
+        )
         assert result.exit_code == 0
         assert "greedy" in result.output
 
     def test_benchmark_json(self):
         runner = CliRunner()
-        result = runner.invoke(benchmark, ["--solvers", "greedy", "--packages", "10", "--runs", "2", "--output", "json"])
+        result = runner.invoke(
+            benchmark,
+            [
+                "--solvers",
+                "greedy",
+                "--packages",
+                "10",
+                "--runs",
+                "2",
+                "--output",
+                "json",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_benchmark_all_solvers(self):
         runner = CliRunner()
-        result = runner.invoke(benchmark, ["--solvers", "greedy", "--packages", "20", "--runs", "1"])
+        result = runner.invoke(
+            benchmark, ["--solvers", "greedy", "--packages", "20", "--runs", "1"]
+        )
         assert result.exit_code == 0
 
     def test_benchmark_unknown_solver(self):
         runner = CliRunner()
-        result = runner.invoke(benchmark, ["--solvers", "nonexistent_solver", "--packages", "5", "--runs", "1"])
+        result = runner.invoke(
+            benchmark,
+            ["--solvers", "nonexistent_solver", "--packages", "5", "--runs", "1"],
+        )
         assert result.exit_code == 0
 
 
@@ -101,7 +110,9 @@ class TestSearchCommand:
 
     def test_search_json(self):
         runner = CliRunner()
-        result = runner.invoke(search, ["python", "--manager", "apt", "--limit", "5", "--output", "json"])
+        result = runner.invoke(
+            search, ["python", "--manager", "apt", "--limit", "5", "--output", "json"]
+        )
         assert result.exit_code == 0 or result.exit_code == 1
 
 
@@ -206,13 +217,17 @@ class TestExportCommand:
     def test_export_with_output_file(self, tmp_path):
         out = tmp_path / "result.json"
         runner = CliRunner()
-        result = runner.invoke(export_command, ["alpha", "--format", "json", "--output-file", str(out)])
+        result = runner.invoke(
+            export_command, ["alpha", "--format", "json", "--output-file", str(out)]
+        )
         assert result.exit_code == 0
         assert out.exists()
 
     def test_export_with_conflicts(self):
         runner = CliRunner()
-        result = runner.invoke(export_command, ["alpha", "beta", "-c", "alpha", "beta", "--format", "json"])
+        result = runner.invoke(
+            export_command, ["alpha", "beta", "-c", "alpha", "beta", "--format", "json"]
+        )
         assert result.exit_code == 0
 
 

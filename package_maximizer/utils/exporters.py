@@ -104,7 +104,7 @@ def to_graphml(packages: Sequence[Package], selected: Iterable[str]) -> str:
             f'    <node id="{_esc(p.name)}">\n'
             f'      <data key="selected">{str(p.name in selected_set).lower()}</data>\n'
             f'      <data key="version">{_esc(p.version)}</data>\n'
-            f'    </node>'
+            f"    </node>"
         )
 
     edges: list[str] = []
@@ -133,10 +133,10 @@ def to_graphml(packages: Sequence[Package], selected: Iterable[str]) -> str:
         '  <key id="version" for="node" attr.name="version" attr.type="string"/>\n'
         '  <key id="etype" for="edge" attr.name="type" attr.type="string"/>\n'
         '  <graph id="package-maximizer" edgedefault="undirected">\n'
-        f'{chr(10).join(nodes)}\n'
-        f'{chr(10).join(edges)}\n'
-        '  </graph>\n'
-        '</graphml>\n'
+        f"{chr(10).join(nodes)}\n"
+        f"{chr(10).join(edges)}\n"
+        "  </graph>\n"
+        "</graphml>\n"
     )
 
 
@@ -144,7 +144,7 @@ def _edge(edge_id: int, src: str, dst: str, etype: str) -> str:
     return (
         f'    <edge id="e{edge_id}" source="{_esc(src)}" target="{_esc(dst)}">\n'
         f'      <data key="etype">{etype}</data>\n'
-        f'    </edge>'
+        f"    </edge>"
     )
 
 

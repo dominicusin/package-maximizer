@@ -12,12 +12,12 @@ from typing import TYPE_CHECKING
 
 import click
 
+from ..core.config import load_config
 from ..core.enums import PackageManagerType
 from ..core.maximizer import PackageMaximizer
 from ..core.package import Package
-from ..core.config import load_config
-from ..utils.logging_config import configure_logging
 from ..integrations import RealRepoIntegration
+from ..utils.logging_config import configure_logging
 
 if TYPE_CHECKING:
     pass
@@ -26,14 +26,19 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.option('--verbose', '-v', is_flag=True, help='Включить подробный вывод')
-@click.option('--quiet', '-q', is_flag=True, help='Отключить вывод')
-@click.option('--config', '-C', type=str, default=None,
-              help='Путь к файлу конфигурации (YAML/JSON)')
+@click.option("--verbose", "-v", is_flag=True, help="Включить подробный вывод")
+@click.option("--quiet", "-q", is_flag=True, help="Отключить вывод")
+@click.option(
+    "--config",
+    "-C",
+    type=str,
+    default=None,
+    help="Путь к файлу конфигурации (YAML/JSON)",
+)
 def cli(verbose: bool, quiet: bool, config: str | None):
     """
     Package Maximizer - Система максимизации непротиворечивого множества пакетов.
-    
+
     Использует различные SAT/ILP/SMT солверы для решения задачи.
     """
     level = "INFO"
@@ -48,42 +53,72 @@ def cli(verbose: bool, quiet: bool, config: str | None):
     click.get_current_context().obj = {"config": cfg, "config_path": config}
 
 
-
 @cli.command()
-@click.argument('packages', nargs=-1)
-@click.option('--manager', '-m', type=str, default=None,
-              help='Тип пакетного менеджера (apt, pacman, dnf, brew, snap, flatpak, cargo, npm, pip, gem, apk, zypper, yum, yarn, composer, vcpkg, nuget, winget, scoop, choco, conda, portage)')
-@click.option('--solver', '-s', type=str, default=None,
-              help='Тип солвера (greedy, z3, pulp, ortools, maxsat, minisat, enhanced_greedy)')
-@click.option('--conflicts', '-c', type=(str, str), multiple=True,
-              help='Конфликты между пакетами (имя1,имя2)')
-@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text',
-              help='Формат вывода')
-@click.option('--weights', '-w', type=(str, float), multiple=True,
-              help='Веса пакетов (имя,вес)')
-@click.option('--depends', '-d', type=(str, str), multiple=True,
-              help='Зависимости пакетов (имя,зависимость)')
-@click.option('--explain', '-e', is_flag=True, default=False,
-              help='Показать причины отбора/отклонения пакетов')
+@click.argument("packages", nargs=-1)
+@click.option(
+    "--manager",
+    "-m",
+    type=str,
+    default=None,
+    help="Тип пакетного менеджера (apt, pacman, dnf, brew, snap, flatpak, cargo, npm, pip, gem, apk, zypper, yum, yarn, composer, vcpkg, nuget, winget, scoop, choco, conda, portage)",
+)
+@click.option(
+    "--solver",
+    "-s",
+    type=str,
+    default=None,
+    help="Тип солвера (greedy, z3, pulp, ortools, maxsat, minisat, enhanced_greedy)",
+)
+@click.option(
+    "--conflicts",
+    "-c",
+    type=(str, str),
+    multiple=True,
+    help="Конфликты между пакетами (имя1,имя2)",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    help="Формат вывода",
+)
+@click.option(
+    "--weights", "-w", type=(str, float), multiple=True, help="Веса пакетов (имя,вес)"
+)
+@click.option(
+    "--depends",
+    "-d",
+    type=(str, str),
+    multiple=True,
+    help="Зависимости пакетов (имя,зависимость)",
+)
+@click.option(
+    "--explain",
+    "-e",
+    is_flag=True,
+    default=False,
+    help="Показать причины отбора/отклонения пакетов",
+)
 def maximize(packages, manager, solver, conflicts, output, weights, depends, explain):
     """
     Максимизировать множество пакетов.
-    
+
     Примеры:
 
         package-maximizer pkg1 pkg2 pkg3
-        
+
         package-maximizer pkg1 pkg2 -c pkg1,pkg2 -s z3
-        
+
         package-maximizer pkg1 pkg2 pkg3 -w pkg1,2.0 -w pkg2,1.5
     """
     # Resolve config-driven defaults (explicit CLI flags take precedence).
     obj = click.get_current_context().obj or {}
     cfg = obj.get("config")
     if manager is None:
-        manager = (cfg.default_manager if cfg else "apt")
+        manager = cfg.default_manager if cfg else "apt"
     if solver is None:
-        solver = (cfg.default_solver if cfg else "greedy")
+        solver = cfg.default_solver if cfg else "greedy"
 
     try:
         # Валидация менеджера
@@ -92,19 +127,19 @@ def maximize(packages, manager, solver, conflicts, output, weights, depends, exp
         except ValueError:
             click.echo(f"Ошибка: Неизвестный пакетный менеджер '{manager}'", err=True)
             sys.exit(1)
-        
+
         # Создание объектов пакетов
         package_objs = []
         conflict_map = {}
-        
+
         for pkg_name in packages:
             pkg = Package(name=pkg_name, status="candidate")
             package_objs.append(pkg)
-        
+
         # Добавление конфликтов
         for pkg_name, conflict_name in conflicts:
             conflict_map.setdefault(pkg_name, []).append(conflict_name)
-        
+
         # Применение конфликтов к пакетам
         for pkg in package_objs:
             if pkg.name in conflict_map:
@@ -119,34 +154,31 @@ def maximize(packages, manager, solver, conflicts, output, weights, depends, exp
         for pkg in package_objs:
             if pkg.name in dep_map:
                 pkg.depends = dep_map[pkg.name]
-        
+
         # Создание словаря весов
         weights_dict = dict(weights) if weights else None
-        
+
         # Создание максимайзера
         try:
-            maximizer = PackageMaximizer(
-                manager=manager_enum,
-                solver=solver
-            )
+            maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
         except ValueError:
             click.echo(f"Ошибка: Неизвестный солвер '{solver}'", err=True)
             sys.exit(1)
-        
+
         # Решение
         if weights_dict:
             result = maximizer.solve_with_weights(package_objs, weights_dict)
         else:
             result = maximizer.solve(package_objs)
-        
+
         # Вывод
-        if output == 'json':
+        if output == "json":
             output_data = {
-                'manager': manager,
-                'solver': solver,
-                'input': [p.name for p in package_objs],
-                'output': result,
-                'count': len(result)
+                "manager": manager,
+                "solver": solver,
+                "input": [p.name for p in package_objs],
+                "output": result,
+                "count": len(result),
             }
             click.echo(json.dumps(output_data, indent=2))
         else:
@@ -166,6 +198,7 @@ def maximize(packages, manager, solver, conflicts, output, weights, depends, exp
                     click.echo(f"\nПричины отклонения:")
                     # Используем encoder для получения ограничений
                     from ..core.model_encoder import encode_packages
+
                     constraints = encode_packages(package_objs)
 
                     for name in sorted(excluded):
@@ -199,12 +232,12 @@ def list_solvers():
     Показать доступные солверы.
     """
     from ..solvers import SOLVER_REGISTRY
-    
+
     click.echo("Доступные солверы:")
     for name, solver_class in SOLVER_REGISTRY.items():
-        doc = solver_class.__doc__ or 'No description'
+        doc = solver_class.__doc__ or "No description"
         # Get first line of docstring
-        first_line = doc.split('\n')[0] if doc else ''
+        first_line = doc.split("\n")[0] if doc else ""
         click.echo(f"  - {name}: {first_line}")
 
 
@@ -217,8 +250,8 @@ def list_managers():
 
     click.echo("Поддерживаемые пакетные менеджеры:")
     for name, parser_class in PARSER_REGISTRY.items():
-        doc = parser_class.__doc__ or 'No description'
-        first_line = doc.split('\n')[0] if doc else ''
+        doc = parser_class.__doc__ or "No description"
+        first_line = doc.split("\n")[0] if doc else ""
         click.echo(f"  - {name}: {first_line}")
 
 
@@ -231,8 +264,8 @@ def list_parsers():
 
     click.echo("Доступные парсеры:")
     for name, parser_class in PARSER_REGISTRY.items():
-        doc = parser_class.__doc__ or 'No description'
-        first_line = doc.split('\n')[0] if doc else ''
+        doc = parser_class.__doc__ or "No description"
+        first_line = doc.split("\n")[0] if doc else ""
         click.echo(f"  - {name}: {first_line}")
 
 
@@ -242,18 +275,19 @@ def version():
     Показать версию.
     """
     from .. import __version__
+
     click.echo(f"Package Maximizer version: {__version__}")
 
 
 @cli.command()
-@click.argument('package_file', type=click.Path(exists=True))
-@click.option('--manager', '-m', type=str, default='apt')
-@click.option('--solver', '-s', type=str, default='greedy')
-@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text')
+@click.argument("package_file", type=click.Path(exists=True))
+@click.option("--manager", "-m", type=str, default="apt")
+@click.option("--solver", "-s", type=str, default="greedy")
+@click.option("--output", "-o", type=click.Choice(["text", "json"]), default="text")
 def from_file(package_file, manager, solver, output):
     """
     Максимизировать пакеты из JSON файла.
-    
+
     Файл должен содержать массив объектов:
     [
         {"name": "pkg1", "version": "1.0", "conflicts": ["pkg2"]},
@@ -261,44 +295,41 @@ def from_file(package_file, manager, solver, output):
     ]
     """
     try:
-        with open(package_file, 'r') as f:
+        with open(package_file, "r") as f:
             data = json.load(f)
-        
+
         # Разбор пакетов
         package_objs = []
         for item in data:
             pkg = Package(
-                name=item.get('name', ''),
-                version=item.get('version', ''),
-                status=item.get('status', 'candidate'),
-                depends=item.get('depends', []),
-                conflicts=item.get('conflicts', [])
+                name=item.get("name", ""),
+                version=item.get("version", ""),
+                status=item.get("status", "candidate"),
+                depends=item.get("depends", []),
+                conflicts=item.get("conflicts", []),
             )
             package_objs.append(pkg)
-        
+
         # Создание максимайзера
         try:
             manager_enum = PackageManagerType(manager)
         except ValueError:
             click.echo(f"Ошибка: Неизвестный пакетный менеджер '{manager}'", err=True)
             sys.exit(1)
-        
-        maximizer = PackageMaximizer(
-            manager=manager_enum,
-            solver=solver
-        )
-        
+
+        maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
+
         # Решение
         result = maximizer.solve(package_objs)
-        
+
         # Вывод
-        if output == 'json':
+        if output == "json":
             output_data = {
-                'manager': manager,
-                'solver': solver,
-                'input_count': len(package_objs),
-                'output': result,
-                'count': len(result)
+                "manager": manager,
+                "solver": solver,
+                "input_count": len(package_objs),
+                "output": result,
+                "count": len(result),
             }
             click.echo(json.dumps(output_data, indent=2))
         else:
@@ -307,7 +338,7 @@ def from_file(package_file, manager, solver, output):
             click.echo(f"Входные пакеты: {len(package_objs)}")
             click.echo(f"Выбранные пакеты: {len(result)}")
             click.echo(f"Результат: {', '.join(result)}")
-    
+
     except json.JSONDecodeError as e:
         click.echo(f"Ошибка: Некорректный JSON файл: {e}", err=True)
         sys.exit(1)
@@ -317,53 +348,60 @@ def from_file(package_file, manager, solver, output):
 
 
 @cli.command()
-@click.option('--solvers', '-s', type=str, default='all',
-              help='Список солверов через запятую')
-@click.option('--packages', '-p', type=int, default=100,
-              help='Количество пакетов для теста')
-@click.option('--runs', '-r', type=int, default=5,
-              help='Количество запусков на каждый тест')
-@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text',
-              help='Формат вывода')
+@click.option(
+    "--solvers", "-s", type=str, default="all", help="Список солверов через запятую"
+)
+@click.option(
+    "--packages", "-p", type=int, default=100, help="Количество пакетов для теста"
+)
+@click.option(
+    "--runs", "-r", type=int, default=5, help="Количество запусков на каждый тест"
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    help="Формат вывода",
+)
 def benchmark(solvers, packages, runs, output):
     """
     Запустить тесты производительности солверов.
     """
     import time
+
     from ..solvers import SOLVER_REGISTRY
-    
+
     # Генерация тестовых пакетов
     test_packages = []
     for i in range(packages):
-        pkg = Package(
-            name=f"pkg{i}",
-            version=f"1.{i}",
-            status="candidate"
-        )
+        pkg = Package(name=f"pkg{i}", version=f"1.{i}", status="candidate")
         # Добавление конфликтов (10% пакетов конфликтуют)
         if i % 10 == 0 and i > 0:
-            pkg.conflicts = [f"pkg{j}" for j in range(i-5, i) if j >= 0]
+            pkg.conflicts = [f"pkg{j}" for j in range(i - 5, i) if j >= 0]
         test_packages.append(pkg)
-    
+
     # Выбор солверов
-    if solvers == 'all':
+    if solvers == "all":
         solver_names = list(SOLVER_REGISTRY.keys())
     else:
-        solver_names = [s.strip() for s in solvers.split(',')]
-    
-    click.echo(f"Тестирование {len(solver_names)} солверов с {packages} пакетами, {runs} запусков")
+        solver_names = [s.strip() for s in solvers.split(",")]
+
+    click.echo(
+        f"Тестирование {len(solver_names)} солверов с {packages} пакетами, {runs} запусков"
+    )
     click.echo("-" * 60)
-    
+
     results = {}
-    
+
     for solver_name in solver_names:
         if solver_name not in SOLVER_REGISTRY:
             click.echo(f"Предупреждение: Солвер '{solver_name}' не найден, пропускаем")
             continue
-        
+
         solver_class = SOLVER_REGISTRY[solver_name]
         times = []
-        
+
         for run in range(runs):
             try:
                 solver = solver_class()
@@ -373,38 +411,43 @@ def benchmark(solvers, packages, runs, output):
                 times.append(end - start)
             except Exception as e:
                 click.echo(f"Ошибка с {solver_name} на запуске {run}: {e}")
-                times.append(float('inf'))
-        
+                times.append(float("inf"))
+
         avg_time = sum(times) / len(times) if times else 0
         results[solver_name] = {
-            'avg_time': avg_time,
-            'min_time': min(times) if times else 0,
-            'max_time': max(times) if times else 0,
-            'runs': len(times)
+            "avg_time": avg_time,
+            "min_time": min(times) if times else 0,
+            "max_time": max(times) if times else 0,
+            "runs": len(times),
         }
-        
-        click.echo(f"{solver_name:15s}: {avg_time:.4f}s avg ({min(times):.4f}s - {max(times):.4f}s)")
-    
+
+        click.echo(
+            f"{solver_name:15s}: {avg_time:.4f}s avg ({min(times):.4f}s - {max(times):.4f}s)"
+        )
+
     click.echo("-" * 60)
-    
+
     # Найти самый быстрый
     if results:
-        fastest = min(results.items(), key=lambda x: x[1]['avg_time'])
+        fastest = min(results.items(), key=lambda x: x[1]["avg_time"])
         click.echo(f"Самый быстрый: {fastest[0]} ({fastest[1]['avg_time']:.4f}s)")
-    
+
     # Вывод в JSON если нужно
-    if output == 'json':
+    if output == "json":
         click.echo(json.dumps(results, indent=2))
 
 
 # Новые команды для Фазы 4
 
+
 @cli.command()
-@click.option('--manager', '-m', type=str, default='apt',
-              help='Тип пакетного менеджера')
-@click.option('--limit', '-l', type=int, default=20,
-              help='Максимальное количество результатов')
-@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text')
+@click.option(
+    "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
+)
+@click.option(
+    "--limit", "-l", type=int, default=20, help="Максимальное количество результатов"
+)
+@click.option("--output", "-o", type=click.Choice(["text", "json"]), default="text")
 def list_installed(manager, limit, output):
     """
     Показать установленные пакеты.
@@ -412,19 +455,15 @@ def list_installed(manager, limit, output):
     try:
         integration = RealRepoIntegration(package_manager=manager)
         packages = integration.get_installed_packages()
-        
-        if output == 'json':
+
+        if output == "json":
             output_data = {
-                'manager': manager,
-                'count': len(packages),
-                'packages': [
-                    {
-                        'name': p.name,
-                        'version': p.version,
-                        'status': p.status
-                    }
+                "manager": manager,
+                "count": len(packages),
+                "packages": [
+                    {"name": p.name, "version": p.version, "status": p.status}
                     for p in packages[:limit]
-                ]
+                ],
             }
             click.echo(json.dumps(output_data, indent=2))
         else:
@@ -438,12 +477,14 @@ def list_installed(manager, limit, output):
 
 
 @cli.command()
-@click.argument('query')
-@click.option('--manager', '-m', type=str, default='apt',
-              help='Тип пакетного менеджера')
-@click.option('--limit', '-l', type=int, default=20,
-              help='Максимальное количество результатов')
-@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text')
+@click.argument("query")
+@click.option(
+    "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
+)
+@click.option(
+    "--limit", "-l", type=int, default=20, help="Максимальное количество результатов"
+)
+@click.option("--output", "-o", type=click.Choice(["text", "json"]), default="text")
 def search(query, manager, limit, output):
     """
     Поиск пакетов в репозитории.
@@ -451,20 +492,16 @@ def search(query, manager, limit, output):
     try:
         integration = RealRepoIntegration(package_manager=manager)
         packages = integration.search_packages(query, limit)
-        
-        if output == 'json':
+
+        if output == "json":
             output_data = {
-                'manager': manager,
-                'query': query,
-                'count': len(packages),
-                'packages': [
-                    {
-                        'name': p.name,
-                        'version': p.version,
-                        'status': p.status
-                    }
+                "manager": manager,
+                "query": query,
+                "count": len(packages),
+                "packages": [
+                    {"name": p.name, "version": p.version, "status": p.status}
                     for p in packages
-                ]
+                ],
             }
             click.echo(json.dumps(output_data, indent=2))
         else:
@@ -477,10 +514,11 @@ def search(query, manager, limit, output):
 
 
 @cli.command()
-@click.argument('package_name')
-@click.option('--manager', '-m', type=str, default='apt',
-              help='Тип пакетного менеджера')
-@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text')
+@click.argument("package_name")
+@click.option(
+    "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
+)
+@click.option("--output", "-o", type=click.Choice(["text", "json"]), default="text")
 def info(package_name, manager, output):
     """
     Показать информацию о пакете.
@@ -488,28 +526,32 @@ def info(package_name, manager, output):
     try:
         integration = RealRepoIntegration(package_manager=manager)
         info = integration.get_package_info(package_name)
-        
+
         if info is None:
             click.echo(f"Пакет '{package_name}' не найден", err=True)
             sys.exit(1)
-        
-        if output == 'json':
+
+        if output == "json":
             output_data = {
-                'name': info.name,
-                'version': info.version,
-                'description': info.description,
-                'depends': info.depends,
-                'conflicts': info.conflicts,
-                'size': info.size,
-                'installed': info.installed
+                "name": info.name,
+                "version": info.version,
+                "description": info.description,
+                "depends": info.depends,
+                "conflicts": info.conflicts,
+                "size": info.size,
+                "installed": info.installed,
             }
             click.echo(json.dumps(output_data, indent=2))
         else:
             click.echo(f"Имя: {info.name}")
             click.echo(f"Версия: {info.version}")
             click.echo(f"Описание: {info.description}")
-            click.echo(f"Зависимости: {', '.join(info.depends) if info.depends else 'Нет'}")
-            click.echo(f"Конфликты: {', '.join(info.conflicts) if info.conflicts else 'Нет'}")
+            click.echo(
+                f"Зависимости: {', '.join(info.depends) if info.depends else 'Нет'}"
+            )
+            click.echo(
+                f"Конфликты: {', '.join(info.conflicts) if info.conflicts else 'Нет'}"
+            )
             click.echo(f"Размер: {info.size} KB")
             click.echo(f"Установлен: {'Да' if info.installed else 'Нет'}")
     except Exception as e:
@@ -518,9 +560,10 @@ def info(package_name, manager, output):
 
 
 @cli.command()
-@click.option('--manager', '-m', type=str, default='apt',
-              help='Тип пакетного менеджера')
-@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text')
+@click.option(
+    "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
+)
+@click.option("--output", "-o", type=click.Choice(["text", "json"]), default="text")
 def check_updates(manager, output):
     """
     Проверить доступные обновления.
@@ -528,19 +571,15 @@ def check_updates(manager, output):
     try:
         integration = RealRepoIntegration(package_manager=manager)
         updates = integration.get_available_updates()
-        
-        if output == 'json':
+
+        if output == "json":
             output_data = {
-                'manager': manager,
-                'count': len(updates),
-                'packages': [
-                    {
-                        'name': p.name,
-                        'version': p.version,
-                        'status': p.status
-                    }
+                "manager": manager,
+                "count": len(updates),
+                "packages": [
+                    {"name": p.name, "version": p.version, "status": p.status}
                     for p in updates
-                ]
+                ],
             }
             click.echo(json.dumps(output_data, indent=2))
         else:
@@ -553,9 +592,10 @@ def check_updates(manager, output):
 
 
 @cli.command()
-@click.option('--manager', '-m', type=str, default='apt',
-              help='Тип пакетного менеджера')
-@click.option('--output', '-o', type=click.Choice(['text', 'json']), default='text')
+@click.option(
+    "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
+)
+@click.option("--output", "-o", type=click.Choice(["text", "json"]), default="text")
 def system_info(manager, output):
     """
     Показать информацию о системе.
@@ -563,8 +603,8 @@ def system_info(manager, output):
     try:
         integration = RealRepoIntegration(package_manager=manager)
         info = integration.get_system_info()
-        
-        if output == 'json':
+
+        if output == "json":
             click.echo(json.dumps(info, indent=2))
         else:
             click.echo(f"Пакетный менеджер: {info.get('package_manager', 'Unknown')}")
@@ -577,18 +617,26 @@ def system_info(manager, output):
 
 
 @cli.command(name="config")
-@click.option('--config', '-C', type=str, default=None,
-              help='Путь к файлу конфигурации (YAML/JSON)')
-@click.option('--output', '-o', type=click.Choice(['text', 'yaml', 'json']), default='text')
+@click.option(
+    "--config",
+    "-C",
+    type=str,
+    default=None,
+    help="Путь к файлу конфигурации (YAML/JSON)",
+)
+@click.option(
+    "--output", "-o", type=click.Choice(["text", "yaml", "json"]), default="text"
+)
 def config_command(config, output):
     """Показать итоговую конфигурацию (с учётом файла и переменных окружения)."""
     cfg = load_config(config)
     data = cfg.as_dict()
-    if output == 'json':
+    if output == "json":
         click.echo(json.dumps(data, indent=2))
-    elif output == 'yaml':
+    elif output == "yaml":
         try:
             import yaml
+
             click.echo(yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
         except ImportError:
             click.echo(json.dumps(data, indent=2))
@@ -599,8 +647,13 @@ def config_command(config, output):
 
 
 @cli.command(name="init-config")
-@click.option('--config', '-C', type=str, default='package-maximizer.json',
-              help='Путь для записи файла конфигурации по умолчанию')
+@click.option(
+    "--config",
+    "-C",
+    type=str,
+    default="package-maximizer.json",
+    help="Путь для записи файла конфигурации по умолчанию",
+)
 def init_config_command(config):
     """Создать файл конфигурации по умолчанию (JSON)."""
     from ..core.config import Config
@@ -614,20 +667,35 @@ def init_config_command(config):
 
 
 @cli.command(name="export")
-@click.argument('packages', nargs=-1)
-@click.option('--manager', '-m', type=str, default='apt')
-@click.option('--solver', '-s', type=str, default='greedy')
-@click.option('--conflicts', '-c', type=(str, str), multiple=True,
-              help='Конфликты между пакетами (имя1,имя2)')
-@click.option('--format', '-f', type=click.Choice(['json', 'csv', 'graphml']),
-              default='json', help='Формат экспорта результатов')
-@click.option('--output-file', '-o', type=str, default=None,
-              help='Путь к файлу (по умолчанию stdout)')
+@click.argument("packages", nargs=-1)
+@click.option("--manager", "-m", type=str, default="apt")
+@click.option("--solver", "-s", type=str, default="greedy")
+@click.option(
+    "--conflicts",
+    "-c",
+    type=(str, str),
+    multiple=True,
+    help="Конфликты между пакетами (имя1,имя2)",
+)
+@click.option(
+    "--format",
+    "-f",
+    type=click.Choice(["json", "csv", "graphml"]),
+    default="json",
+    help="Формат экспорта результатов",
+)
+@click.option(
+    "--output-file",
+    "-o",
+    type=str,
+    default=None,
+    help="Путь к файлу (по умолчанию stdout)",
+)
 def export_command(packages, manager, solver, conflicts, format, output_file):
     """
     Решить задачу максимизации и экспортировать результат в файл.
     """
-    from ..utils.exporters import to_json, to_csv, to_graphml
+    from ..utils.exporters import to_csv, to_graphml, to_json
 
     pkg_objs = [Package(name=n) for n in packages]
     conflict_map: dict[str, list[str]] = {}
@@ -647,20 +715,19 @@ def export_command(packages, manager, solver, conflicts, format, output_file):
 
     selected_names = [p.name if isinstance(p, Package) else p for p in selected]
 
-    if format == 'json':
+    if format == "json":
         content = to_json(pkg_objs, selected_names)
-    elif format == 'csv':
+    elif format == "csv":
         content = to_csv(pkg_objs, selected_names)
     else:
         content = to_graphml(pkg_objs, selected_names)
 
     if output_file:
-        with open(output_file, 'w', encoding='utf-8') as fh:
+        with open(output_file, "w", encoding="utf-8") as fh:
             fh.write(content)
         click.echo(f"Записано в {output_file} ({len(selected)} выбрано)")
     else:
         click.echo(content)
-
 
 
 @cli.command(name="tui")
@@ -670,12 +737,12 @@ def tui_command() -> None:
     """
     try:
         from ..tui.app import run_tui
+
         run_tui()
     except ImportError as e:
         click.echo(f"Ошибка: {e}", err=True)
         sys.exit(1)
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

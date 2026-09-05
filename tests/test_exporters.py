@@ -9,7 +9,7 @@ import json
 import xml.etree.ElementTree as ET
 
 from package_maximizer.core.package import Package
-from package_maximizer.utils.exporters import to_json, to_csv, to_graphml
+from package_maximizer.utils.exporters import to_csv, to_graphml, to_json
 
 
 def _build() -> tuple[list[Package], list[str]]:

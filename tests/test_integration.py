@@ -6,11 +6,12 @@ import json
 
 import pytest
 
-from package_maximizer.core.package import Package
+from package_maximizer.core.constraints import (ConstraintParser,
+                                                VersionConstraint)
 from package_maximizer.core.maximizer import PackageMaximizer
-from package_maximizer.core.constraints import VersionConstraint, ConstraintParser
-from package_maximizer.solvers import get_solver, SOLVER_REGISTRY
-from package_maximizer.parsers import get_parser, PARSER_REGISTRY
+from package_maximizer.core.package import Package
+from package_maximizer.parsers import PARSER_REGISTRY, get_parser
+from package_maximizer.solvers import SOLVER_REGISTRY, get_solver
 
 
 # ─── End-to-end maximization scenarios ───────────────────────
@@ -253,6 +254,7 @@ class TestWebAPIIntegration:
     @pytest.fixture
     def auth_headers(self):
         import os
+
         return {"X-API-Key": os.environ.get("PM_API_KEY", "test-key-for-tests")}
 
     def test_health_check(self, client):
@@ -356,7 +358,9 @@ class TestWebAPIIntegration:
 
     # ─── Input validation (security) ──────────────────────────
     def test_missing_packages_field(self, client, auth_headers):
-        resp = client.post("/api/v1/maximize", json={"manager": "apt"}, headers=auth_headers)
+        resp = client.post(
+            "/api/v1/maximize", json={"manager": "apt"}, headers=auth_headers
+        )
         assert resp.status_code == 400
         assert "packages" in resp.get_json()["message"].lower()
 
@@ -426,7 +430,11 @@ class TestWebAPIIntegration:
     def test_export_graphml(self, client, auth_headers):
         resp = client.post(
             "/api/v1/export",
-            json={"packages": ["vim", "emacs"], "conflicts": [["vim", "emacs"]], "format": "graphml"},
+            json={
+                "packages": ["vim", "emacs"],
+                "conflicts": [["vim", "emacs"]],
+                "format": "graphml",
+            },
             headers=auth_headers,
         )
         assert resp.status_code == 200
@@ -450,31 +458,50 @@ class TestWebAPIIntegration:
 
         web_mod = sys.modules["package_maximizer.web.app"]
         # Tiny limit so repeated calls trip 429
-        monkeypatch.setattr(web_mod, "RATE_LIMITER", web_mod.RateLimiter(max_requests=2, window=60))
+        monkeypatch.setattr(
+            web_mod, "RATE_LIMITER", web_mod.RateLimiter(max_requests=2, window=60)
+        )
         for _ in range(3):
             resp = client.get("/api/v1/solvers", headers=auth_headers)
         assert resp.status_code == 429
 
-
     def test_bad_package_type_returns_400(self, client, auth_headers):
-        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": "not-a-list"})
+        resp = client.post(
+            "/api/v1/maximize", headers=auth_headers, json={"packages": "not-a-list"}
+        )
         assert resp.status_code == 400
 
     def test_unknown_manager_returns_400(self, client, auth_headers):
-        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": ["vim"], "manager": "unknown"})
+        resp = client.post(
+            "/api/v1/maximize",
+            headers=auth_headers,
+            json={"packages": ["vim"], "manager": "unknown"},
+        )
         assert resp.status_code == 400
 
     def test_unknown_solver_returns_400(self, client, auth_headers):
-        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": ["vim"], "solver": "unknown_solver"})
+        resp = client.post(
+            "/api/v1/maximize",
+            headers=auth_headers,
+            json={"packages": ["vim"], "solver": "unknown_solver"},
+        )
         assert resp.status_code == 400
 
     def test_maximize_with_weights(self, client, auth_headers):
-        resp = client.post("/api/v1/maximize", headers=auth_headers, json={"packages": ["vim", "nano"], "weights": {"vim": 2.0}})
+        resp = client.post(
+            "/api/v1/maximize",
+            headers=auth_headers,
+            json={"packages": ["vim", "nano"], "weights": {"vim": 2.0}},
+        )
         assert resp.status_code == 200
 
     def test_export_cache_disabled(self, client, auth_headers, monkeypatch):
         monkeypatch.setenv("PM_CACHE_ENABLED", "false")
-        resp = client.post("/api/v1/export", headers=auth_headers, json={"packages": ["vim"], "format": "json"})
+        resp = client.post(
+            "/api/v1/export",
+            headers=auth_headers,
+            json={"packages": ["vim"], "format": "json"},
+        )
         assert resp.status_code == 200
 
     def test_cache_stats_when_disabled(self, client, auth_headers, monkeypatch):

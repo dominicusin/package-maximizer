@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from package_maximizer.parsers.brew_parser import BrewParser
+import pytest
+
 from package_maximizer.core.package import Package
+from package_maximizer.parsers.brew_parser import BrewParser
 
 
 class TestBrewParserParse:
@@ -19,7 +20,9 @@ class TestBrewParserParse:
 
     def test_parse_brew_list_format(self):
         parser = BrewParser()
-        raw = "==> Formulae\nvim\nwget\npython@3.11\n==> Casks\nfirefox\ngoogle-chrome\n"
+        raw = (
+            "==> Formulae\nvim\nwget\npython@3.11\n==> Casks\nfirefox\ngoogle-chrome\n"
+        )
         result = parser.parse(raw)
         names = {p.name for p in result}
         assert "vim" in names
@@ -117,7 +120,9 @@ class TestBrewParserParseFromSystem:
         parser = BrewParser()
         mock_result = MagicMock()
         mock_result.returncode = 0
-        mock_result.stdout = "vim:\nVersion: 9.1.0000\nFrom: https://github.com/vim/vim\n"
+        mock_result.stdout = (
+            "vim:\nVersion: 9.1.0000\nFrom: https://github.com/vim/vim\n"
+        )
 
         with patch("subprocess.run", return_value=mock_result):
             result = parser.parse_from_system(["vim"])
@@ -138,7 +143,10 @@ class TestBrewParserParseFromSystem:
         parser = BrewParser()
         import subprocess
 
-        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="brew", timeout=30)):
+        with patch(
+            "subprocess.run",
+            side_effect=subprocess.TimeoutExpired(cmd="brew", timeout=30),
+        ):
             result = parser.parse_from_system()
             assert result == []
 

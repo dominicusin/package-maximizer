@@ -5,10 +5,7 @@ Tests for parsers module.
 import pytest
 
 from package_maximizer.core.package import Package
-from package_maximizer.parsers import (
-    APTParser,
-    get_parser,
-)
+from package_maximizer.parsers import APTParser, get_parser
 
 
 class TestAPTParser:
@@ -67,7 +64,7 @@ Depends: apache2-bin (= 2.4.57-1ubuntu1)
 """
         result = parser.parse(raw)
         assert len(result) == 2
-        
+
         vim_pkg = next((p for p in result if p.name == "vim"), None)
         assert vim_pkg is not None
         assert vim_pkg.version == "2:8.2.3995-1ubuntu1"

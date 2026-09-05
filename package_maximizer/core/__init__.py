@@ -2,12 +2,13 @@
 Core module — Ядро системы Package Maximizer.
 """
 
-from .enums import PackageManagerType, SolverType, PackageStatus
+from .constraints import (ConflictConstraint, ConstraintParser,
+                          DependencyConstraint, VersionConstraint)
+from .enums import PackageManagerType, PackageStatus, SolverType
 from .interfaces import ConstraintSolver, PackageParser, ResultAnalyzer
 from .maximizer import PackageMaximizer
 from .model_encoder import ModelConstraints, encode_packages
 from .package import Package, PackageConstraint
-from .constraints import VersionConstraint, DependencyConstraint, ConflictConstraint, ConstraintParser
 
 __all__ = [
     "PackageManagerType",

@@ -3,12 +3,11 @@ Tests for constraints module
 """
 
 import pytest
-from package_maximizer.core.constraints import (
-    VersionConstraint,
-    DependencyConstraint,
-    ConflictConstraint,
-    ConstraintParser
-)
+
+from package_maximizer.core.constraints import (ConflictConstraint,
+                                                ConstraintParser,
+                                                DependencyConstraint,
+                                                VersionConstraint)
 
 
 class TestVersionConstraint:
@@ -94,11 +93,11 @@ class TestDependencyConstraint:
             package="libc",
             version_constraint=VersionConstraint(
                 package="", operator=">=", version="2.30"
-            )
+            ),
         )
         installed = {"libc": "2.31"}
         assert constraint.satisfied_by(installed) == True
-        
+
         installed = {"libc": "2.29"}
         assert constraint.satisfied_by(installed) == False
 
@@ -118,7 +117,7 @@ class TestConflictConstraint:
             package="pkg1",
             version_constraint=VersionConstraint(
                 package="", operator="<", version="2.0"
-            )
+            ),
         )
         assert constraint.conflicts_with("pkg1", "1.0") == True
         assert constraint.conflicts_with("pkg1", "2.0") == False

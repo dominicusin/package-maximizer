@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import csv
 import io
+import json
 
 import pytest
 
-from package_maximizer.utils.benchmark import BenchmarkRunner, BenchmarkReport, BenchmarkResult
+from package_maximizer.utils.benchmark import (BenchmarkReport,
+                                               BenchmarkResult,
+                                               BenchmarkRunner)
 
 
 def _fake_report() -> BenchmarkReport:

@@ -3,7 +3,8 @@ Extended tests for parsers (Pacman, DNF, Brew)
 """
 
 import pytest
-from package_maximizer.parsers import PacmanParser, DNFParser, BrewParser
+
+from package_maximizer.parsers import BrewParser, DNFParser, PacmanParser
 
 
 class TestPacmanParser:
@@ -17,7 +18,7 @@ core/python 3.11.5-1
 extra/vim 9.1.0000-1"""
         parser = PacmanParser()
         packages = parser.parse(raw)
-        
+
         assert len(packages) == 4
         names = [p.name for p in packages]
         assert "linux" in names
@@ -32,7 +33,7 @@ core/python 3.11.5-1
 extra/vim 9.1.0000-1 [installed]"""
         parser = PacmanParser()
         packages = parser.parse(raw)
-        
+
         assert len(packages) == 3
         names = [p.name for p in packages]
         assert "linux" in names
@@ -49,7 +50,7 @@ Conflicts With : linux-lts
 Status         : installed"""
         parser = PacmanParser()
         packages = parser.parse(raw)
-        
+
         # Should parse correctly with colon separator
         assert len(packages) >= 0
         if packages and packages[0].name:
@@ -64,7 +65,7 @@ pkg2
 pkg3"""
         parser = PacmanParser()
         packages = parser.parse(raw)
-        
+
         assert len(packages) == 3
         names = [p.name for p in packages]
         assert "pkg1" in names
@@ -83,7 +84,7 @@ vim-enhanced.x86_64  2:9.1.0000-1.fc39  @fedora
 python3.x86_64  3.11.0-1.fc39  fedora"""
         parser = DNFParser()
         packages = parser.parse(raw)
-        
+
         assert len(packages) == 3
         names = [p.name for p in packages]
         assert "kernel-core" in names
@@ -101,7 +102,7 @@ Conflicts With: kernel < 6.6.10
 Installed    : Yes"""
         parser = DNFParser()
         packages = parser.parse(raw)
-        
+
         assert len(packages) == 1
         pkg = packages[0]
         assert pkg.name == "kernel-core"
@@ -114,7 +115,7 @@ vim-enhanced.x86_64 : A version of the VIM editor
 python3.x86_64 : Python programming language"""
         parser = DNFParser()
         packages = parser.parse(raw)
-        
+
         assert len(packages) == 3
         names = [p.name for p in packages]
         assert "kernel-core" in names
@@ -137,7 +138,7 @@ firefox
 google-chrome"""
         parser = BrewParser()
         packages = parser.parse(raw)
-        
+
         assert len(packages) == 5
         names = [p.name for p in packages]
         assert "vim" in names
@@ -156,7 +157,7 @@ Conflicts with: vim-tiny
 Installed: YES"""
         parser = BrewParser()
         packages = parser.parse(raw)
-        
+
         assert len(packages) == 1
         pkg = packages[0]
         assert pkg.name == "vim"
@@ -169,7 +170,7 @@ pkg2
 pkg3"""
         parser = BrewParser()
         packages = parser.parse(raw)
-        
+
         assert len(packages) == 3
         names = [p.name for p in packages]
         assert "pkg1" in names
@@ -183,29 +184,32 @@ class TestParserRegistry:
     def test_get_parser_pacman(self):
         """Test getting pacman parser"""
         from package_maximizer.parsers import get_parser
+
         parser = get_parser("pacman")
         assert isinstance(parser, PacmanParser)
 
     def test_get_parser_dnf(self):
         """Test getting dnf parser"""
         from package_maximizer.parsers import get_parser
+
         parser = get_parser("dnf")
         assert isinstance(parser, DNFParser)
 
     def test_get_parser_brew(self):
         """Test getting brew parser"""
         from package_maximizer.parsers import get_parser
+
         parser = get_parser("brew")
         assert isinstance(parser, BrewParser)
 
     def test_get_parser_case_insensitive(self):
         """Test case insensitive parser lookup"""
         from package_maximizer.parsers import get_parser
-        
+
         parser1 = get_parser("PACMAN")
         parser2 = get_parser("Pacman")
         parser3 = get_parser("pacman")
-        
+
         assert isinstance(parser1, PacmanParser)
         assert isinstance(parser2, PacmanParser)
         assert isinstance(parser3, PacmanParser)
@@ -213,8 +217,8 @@ class TestParserRegistry:
     def test_get_parser_invalid(self):
         """Test getting invalid parser"""
         from package_maximizer.parsers import get_parser
-        
+
         with pytest.raises(ValueError) as exc_info:
             get_parser("invalid")
-        
+
         assert "not found" in str(exc_info.value)

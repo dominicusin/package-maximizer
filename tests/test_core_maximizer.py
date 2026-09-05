@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import pytest
 
+from package_maximizer.core.enums import PackageManagerType, SolverType
 from package_maximizer.core.maximizer import PackageMaximizer
 from package_maximizer.core.package import Package
-from package_maximizer.core.enums import PackageManagerType, SolverType
 
 
 class TestPackageMaximizerInit:
@@ -44,7 +44,10 @@ class TestGetSolverInstance:
     def test_invalid_solver_fallback(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from unittest.mock import patch
-        with patch("package_maximizer.solvers.get_solver", side_effect=ValueError("not found")):
+
+        with patch(
+            "package_maximizer.solvers.get_solver", side_effect=ValueError("not found")
+        ):
             solver = pm._get_solver_instance(SolverType.Z3)
             assert solver.__class__.__name__ == "GreedySolver"
 
@@ -55,37 +58,46 @@ class TestInferSolverType:
     def test_greedy(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.solvers import GreedySolver
+
         assert pm._infer_solver_type(GreedySolver()) == SolverType.GREEDY
 
     def test_z3(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.solvers import Z3Solver
+
         assert pm._infer_solver_type(Z3Solver()) == SolverType.Z3
 
     def test_pulp(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.solvers import PulPSolver
+
         assert pm._infer_solver_type(PulPSolver()) == SolverType.PULP
 
     def test_ortools(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.solvers import ORToolsSolver
+
         assert pm._infer_solver_type(ORToolsSolver()) == SolverType.ORTOOLS
 
     def test_maxsat(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.solvers import MaxSatSolver
+
         assert pm._infer_solver_type(MaxSatSolver()) == SolverType.MAXSAT
 
     def test_minisat(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.solvers import MiniSatSolver
+
         assert pm._infer_solver_type(MiniSatSolver()) == SolverType.MINISAT
 
     def test_enhanced_greedy(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.solvers import EnhancedGreedySolver
-        assert pm._infer_solver_type(EnhancedGreedySolver()) == SolverType.ENHANCED_GREEDY
+
+        assert (
+            pm._infer_solver_type(EnhancedGreedySolver()) == SolverType.ENHANCED_GREEDY
+        )
 
     def test_unknown_defaults_to_greedy(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
@@ -114,6 +126,7 @@ class TestGetParserInstance:
     def test_object_parser_passthrough(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.parsers import APTParser
+
         parser_obj = APTParser()
         result = pm._get_parser_instance(parser_obj)
         assert result is parser_obj
@@ -134,6 +147,7 @@ class TestGetParserInstance:
         pm = PackageMaximizer(manager="apt", solver="greedy")
         parser = pm._get_parser_instance("totally_unknown_parser_zzz")
         assert parser is None
+
 
 class TestGetAnalyzerInstance:
     """_get_analyzer_instance with None, str, and object."""
@@ -157,6 +171,7 @@ class TestGetAnalyzerInstance:
     def test_object_analyzer_passthrough(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.analyzers import ResultAnalyzer
+
         analyzer_obj = ResultAnalyzer()
         result = pm._get_analyzer_instance(analyzer_obj)
         assert result is analyzer_obj
@@ -270,6 +285,7 @@ class TestCheckConstraints:
         pm = PackageMaximizer(manager="apt", solver="greedy")
         pkgs = [Package(name="a", version="1.0")]
         from package_maximizer.core.package import PackageConstraint
+
         constraints = [PackageConstraint(package="a", version=">=1.0")]
         result = pm.check_constraints(pkgs, constraints)
         assert isinstance(result, dict)
@@ -348,6 +364,7 @@ class TestSetSolver:
     def test_set_solver_by_object(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.solvers import GreedySolver
+
         solver = GreedySolver()
         pm.set_solver(solver)
         assert pm.solver is solver
@@ -365,6 +382,7 @@ class TestSetParser:
     def test_set_parser_by_object(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.parsers import APTParser
+
         parser = APTParser()
         pm.set_parser(parser)
         assert pm.parser is parser
@@ -387,6 +405,7 @@ class TestSetAnalyzer:
     def test_set_analyzer_by_object(self):
         pm = PackageMaximizer(manager="apt", solver="greedy")
         from package_maximizer.analyzers import ResultAnalyzer
+
         analyzer = ResultAnalyzer()
         pm.set_analyzer(analyzer)
         assert pm.analyzer is analyzer

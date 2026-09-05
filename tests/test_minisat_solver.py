@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from package_maximizer.core.package import Package
 
@@ -13,12 +14,14 @@ class TestMiniSatSolverInit:
 
     def test_default_init(self):
         from package_maximizer.solvers.minisat_solver import MiniSatSolver
+
         solver = MiniSatSolver()
         assert solver.time_limit == 10000
         assert solver.solver_name == "m22"
 
     def test_custom_init(self):
         from package_maximizer.solvers.minisat_solver import MiniSatSolver
+
         solver = MiniSatSolver(time_limit=5000, solver_name="g3")
         assert solver.time_limit == 5000
         assert solver.solver_name == "g3"
@@ -29,7 +32,8 @@ class TestMiniSatAvailable:
 
     def test_minisat_available_flag(self):
         from package_maximizer.solvers import minisat_solver
-        assert hasattr(minisat_solver, 'MINISAT_AVAILABLE')
+
+        assert hasattr(minisat_solver, "MINISAT_AVAILABLE")
 
 
 class TestMiniSatSolve:
@@ -37,12 +41,14 @@ class TestMiniSatSolve:
 
     def test_solve_empty_packages(self):
         from package_maximizer.solvers.minisat_solver import MiniSatSolver
+
         solver = MiniSatSolver()
         result = solver.solve([])
         assert result == []
 
     def test_solve_single_package(self):
         from package_maximizer.solvers.minisat_solver import MiniSatSolver
+
         solver = MiniSatSolver()
         pkgs = [Package(name="a")]
         result = solver.solve(pkgs)
@@ -50,6 +56,7 @@ class TestMiniSatSolve:
 
     def test_solve_no_conflicts(self):
         from package_maximizer.solvers.minisat_solver import MiniSatSolver
+
         solver = MiniSatSolver()
         pkgs = [Package(name="a"), Package(name="b"), Package(name="c")]
         result = solver.solve(pkgs)
@@ -57,6 +64,7 @@ class TestMiniSatSolve:
 
     def test_solve_with_conflicts(self):
         from package_maximizer.solvers.minisat_solver import MiniSatSolver
+
         solver = MiniSatSolver()
         pkgs = [
             Package(name="a", conflicts=["b"]),
@@ -72,12 +80,14 @@ class TestMiniSatSolveWithWeights:
 
     def test_solve_with_weights_empty(self):
         from package_maximizer.solvers.minisat_solver import MiniSatSolver
+
         solver = MiniSatSolver()
         result = solver.solve_with_weights([], {})
         assert result == []
 
     def test_solve_with_weights_none(self):
         from package_maximizer.solvers.minisat_solver import MiniSatSolver
+
         solver = MiniSatSolver()
         pkgs = [Package(name="a"), Package(name="b")]
         result = solver.solve_with_weights(pkgs, None)
@@ -85,6 +95,7 @@ class TestMiniSatSolveWithWeights:
 
     def test_solve_with_weights_prefers_high(self):
         from package_maximizer.solvers.minisat_solver import MiniSatSolver
+
         solver = MiniSatSolver()
         pkgs = [
             Package(name="low", conflicts=["high"]),

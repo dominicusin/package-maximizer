@@ -2,28 +2,13 @@
 
 from __future__ import annotations
 
-from package_maximizer.parsers import (
-    SnapParser,
-    FlatpakParser,
-    CargoParser,
-    NpmParser,
-    CondaParser,
-    PortageParser,
-    ApkParser,
-    ZypperParser,
-    YumParser,
-    PipParser,
-    GemParser,
-    YarnParser,
-    ComposerParser,
-    VcpkgParser,
-    NuGetParser,
-    WingetParser,
-    ScoopParser,
-    ChocoParser,
-)
-from package_maximizer.parsers import PARSER_REGISTRY, get_parser
-
+from package_maximizer.parsers import (PARSER_REGISTRY, ApkParser, CargoParser,
+                                       ChocoParser, ComposerParser,
+                                       CondaParser, FlatpakParser, GemParser,
+                                       NpmParser, NuGetParser, PipParser,
+                                       PortageParser, ScoopParser, SnapParser,
+                                       VcpkgParser, WingetParser, YarnParser,
+                                       YumParser, ZypperParser, get_parser)
 
 SNAP_LIST = """Name           Version          Rev    Tracking         Publisher
 core           16-2.58.3        14936  latest/stable    canonical*
@@ -35,19 +20,19 @@ org.gnome.Platform              44.0
 com.spotify.Client              1.2.13
 """
 
-CARGO_META = r'''{
+CARGO_META = r"""{
   "packages": [
     {"name": "serde", "version": "1.0.0", "dependencies": [{"name": "serde_derive"}]},
     {"name": "serde_derive", "version": "1.0.0", "dependencies": []}
   ]
-}'''
+}"""
 
-NPM_LS = r'''{
+NPM_LS = r"""{
   "dependencies": {
     "lodash": {"version": "4.17.21"},
     "react": {"version": "18.2.0", "dependencies": {"scheduler": {"version": "0.23.0"}}}
   }
-}'''
+}"""
 
 CONDA_LIST = """# packages in environment at /home/user/miniconda3:
 #
@@ -175,9 +160,12 @@ class TestNewParsers:
     def test_registry_includes_new_parsers(self):
         for key in ("snap", "flatpak", "cargo", "npm"):
             assert key in PARSER_REGISTRY
-            assert isinstance(get_parser(key), PackageParser := __import__(
-                "package_maximizer.core.interfaces", fromlist=["PackageParser"]
-            ).PackageParser)
+            assert isinstance(
+                get_parser(key),
+                PackageParser := __import__(
+                    "package_maximizer.core.interfaces", fromlist=["PackageParser"]
+                ).PackageParser,
+            )
 
     def test_conda_parser(self):
         pkgs = CondaParser().parse(CONDA_LIST)
@@ -272,9 +260,24 @@ class TestNewParsers:
 
     def test_all_new_parsers_registered(self):
         expected = {
-            "snap", "flatpak", "cargo", "npm", "conda", "portage",
-            "apk", "zypper", "yum", "pip", "gem", "yarn", "composer",
-            "vcpkg", "nuget", "winget", "scoop", "choco",
+            "snap",
+            "flatpak",
+            "cargo",
+            "npm",
+            "conda",
+            "portage",
+            "apk",
+            "zypper",
+            "yum",
+            "pip",
+            "gem",
+            "yarn",
+            "composer",
+            "vcpkg",
+            "nuget",
+            "winget",
+            "scoop",
+            "choco",
         }
         for key in expected:
             assert key in PARSER_REGISTRY, f"{key} not in registry"
@@ -284,10 +287,20 @@ class TestNewParsers:
     def test_empty_input_returns_empty_list(self):
         """All parsers should handle empty input gracefully."""
         parsers = [
-            CondaParser(), PortageParser(), ApkParser(), ZypperParser(),
-            YumParser(), PipParser(), GemParser(), YarnParser(),
-            ComposerParser(), VcpkgParser(), NuGetParser(), WingetParser(),
-            ScoopParser(), ChocoParser(),
+            CondaParser(),
+            PortageParser(),
+            ApkParser(),
+            ZypperParser(),
+            YumParser(),
+            PipParser(),
+            GemParser(),
+            YarnParser(),
+            ComposerParser(),
+            VcpkgParser(),
+            NuGetParser(),
+            WingetParser(),
+            ScoopParser(),
+            ChocoParser(),
         ]
         for parser in parsers:
             assert parser.parse("") == []

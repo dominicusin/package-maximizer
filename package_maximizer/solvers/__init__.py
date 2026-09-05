@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .enhanced_greedy import EnhancedGreedySolver
     from .greedy import GreedySolver
-    from .z3_solver import Z3Solver
-    from .pulp_solver import PulPSolver
-    from .ortools_solver import ORToolsSolver
     from .maxsat_solver import MaxSatSolver
     from .minisat_solver import MiniSatSolver
-    from .enhanced_greedy import EnhancedGreedySolver
+    from .ortools_solver import ORToolsSolver
+    from .pulp_solver import PulPSolver
+    from .z3_solver import Z3Solver
 
 # Names that callers may import directly (e.g. ``from package_maximizer.solvers
 # import MaxSatSolver``). They are resolved lazily so a missing optional

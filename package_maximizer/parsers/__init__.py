@@ -6,29 +6,15 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .apt_parser import APTParser
-    from .pacman_parser import PacmanParser
-    from .dnf_parser import DNFParser
     from .brew_parser import BrewParser
-    from .extra_parsers import (
-        SnapParser,
-        FlatpakParser,
-        CargoParser,
-        NpmParser,
-        CondaParser,
-        PortageParser,
-        ApkParser,
-        ZypperParser,
-        YumParser,
-        PipParser,
-        GemParser,
-        YarnParser,
-        ComposerParser,
-        VcpkgParser,
-        NuGetParser,
-        WingetParser,
-        ScoopParser,
-        ChocoParser,
-    )
+    from .dnf_parser import DNFParser
+    from .extra_parsers import (ApkParser, CargoParser, ChocoParser,
+                                ComposerParser, CondaParser, FlatpakParser,
+                                GemParser, NpmParser, NuGetParser, PipParser,
+                                PortageParser, ScoopParser, SnapParser,
+                                VcpkgParser, WingetParser, YarnParser,
+                                YumParser, ZypperParser)
+    from .pacman_parser import PacmanParser
 
 # Available parsers (names re-exported for typing convenience)
 __all__ = [

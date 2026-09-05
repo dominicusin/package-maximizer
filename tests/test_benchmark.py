@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from package_maximizer.utils.benchmark import BenchmarkRunner, BenchmarkResult, BenchmarkReport
 from package_maximizer.core.package import Package
+from package_maximizer.utils.benchmark import (BenchmarkReport,
+                                               BenchmarkResult,
+                                               BenchmarkRunner)
 
 
 class TestBenchmarkResult:
@@ -54,28 +56,32 @@ class TestBenchmarkReport:
 
     def test_get_summary_with_results(self):
         report = BenchmarkReport()
-        report.add_result(BenchmarkResult(
-            solver_name="greedy",
-            package_count=10,
-            conflict_count=2,
-            total_time=0.5,
-            avg_time=0.1,
-            min_time=0.05,
-            max_time=0.15,
-            selected_count=8,
-            success=True,
-        ))
-        report.add_result(BenchmarkResult(
-            solver_name="z3",
-            package_count=10,
-            conflict_count=2,
-            total_time=1.0,
-            avg_time=0.2,
-            min_time=0.1,
-            max_time=0.3,
-            selected_count=8,
-            success=True,
-        ))
+        report.add_result(
+            BenchmarkResult(
+                solver_name="greedy",
+                package_count=10,
+                conflict_count=2,
+                total_time=0.5,
+                avg_time=0.1,
+                min_time=0.05,
+                max_time=0.15,
+                selected_count=8,
+                success=True,
+            )
+        )
+        report.add_result(
+            BenchmarkResult(
+                solver_name="z3",
+                package_count=10,
+                conflict_count=2,
+                total_time=1.0,
+                avg_time=0.2,
+                min_time=0.1,
+                max_time=0.3,
+                selected_count=8,
+                success=True,
+            )
+        )
         summary = report.get_summary()
         assert summary["total_solvers"] == 2
         assert summary["best_solver"] == "greedy"
@@ -117,64 +123,72 @@ class TestBenchmarkRunner:
     def test_print_report(self):
         runner = BenchmarkRunner(runs=1)
         report = BenchmarkReport()
-        report.add_result(BenchmarkResult(
-            solver_name="greedy",
-            package_count=10,
-            conflict_count=2,
-            total_time=0.5,
-            avg_time=0.1,
-            min_time=0.05,
-            max_time=0.15,
-            selected_count=8,
-            success=True,
-        ))
+        report.add_result(
+            BenchmarkResult(
+                solver_name="greedy",
+                package_count=10,
+                conflict_count=2,
+                total_time=0.5,
+                avg_time=0.1,
+                min_time=0.05,
+                max_time=0.15,
+                selected_count=8,
+                success=True,
+            )
+        )
         runner.print_report(report)
 
     def test_print_full_report(self):
         runner = BenchmarkRunner(runs=1)
         reports = {10: BenchmarkReport()}
-        reports[10].add_result(BenchmarkResult(
-            solver_name="greedy",
-            package_count=10,
-            conflict_count=2,
-            total_time=0.5,
-            avg_time=0.1,
-            min_time=0.05,
-            max_time=0.15,
-            selected_count=8,
-            success=True,
-        ))
+        reports[10].add_result(
+            BenchmarkResult(
+                solver_name="greedy",
+                package_count=10,
+                conflict_count=2,
+                total_time=0.5,
+                avg_time=0.1,
+                min_time=0.05,
+                max_time=0.15,
+                selected_count=8,
+                success=True,
+            )
+        )
         runner.print_full_report(reports)
 
     def test_export_report_json(self):
         report = BenchmarkReport()
-        report.add_result(BenchmarkResult(
-            solver_name="greedy",
-            package_count=10,
-            conflict_count=2,
-            total_time=0.5,
-            avg_time=0.1,
-            min_time=0.05,
-            max_time=0.15,
-            selected_count=8,
-            success=True,
-        ))
+        report.add_result(
+            BenchmarkResult(
+                solver_name="greedy",
+                package_count=10,
+                conflict_count=2,
+                total_time=0.5,
+                avg_time=0.1,
+                min_time=0.05,
+                max_time=0.15,
+                selected_count=8,
+                success=True,
+            )
+        )
         result = BenchmarkRunner.export_report(report, format="json")
         assert isinstance(result, str)
         assert "greedy" in result
 
     def test_export_report_csv(self):
         report = BenchmarkReport()
-        report.add_result(BenchmarkResult(
-            solver_name="greedy",
-            package_count=10,
-            conflict_count=2,
-            total_time=0.5,
-            avg_time=0.1,
-            min_time=0.05,
-            max_time=0.15,
-            selected_count=8,
-            success=True,
-        ))
+        report.add_result(
+            BenchmarkResult(
+                solver_name="greedy",
+                package_count=10,
+                conflict_count=2,
+                total_time=0.5,
+                avg_time=0.1,
+                min_time=0.05,
+                max_time=0.15,
+                selected_count=8,
+                success=True,
+            )
+        )
         result = BenchmarkRunner.export_report(report, format="csv")
         assert isinstance(result, str)

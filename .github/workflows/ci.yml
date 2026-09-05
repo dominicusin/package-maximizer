@@ -70,14 +70,16 @@ jobs:
       run: |
         flake8 package_maximizer/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
+    # Blocking checks — no || true (CI must catch regressions)
+    # Safe: these commands have no user-controlled input
     - name: Type check with mypy
-      run: mypy package_maximizer/ --ignore-missing-imports || true
+      run: mypy package_maximizer/ --ignore-missing-imports
 
     - name: Check formatting with black
-      run: black --check package_maximizer/ tests/ || true
+      run: black --check package_maximizer/ tests/
 
     - name: Check imports with isort
-      run: isort --check-only package_maximizer/ tests/ || true
+      run: isort --check-only package_maximizer/ tests/
 
   # ─── Tests across matrix ────────────────────────────────────
   test:

@@ -4,8 +4,9 @@ Tests for solvers.pulp_solver — ILP solver with fallback behavior.
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from package_maximizer.core.package import Package
 
@@ -15,12 +16,14 @@ class TestPulPSolverInit:
 
     def test_default_init(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         assert solver.solver_name is None
         assert solver.time_limit == 10000
 
     def test_custom_init(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver(solver_name="CBC", time_limit=5000)
         assert solver.solver_name == "CBC"
         assert solver.time_limit == 5000
@@ -30,10 +33,12 @@ class TestPulPSolverAvailable:
     """PULP_AVAILABLE flag and import handling."""
 
     def test_pulp_available_true_when_imported(self):
-        from package_maximizer.solvers import pulp_solver
         # If we can import pulp_solver, PULP_AVAILABLE should be True
         # Skip when pulp is not installed
         import importlib
+
+        from package_maximizer.solvers import pulp_solver
+
         try:
             importlib.import_module("pulp")
         except ImportError:
@@ -46,12 +51,14 @@ class TestPulPSolve:
 
     def test_solve_empty_packages(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         result = solver.solve([])
         assert result == []
 
     def test_solve_single_package(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [Package(name="a")]
         result = solver.solve(pkgs)
@@ -59,6 +66,7 @@ class TestPulPSolve:
 
     def test_solve_no_conflicts(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [Package(name="a"), Package(name="b"), Package(name="c")]
         result = solver.solve(pkgs)
@@ -66,6 +74,7 @@ class TestPulPSolve:
 
     def test_solve_with_conflicts(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [
             Package(name="a", conflicts=["b"]),
@@ -78,6 +87,7 @@ class TestPulPSolve:
 
     def test_solve_with_chain_conflicts(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [
             Package(name="a", conflicts=["b"]),
@@ -90,6 +100,7 @@ class TestPulPSolve:
 
     def test_solve_with_isolated_packages(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [
             Package(name="a", conflicts=["b"]),
@@ -108,12 +119,14 @@ class TestPulPSolveWithWeights:
 
     def test_solve_with_weights_empty(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         result = solver.solve_with_weights([], {})
         assert result == []
 
     def test_solve_with_weights_none(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [Package(name="a"), Package(name="b")]
         result = solver.solve_with_weights(pkgs, None)
@@ -121,6 +134,7 @@ class TestPulPSolveWithWeights:
 
     def test_solve_with_weights_prefers_high(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [
             Package(name="low", conflicts=["high"]),
@@ -132,6 +146,7 @@ class TestPulPSolveWithWeights:
 
     def test_solve_with_weights_respects_conflicts(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [
             Package(name="a", conflicts=["b"]),
@@ -143,6 +158,7 @@ class TestPulPSolveWithWeights:
 
     def test_solve_with_weights_missing_weight_defaults(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [Package(name="a"), Package(name="b")]
         weights = {"a": 5.0}  # b missing
@@ -155,6 +171,7 @@ class TestPulPGreedyFallback:
 
     def test_greedy_fallback_no_weights(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [Package(name="a"), Package(name="b")]
         result = solver._greedy_fallback(pkgs)
@@ -162,6 +179,7 @@ class TestPulPGreedyFallback:
 
     def test_greedy_fallback_with_weights(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [Package(name="a"), Package(name="b")]
         weights = {"a": 2.0, "b": 1.0}
@@ -170,6 +188,7 @@ class TestPulPGreedyFallback:
 
     def test_greedy_fallback_with_conflicts(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [
             Package(name="a", conflicts=["b"]),
@@ -216,6 +235,7 @@ class TestPulPStatusHandling:
 
     def test_solve_optimal_status(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [Package(name="a"), Package(name="b")]
         result = solver.solve(pkgs)
@@ -223,6 +243,7 @@ class TestPulPStatusHandling:
 
     def test_solve_with_weights_optimal_status(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [Package(name="a"), Package(name="b")]
         result = solver.solve_with_weights(pkgs, {"a": 1.0, "b": 1.0})
@@ -234,6 +255,7 @@ class TestPulPExceptionHandling:
 
     def test_greedy_fallback_produces_valid_result(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [
             Package(name="a", conflicts=["b"]),
@@ -246,6 +268,7 @@ class TestPulPExceptionHandling:
 
     def test_greedy_fallback_with_weights_produces_valid_result(self):
         from package_maximizer.solvers.pulp_solver import PulPSolver
+
         solver = PulPSolver()
         pkgs = [
             Package(name="a", conflicts=["b"]),

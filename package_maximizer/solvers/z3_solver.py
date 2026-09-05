@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 try:
-    from z3 import Optimize, Bool, sat, unsat, Or, Not, If, RealVal
+    from z3 import Bool, If, Not, Optimize, Or, RealVal, sat, unsat
 
     Z3_AVAILABLE = True
 except ImportError:
@@ -71,7 +71,11 @@ class Z3Solver(ConstraintSolver):
             return []
         elif result == sat:
             model = solver.model()
-            return [name for name, var in x.items() if model.evaluate(var, model_completion=True)]
+            return [
+                name
+                for name, var in x.items()
+                if model.evaluate(var, model_completion=True)
+            ]
         else:
             return []
 
@@ -119,6 +123,10 @@ class Z3Solver(ConstraintSolver):
             return []
         elif result == sat:
             model = solver.model()
-            return [name for name, var in x.items() if model.evaluate(var, model_completion=True)]
+            return [
+                name
+                for name, var in x.items()
+                if model.evaluate(var, model_completion=True)
+            ]
         else:
             return []
