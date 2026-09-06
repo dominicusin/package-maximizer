@@ -104,6 +104,7 @@ def test_maximize_success(client):
     assert r.status_code == 200
     body = r.get_json()
     assert "selected" in body or "result" in body
+    assert "metadata_fetched" in body
 
 
 def test_maximize_get_supported(client):

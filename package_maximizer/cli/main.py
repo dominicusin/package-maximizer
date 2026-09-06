@@ -100,7 +100,15 @@ def cli(verbose: bool, quiet: bool, config: str | None):
     default=False,
     help="Показать причины отбора/отклонения пакетов",
 )
-def maximize(packages, manager, solver, conflicts, output, weights, depends, explain):
+@click.option(
+    "--metadata",
+    is_flag=True,
+    default=False,
+    help="Автоматически загружать метаданные пакетов через адаптеры",
+)
+def maximize(
+    packages, manager, solver, conflicts, output, weights, depends, explain, metadata
+):
     """
     Максимизировать множество пакетов.
 
@@ -154,6 +162,42 @@ def maximize(packages, manager, solver, conflicts, output, weights, depends, exp
         for pkg in package_objs:
             if pkg.name in dep_map:
                 pkg.depends = dep_map[pkg.name]
+
+        # Автоматическая загрузка метаданных через адаптеры
+        if metadata:
+            from ..adapters import get_adapter
+
+            try:
+                adapter = get_adapter(manager)
+            except Exception:
+                adapter = None
+
+            if adapter is None:
+                click.echo(
+                    f"Предупреждение: нет адаптера метаданных для '{manager}'. "
+                    "Метаданные не будут загружены.",
+                    err=True,
+                )
+            else:
+                metadata_count = 0
+                for pkg in package_objs:
+                    pkg_metadata = adapter.fetch(pkg.name)
+                    if pkg_metadata and pkg_metadata.name:
+                        if pkg_metadata.depends:
+                            pkg.depends = list(
+                                dict.fromkeys(pkg.depends + pkg_metadata.depends)
+                            )
+                        if pkg_metadata.conflicts:
+                            pkg.conflicts = list(
+                                dict.fromkeys(pkg.conflicts + pkg_metadata.conflicts)
+                            )
+                        metadata_count += 1
+
+                if metadata_count > 0:
+                    click.echo(
+                        f"Загружены метаданные для {metadata_count}/{len(package_objs)} пакетов",
+                        err=True,
+                    )
 
         # Создание словаря весов
         weights_dict = dict(weights) if weights else None
