@@ -113,7 +113,7 @@ def validate_maximize_payload(data: Any) -> tuple[list[str], list, dict | None]:
                 raise ValueError("Weight keys must be strings")
             try:
                 float(v)  # type: ignore[arg-type]
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 raise ValueError(f"Weight for '{k}' must be numeric")
 
     return cleaned, conflicts, weights  # type: ignore[return-value]
