@@ -80,7 +80,7 @@ class _LazySolverRegistry(dict):
     def get(self, name: str, default=None):  # type: ignore[override]
         try:
             return self[name]
-        except (KeyError, ImportError):
+        except KeyError, ImportError:
             return default
 
     def __contains__(self, name: object) -> bool:  # type: ignore[override]
