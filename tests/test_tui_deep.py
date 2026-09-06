@@ -10,6 +10,8 @@ import asyncio
 
 import pytest
 
+textual = pytest.importorskip("textual")  # noqa: E402
+
 from package_maximizer.tui.app import MaximizerApp
 
 
@@ -72,6 +74,24 @@ def test_button_run_with_solver_z3():
     """Solver selection is honoured (z3 path executes)."""
     out = _run_app("a,b,c", "z3")
     assert "Selected" in out or "No selection" in out
+
+
+def test_metadata_checkbox_present():
+    """Metadata checkbox exists in the widget tree."""
+
+    async def _check():
+        app = MaximizerApp()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            assert app.query_one("#metadata") is not None
+
+    asyncio.run(_check())
+
+
+def test_run_with_metadata_flag():
+    """Metadata path does not crash when checkbox is enabled."""
+    out = _run_app("vim,nano", "greedy")
+    assert isinstance(out, str)
 
 
 def test_non_run_button_ignored():

@@ -239,7 +239,7 @@ def maximize(
                 excluded = all_names - selected_set
 
                 if excluded:
-                    click.echo(f"\nПричины отклонения:")
+                    click.echo("\nПричины отклонения:")
                     # Используем encoder для получения ограничений
                     from ..core.model_encoder import encode_packages
 
@@ -450,7 +450,7 @@ def benchmark(solvers, packages, runs, output):
             try:
                 solver = solver_class()
                 start = time.time()
-                result = solver.solve(test_packages)
+                _ = solver.solve(test_packages)
                 end = time.time()
                 times.append(end - start)
             except Exception as e:
@@ -896,7 +896,7 @@ def propose(packages, manager, solver, output, explain):
                 excluded = all_names - selected_set
 
                 if excluded:
-                    click.echo(f"\nПричины отклонения:")
+                    click.echo("\nПричины отклонения:")
                     from ..core.model_encoder import encode_packages
 
                     constraints = encode_packages(package_objs)
@@ -919,7 +919,7 @@ def propose(packages, manager, solver, output, explain):
                         else:
                             click.echo(f"  - {name}: не оптимально для данного солвера")
                 else:
-                    click.echo(f"\nВсе пакеты выбраны!")
+                    click.echo("\nВсе пакеты выбраны!")
     except Exception as e:
         logger.error(f"Ошибка: {e}", exc_info=True)
         click.echo(f"Ошибка: {e}", err=True)

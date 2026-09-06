@@ -9,7 +9,7 @@ from typing import Any
 
 from flask import Flask, g, jsonify, request
 
-from ..core.enums import PackageManagerType, SolverType
+from ..core.enums import PackageManagerType
 from ..core.maximizer import PackageMaximizer
 from ..core.package import Package
 from ..utils import BenchmarkRunner, CacheManager
