@@ -212,11 +212,13 @@ def extract_conflicts(nix_file: str) -> list[str]:
         return []
     content = Path(nix_file).read_text(errors="ignore")
     conflicts: list[str] = []
-    # Match: buildInputs = lib.optionals (!stdenv.hostPlatform.isDarwin) [ pkg1 pkg2 ];
-    # Some packages have conflicting variants
-    for match in re.finditer(
-        r"(?:conflict|excludes|notWith|meta\.broken)\s*=\s*([^;]+);", content
-    ):
+    # Match meta.broken = true (real conflict signal in nixpkgs)
+    for match in re.finditer(r"meta\.broken\s*=\s*true", content):
+        ctx = match.group(0)
+        if ctx:
+            conflicts.append(ctx)
+    # Match notWith/forceRenamed for actual package conflicts
+    for match in re.finditer(r"(?:notWith|forceRenamed)\s*=\s*([^;]+);", content):
         ctx = match.group(1).strip()
         if ctx and ctx != "true":
             conflicts.append(ctx)
