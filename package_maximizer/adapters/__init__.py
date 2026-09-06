@@ -42,6 +42,8 @@ def get_adapter(manager: str):
         "apt": APTMetadataAdapter,
         "pip": PipMetadataAdapter,
         "pacman": PacmanMetadataAdapter,
+        "npm": NpmMetadataAdapter,
+        "brew": BrewMetadataAdapter,
     }
     cls = adapters.get(manager.lower())
     if cls is None:
@@ -341,3 +343,166 @@ class PacmanMetadataAdapter:
                 deps.append(dep)
 
         return deps
+
+
+class NpmMetadataAdapter:
+    """Парсер метаданных npm (package-lock.json v2/v3)."""
+
+    def fetch(self, package_name: str) -> PackageMetadata | None:
+        """Получить метаданные через npm view."""
+        try:
+            result = subprocess.run(
+                ["npm", "view", package_name, "json"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if result.returncode == 0:
+                return self.parse(result.stdout)
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+        return None
+
+    def parse(self, raw: str) -> PackageMetadata | None:
+        """Разобрать вывод npm view или package-lock.json."""
+        if not raw.strip():
+            return None
+
+        import json
+
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+
+        # Handle both single package and array responses
+        if isinstance(data, list):
+            if len(data) == 0:
+                return None
+            data = data[-1]  # Latest version
+
+        if not isinstance(data, dict):
+            return None
+
+        metadata = PackageMetadata(
+            name=data.get("name", ""),
+            version=data.get("version", ""),
+            description=data.get("description", ""),
+            homepage=data.get("homepage", ""),
+        )
+
+        # Dependencies
+        deps = data.get("dependencies", {})
+        if isinstance(deps, dict):
+            metadata.depends.extend(deps.keys())
+
+        # Conflicts (npm uses "conflicts" rarely, but check)
+        conflicts = data.get("conflicts", {})
+        if isinstance(conflicts, dict):
+            metadata.conflicts.extend(conflicts.keys())
+
+        return metadata if metadata.name else None
+
+    def parse_lockfile(self, raw: str) -> list[PackageMetadata]:
+        """Разобрать package-lock.json v2/v3."""
+        if not raw.strip():
+            return []
+
+        import json
+
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return []
+
+        packages = []
+        packages_data = data.get("packages", {})
+
+        for path, info in packages_data.items():
+            if not isinstance(info, dict):
+                continue
+            # Skip the root entry
+            if path == "":
+                continue
+
+            name = info.get("name", "")
+            if not name:
+                # Extract from path (node_modules/@scope/pkg or node_modules/pkg)
+                parts = path.replace("node_modules/", "").split("/")
+                if len(parts) > 1 and parts[0].startswith("@"):
+                    name = "/".join(parts[:2])
+                else:
+                    name = parts[0]
+
+            metadata = PackageMetadata(
+                name=name,
+                version=info.get("version", ""),
+            )
+
+            deps = info.get("dependencies", {})
+            if isinstance(deps, dict):
+                metadata.depends.extend(deps.keys())
+
+            packages.append(metadata)
+
+        return packages
+
+
+class BrewMetadataAdapter:
+    """Парсер метаданных brew (brew info --json=v2)."""
+
+    def fetch(self, package_name: str) -> PackageMetadata | None:
+        """Получить метаданные через brew info --json=v2."""
+        try:
+            result = subprocess.run(
+                ["brew", "info", "--json=v2", package_name],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if result.returncode == 0:
+                import json
+
+                data = json.loads(result.stdout)
+                if data and isinstance(data, list) and len(data) > 0:
+                    return self._parse_brew_json(data[0])
+        except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
+            pass
+        return None
+
+    def _parse_brew_json(self, data: dict) -> PackageMetadata:
+        """Разобрать JSON от brew info."""
+        metadata = PackageMetadata(
+            name=data.get("name", ""),
+            version=data.get("versions", {}).get("stable", ""),
+            description=data.get("desc", ""),
+            homepage=data.get("homepage", ""),
+        )
+
+        # Dependencies
+        deps = data.get("dependencies", [])
+        if isinstance(deps, list):
+            metadata.depends.extend(deps)
+
+        # Conflicts
+        conflicts = data.get("conflicts_with", [])
+        if isinstance(conflicts, list):
+            metadata.conflicts.extend(conflicts)
+
+        return metadata
+
+    def parse(self, raw: str) -> PackageMetadata | None:
+        """Разобрать JSON вывод brew info --json=v2."""
+        if not raw.strip():
+            return None
+        try:
+            import json
+
+            data = json.loads(raw)
+            if isinstance(data, list) and len(data) > 0:
+                return self._parse_brew_json(data[0])
+            elif isinstance(data, dict):
+                return self._parse_brew_json(data)
+        except json.JSONDecodeError:
+            pass
+        return None
