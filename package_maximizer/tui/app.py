@@ -155,7 +155,7 @@ class MaximizerApp(App):
         log.write_line("===========")
         log.write_line("")
 
-    def action_quit(self) -> None:
+    async def action_quit(self) -> None:
         """Quit the application via keyboard shortcut (Ctrl+Q)."""
         self.exit()
 
