@@ -11,9 +11,9 @@ try:
     try:
         __version__ = _dist_version("package-maximizer")
     except PackageNotFoundError:
-        __version__ = "0.10.0"
+        __version__ = "0.12.0"
 except ImportError:  # pragma: no cover — Python < 3.8
-    __version__ = "0.10.0"
+    __version__ = "0.12.0"
 __author__ = "Package Maximizer Team"
 __email__ = "team@package-maximizer.dev"
 __license__ = "MIT"
