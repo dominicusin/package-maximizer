@@ -13,7 +13,9 @@ def test_import():
         assert hasattr(package_maximizer, "__version__")
         # Accept both release and dev versions (0.10.x or 0.10.y.devN+...)
         ver = package_maximizer.__version__
-        assert ver.split("+")[0].startswith("0.10") or ver.split("+")[0].startswith("0.9"), f"Expected 0.10.x, got {ver}"
+        assert ver.split("+")[0].startswith("0.10") or ver.split("+")[0].startswith(
+            "0.9"
+        ), f"Expected 0.10.x, got {ver}"
     except ImportError:
         assert False, "Failed to import package_maximizer"
 
