@@ -34,7 +34,7 @@ jobs:
       url: https://pypi.org/p/package-maximizer
     permissions: {}
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: {name: dist, path: dist}
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.14.2
