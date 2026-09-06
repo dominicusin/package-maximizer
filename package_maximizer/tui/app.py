@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Button, Footer, Header, Input, Log, Select, Static
+from textual.widgets import Button, Checkbox, Footer, Header, Input, Log, Select, Static
 
 
 class MaximizerApp(App):
@@ -38,6 +36,7 @@ class MaximizerApp(App):
                     value="greedy",
                     id="solver",
                 )
+                yield Checkbox("Load metadata", id="metadata")
                 yield Button("Run", id="run")
             with Vertical(id="results"):
                 yield Static("Results will appear here.", id="result_text")
@@ -49,6 +48,7 @@ class MaximizerApp(App):
             return
         packages_text = self.query_one("#packages", Input).value
         solver = self.query_one("#solver", Select).value
+        metadata = self.query_one("#metadata", Checkbox).value
         log = self.query_one("#log_output", Log)
         result_text = self.query_one("#result_text", Static)
 
@@ -64,6 +64,21 @@ class MaximizerApp(App):
 
             maximizer = PackageMaximizer(manager="apt", solver=solver or "greedy")
             pkg_objs = [Package(name=p) for p in packages]
+            if metadata:
+                from package_maximizer.adapters import get_adapter
+
+                adapter = get_adapter("apt")
+                if adapter is not None:
+                    for pkg in pkg_objs:
+                        meta = adapter.fetch(pkg.name)
+                        if meta and meta.name:
+                            if meta.depends:
+                                pkg.depends = meta.depends
+                            if meta.conflicts:
+                                pkg.conflicts = meta.conflicts
+                    log.write_line(f"Loaded metadata for {len(packages)} packages.")
+                else:
+                    log.write_line("No adapter for metadata; continuing without it.")
             selected = maximizer.maximize(pkg_objs)
             selected_names = [p.name for p in selected]
             result_text.update(
