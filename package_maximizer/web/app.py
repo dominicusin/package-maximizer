@@ -313,9 +313,42 @@ def maximize_post() -> tuple[dict, int]:
     # Build package objects
     package_objs = []
     conflict_map: dict[str, list[str]] = {}
-    for pkg_name in packages:
-        pkg = Package(name=pkg_name, status="candidate")
-        package_objs.append(pkg)
+    not_found = []
+    metadata_summary = []
+
+    from ..adapters import get_adapter
+
+    adapter = None
+    try:
+        adapter = get_adapter(manager)
+    except Exception:
+        pass
+
+    if adapter is not None:
+        for pkg_name in packages:
+            metadata = adapter.fetch(pkg_name)
+            if metadata and metadata.name:
+                pkg = Package(name=metadata.name, status="candidate")
+                if metadata.depends:
+                    pkg.depends = metadata.depends
+                if metadata.conflicts:
+                    pkg.conflicts = metadata.conflicts
+                package_objs.append(pkg)
+                metadata_summary.append(
+                    {
+                        "name": metadata.name,
+                        "version": metadata.version,
+                        "depends": metadata.depends,
+                        "conflicts": metadata.conflicts,
+                    }
+                )
+            else:
+                not_found.append(pkg_name)
+                package_objs.append(Package(name=pkg_name, status="candidate"))
+    else:
+        for pkg_name in packages:
+            pkg = Package(name=pkg_name, status="candidate")
+            package_objs.append(pkg)
 
     # Apply conflicts
     for c in conflicts:
@@ -359,7 +392,12 @@ def maximize_post() -> tuple[dict, int]:
         "output_count": len(result),
         "selected": result,
         "input": packages,
+        "metadata_fetched": (
+            len(packages) - len(not_found) if adapter is not None else 0
+        ),
     }
+    if metadata_summary:
+        response_data["metadata"] = metadata_summary
 
     if explain:
         from ..core.model_encoder import encode_packages
