@@ -264,3 +264,114 @@ def test_propose_with_explain(client, monkeypatch):
     assert r.status_code == 200
     data = r.get_json()
     assert "excluded" in data
+
+
+# --- Analyze endpoint ---------------------------------------------------------
+
+
+def test_analyze_requires_key(client):
+    r = client.post("/api/v1/analyze", json={"packages": ["a"]})
+    assert r.status_code == 401
+
+
+def test_analyze_success(client):
+    payload = {"packages": ["pkg1", "pkg2"], "manager": "apt", "solver": "greedy"}
+    r = client.post("/api/v1/analyze", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+    data = r.get_json()
+    assert data["total_packages"] == 2
+    assert "selected" in data
+    assert "bottlenecks" in data
+    assert "conflict_count" in data
+
+
+def test_analyze_with_conflicts(client):
+    payload = {
+        "packages": ["pkg1", "pkg2"],
+        "manager": "apt",
+        "solver": "greedy",
+        "conflicts": [["pkg1", "pkg2"]],
+    }
+    r = client.post("/api/v1/analyze", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+    data = r.get_json()
+    assert data["conflict_count"] == 1
+    assert data["excluded_count"] == 1
+
+
+def test_analyze_invalid_manager(client):
+    payload = {"packages": ["pkg1"], "manager": "invalid"}
+    r = client.post("/api/v1/analyze", json=payload, headers=auth_headers())
+    assert r.status_code == 400
+
+
+def test_analyze_missing_packages(client):
+    r = client.post("/api/v1/analyze", json={}, headers=auth_headers())
+    assert r.status_code == 400
+
+
+def test_analyze_json_output(client):
+    payload = {
+        "packages": ["pkg1", "pkg2", "pkg3"],
+        "manager": "apt",
+        "solver": "greedy",
+    }
+    r = client.post("/api/v1/analyze", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+    data = r.get_json()
+    assert "total_packages" in data
+    assert "selected_count" in data
+    assert "excluded_count" in data
+    assert "dependency_count" in data
+    assert "bottlenecks" in data
+
+
+# --- Compare endpoint ---------------------------------------------------------
+
+
+def test_compare_requires_key(client):
+    r = client.post("/api/v1/compare", json={"packages": ["a"]})
+    assert r.status_code == 401
+
+
+def test_compare_success(client):
+    payload = {"packages": ["pkg1", "pkg2", "pkg3"], "manager": "apt"}
+    r = client.post("/api/v1/compare", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+    data = r.get_json()
+    assert "results" in data
+    assert len(data["results"]) > 0
+    for entry in data["results"]:
+        assert "solver" in entry
+        assert "avg_time" in entry
+        assert "selected_count" in entry
+        assert "success" in entry
+
+
+def test_compare_results_sorted(client):
+    payload = {"packages": ["pkg1", "pkg2", "pkg3"], "manager": "apt"}
+    r = client.post("/api/v1/compare", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+    data = r.get_json()
+    times = [r["avg_time"] for r in data["results"]]
+    assert times == sorted(times)
+
+
+def test_compare_best_solver(client):
+    payload = {"packages": ["pkg1", "pkg2"], "manager": "apt"}
+    r = client.post("/api/v1/compare", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+    data = r.get_json()
+    assert "best_solver" in data
+    assert data["best_solver"] is not None
+
+
+def test_compare_invalid_manager(client):
+    payload = {"packages": ["pkg1"], "manager": "invalid"}
+    r = client.post("/api/v1/compare", json=payload, headers=auth_headers())
+    assert r.status_code == 400
+
+
+def test_compare_missing_packages(client):
+    r = client.post("/api/v1/compare", json={}, headers=auth_headers())
+    assert r.status_code == 400

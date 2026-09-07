@@ -763,6 +763,281 @@ def cache_clear() -> tuple[dict, int]:
     return jsonify({"cleared": count}), 200
 
 
+# ─── Analyze endpoint ──────────────────────────────────────────
+@app.post("/api/v1/analyze")
+@require_api_key
+def analyze_post() -> tuple[dict, int]:
+    """
+    Analyze package conflicts and dependencies.
+
+    Expected JSON body::
+
+        {
+            "packages": ["pkg1", "pkg2"],
+            "manager": "apt",
+            "solver": "greedy",
+            "metadata": false,
+            "conflicts": [["pkg1", "pkg2"]],
+            "depends": [["pkg1", "dep1"]]
+        }
+    """
+    from ..core.model_encoder import encode_packages
+    from ..core.package import Package
+
+    data = request.get_json(force=True) or {}
+    if not isinstance(data, dict):
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": "Request body must be a JSON object",
+                }
+            ),
+            400,
+        )
+
+    packages = data.get("packages", [])
+    if not isinstance(packages, list) or not packages:
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": "'packages' must be a non-empty list",
+                }
+            ),
+            400,
+        )
+
+    manager = data.get("manager", "apt")
+    solver = data.get("solver", "greedy")
+    metadata = data.get("metadata", False)
+    conflicts = data.get("conflicts", [])
+    depends = data.get("depends", [])
+
+    try:
+        manager_enum = PackageManagerType(manager)
+    except ValueError:
+        valid = [m.value for m in PackageManagerType]
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": f"Unknown manager '{manager}'. Valid: {valid}",
+                }
+            ),
+            400,
+        )
+
+    package_objs = [Package(name=p, status="candidate") for p in packages]
+
+    for conflict_pair in conflicts:
+        if len(conflict_pair) == 2:
+            a, b = conflict_pair
+            for pkg in package_objs:
+                if pkg.name == a:
+                    if b not in pkg.conflicts:
+                        pkg.conflicts.append(b)
+                if pkg.name == b:
+                    if a not in pkg.conflicts:
+                        pkg.conflicts.append(a)
+
+    for dep_pair in depends:
+        if len(dep_pair) == 2:
+            pkg_name, dep_name = dep_pair
+            for pkg in package_objs:
+                if pkg.name == pkg_name:
+                    if dep_name not in pkg.depends:
+                        pkg.depends.append(dep_name)
+
+    if metadata:
+        from ..adapters import get_adapter
+
+        try:
+            adapter = get_adapter(manager)
+        except Exception:
+            adapter = None
+
+        if adapter is not None:
+            for pkg in package_objs:
+                meta = adapter.fetch(pkg.name)
+                if meta and meta.name:
+                    if meta.depends:
+                        pkg.depends = list(dict.fromkeys(pkg.depends + meta.depends))
+                    if meta.conflicts:
+                        pkg.conflicts = list(
+                            dict.fromkeys(pkg.conflicts + meta.conflicts)
+                        )
+
+    constraints = encode_packages(package_objs)
+    maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
+    result = maximizer.solve(package_objs)
+    selected_set = set(result)
+
+    all_names = {p.name for p in package_objs}
+    excluded = all_names - selected_set
+
+    conflict_map = {}
+    for name in sorted(excluded):
+        reasons = []
+        for a, b in constraints.conflicts:
+            if a == name and b in selected_set:
+                reasons.append(f"conflict with selected '{b}'")
+            elif b == name and a in selected_set:
+                reasons.append(f"conflict with selected '{a}'")
+        deps = constraints.dependencies.get(name, [])
+        unmet_deps = [d for d in deps if d not in selected_set]
+        if unmet_deps:
+            reasons.append(f"unmet dependencies: {', '.join(unmet_deps)}")
+        conflict_map[name] = reasons if reasons else ["not selected"]
+
+    conflict_count = {}
+    for a, b in constraints.conflicts:
+        conflict_count[a] = conflict_count.get(a, 0) + 1
+        conflict_count[b] = conflict_count.get(b, 0) + 1
+    bottlenecks = sorted(conflict_count.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    analysis = {
+        "total_packages": len(package_objs),
+        "selected_count": len(result),
+        "excluded_count": len(excluded),
+        "selected": result,
+        "excluded": {k: v for k, v in conflict_map.items() if v},
+        "conflict_count": len(constraints.conflicts),
+        "dependency_count": sum(len(d) for d in constraints.dependencies.values()),
+        "bottlenecks": [{"name": n, "conflict_count": c} for n, c in bottlenecks],
+        "solver": solver,
+        "manager": manager,
+    }
+
+    return jsonify(analysis), 200
+
+
+# ─── Compare endpoint ──────────────────────────────────────────
+@app.post("/api/v1/compare")
+@require_api_key
+def compare_post() -> tuple[dict, int]:
+    """
+    Compare all available solvers on the given package set.
+
+    Expected JSON body::
+
+        {
+            "packages": ["pkg1", "pkg2"],
+            "manager": "apt",
+            "metadata": false
+        }
+    """
+    import time
+
+    from ..solvers import SOLVER_REGISTRY
+
+    data = request.get_json(force=True) or {}
+    if not isinstance(data, dict):
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": "Request body must be a JSON object",
+                }
+            ),
+            400,
+        )
+
+    packages = data.get("packages", [])
+    if not isinstance(packages, list) or not packages:
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": "'packages' must be a non-empty list",
+                }
+            ),
+            400,
+        )
+
+    manager = data.get("manager", "apt")
+    metadata = data.get("metadata", False)
+
+    try:
+        manager_enum = PackageManagerType(manager)
+    except ValueError:
+        valid = [m.value for m in PackageManagerType]
+        return (
+            jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": f"Unknown manager '{manager}'. Valid: {valid}",
+                }
+            ),
+            400,
+        )
+
+    package_objs = [Package(name=p, status="candidate") for p in packages]
+
+    if metadata:
+        from ..adapters import get_adapter
+
+        try:
+            adapter = get_adapter(manager)
+        except Exception:
+            adapter = None
+
+        if adapter is not None:
+            for pkg in package_objs:
+                pkg_meta = adapter.fetch(pkg.name)
+                if pkg_meta and pkg_meta.name:
+                    if pkg_meta.depends:
+                        pkg.depends = list(pkg_meta.depends)
+                    if pkg_meta.conflicts:
+                        pkg.conflicts = list(pkg_meta.conflicts)
+
+    solver_names = list(SOLVER_REGISTRY.keys())
+    results = []
+
+    for sname in solver_names:
+        try:
+            solver_cls = SOLVER_REGISTRY[sname]
+            solver_inst = solver_cls()
+            start = time.time()
+            res = solver_inst.solve(list(package_objs))
+            elapsed = time.time() - start
+            results.append(
+                {
+                    "solver": sname,
+                    "avg_time": elapsed,
+                    "selected_count": len(res),
+                    "selected": res,
+                    "success": True,
+                    "error": None,
+                }
+            )
+        except Exception as e:  # noqa: BLE001
+            results.append(
+                {
+                    "solver": sname,
+                    "avg_time": 0.0,
+                    "selected_count": 0,
+                    "selected": [],
+                    "success": False,
+                    "error": str(e),
+                }
+            )
+
+    results.sort(key=lambda r: r["avg_time"])
+
+    return (
+        jsonify(
+            {
+                "results": results,
+                "package_count": len(packages),
+                "best_solver": results[0]["solver"] if results else None,
+                "manager": manager,
+            }
+        ),
+        200,
+    )
+
+
 # ─── Error handlers ──────────────────────────────────────────
 @app.errorhandler(404)
 def not_found(e):
