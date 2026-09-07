@@ -176,3 +176,120 @@ def test_shell_help():
 
     shell = MaximizerShell()
     shell.do_help("")
+
+
+def test_shell_help_no_help_arg():
+    """do_help with no arg prints command list."""
+    from package_maximizer.tui.shell import MaximizerShell
+
+    shell = MaximizerShell()
+    shell.do_help("")
+
+
+def test_shell_info_found():
+    """do_info shows package information when found."""
+    from package_maximizer.integrations.real_repo_integration import PackageInfo
+    from package_maximizer.tui.shell import MaximizerShell
+
+    shell = MaximizerShell()
+    mock_info = PackageInfo(
+        name="pkg1",
+        version="1.0",
+        description="A test package",
+        depends=["dep1"],
+        conflicts=["conf1"],
+        size=100,
+        installed=True,
+    )
+    with patch.object(shell, "_get_integration") as mock_int:
+        mock_int.return_value.get_package_info.return_value = mock_info
+        shell.do_info("pkg1")
+    assert mock_int.return_value.get_package_info.called
+
+
+def test_shell_search_empty_results():
+    """do_search prints nothing found when empty."""
+    from package_maximizer.tui.shell import MaximizerShell
+
+    shell = MaximizerShell()
+    with patch.object(shell, "_get_integration") as mock_int:
+        mock_int.return_value.search_packages.return_value = []
+        shell.do_search("nothing")
+    assert mock_int.return_value.search_packages.called
+
+
+def test_shell_search_error():
+    """do_search handles errors."""
+    from package_maximizer.tui.shell import MaximizerShell
+
+    shell = MaximizerShell()
+    with patch.object(shell, "_get_integration") as mock_int:
+        mock_int.return_value.search_packages.side_effect = RuntimeError("fail")
+        shell.do_search("query")
+    assert mock_int.return_value.search_packages.called
+
+
+def test_shell_search_empty_args():
+    """do_search with no args prints usage."""
+    from package_maximizer.tui.shell import MaximizerShell
+
+    shell = MaximizerShell()
+    shell.do_search("")
+
+
+def test_shell_manager_no_args():
+    """do_manager with no args shows current manager."""
+    from package_maximizer.tui.shell import MaximizerShell
+
+    shell = MaximizerShell()
+    shell.do_manager("")
+    assert shell.manager == "apt"
+
+
+def test_shell_json_empty():
+    """do_json with no args prints usage."""
+    from package_maximizer.tui.shell import MaximizerShell
+
+    shell = MaximizerShell()
+    shell.do_json("")
+
+
+def test_shell_json_empty_packages():
+    """do_json with command but no packages prints usage."""
+    from package_maximizer.tui.shell import MaximizerShell
+
+    shell = MaximizerShell()
+    shell.do_json("maximize")
+
+
+def test_shell_json_unknown_command():
+    """do_json with unknown command prints error."""
+    from package_maximizer.tui.shell import MaximizerShell
+
+    shell = MaximizerShell()
+    shell.do_json("unknown pkg1 pkg2")
+
+
+def test_shell_json_error():
+    """do_json handles solver errors."""
+    from package_maximizer.tui.shell import MaximizerShell
+
+    shell = MaximizerShell()
+    with patch.object(shell, "_get_maximizer") as mock_max:
+        mock_max.return_value.solve.side_effect = RuntimeError("fail")
+        shell.do_json("maximize pkg1 pkg2")
+    assert mock_max.return_value.solve.called
+
+
+def test_shell_search_with_results():
+    """do_search prints found package names."""
+    from package_maximizer.core.package import Package
+    from package_maximizer.tui.shell import MaximizerShell
+
+    shell = MaximizerShell()
+    with patch.object(shell, "_get_integration") as mock_int:
+        mock_int.return_value.search_packages.return_value = [
+            Package(name="found_pkg"),
+        ]
+        shell.do_search("query")
+    assert mock_int.return_value.search_packages.called
