@@ -1240,5 +1240,46 @@ def tui_command() -> None:
         sys.exit(1)
 
 
+@cli.command(name="history")
+@click.option("--manager", "-m", type=str, default="apt", help="Package manager type")
+@click.option("--limit", "-l", type=int, default=20, help="Number of entries to show")
+@click.option("--output", "-o", type=click.Choice(["text", "json"]), default="text")
+def history_command(manager, limit, output):
+    """Показать историю операций пакетного менеджера."""
+    try:
+        integration = RealRepoIntegration(package_manager=manager)
+        history = integration.get_transaction_history(limit)
+    except Exception as e:
+        click.echo(f"Ошибка: {e}", err=True)
+        sys.exit(1)
+
+    if not history:
+        click.echo("История пуста или недоступна для этого менеджера")
+        return
+
+    if output == "json":
+        click.echo(json.dumps(history, indent=2))
+    else:
+        click.echo(f"=== История операций ({manager}) ===")
+        click.echo(f"{'Дата':<20s} {'Операция':<15s} {'Пакет':<30s} Статус")
+        click.echo("-" * 80)
+        for entry in history:
+            date = entry.get("date", "N/A")
+            op = entry.get("operation", "N/A")
+            pkg = (entry.get("package", "N/A") or "N/A")[:29]
+            status = entry.get("status", "OK")
+            click.echo(f"{date:<20s} {op:<15s} {pkg:<30s} {status}")
+
+
+@cli.command(name="shell")
+@click.option("--manager", "-m", type=str, default="apt", help="Package manager type")
+def shell_command(manager):
+    """Запустить интерактивную оболочку для работы с пакетами."""
+    from ..tui.shell import MaximizerShell
+
+    shell = MaximizerShell(manager=manager)
+    shell.run()
+
+
 if __name__ == "__main__":
     cli()

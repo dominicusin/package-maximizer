@@ -519,3 +519,182 @@ class RealRepoIntegration:
             logger.debug(f"Failed to get package manager version: {e}")
 
         return info
+
+    def get_transaction_history(self, limit: int = 20) -> list[dict[str, Any]]:
+        """
+        Получить историю транзакций пакетного менеджера.
+
+        Args:
+            limit: Максимальное количество записей
+
+        Returns:
+            Список записей истории с полями: date, operation, package, status
+        """
+        if self.package_manager == "apt":
+            return self._get_history_apt(limit)
+        elif self.package_manager == "pacman":
+            return self._get_history_pacman(limit)
+        elif self.package_manager == "dnf":
+            return self._get_history_dnf(limit)
+        elif self.package_manager == "brew":
+            return self._get_history_brew(limit)
+        else:
+            return []
+
+    def _get_history_apt(self, limit: int) -> list[dict[str, Any]]:
+        """Get transaction history via APT (dpkg log)."""
+        history: list[dict[str, Any]] = []
+        try:
+            result = subprocess.run(
+                ["tail", "-n", str(limit * 10), "/var/log/dpkg.log"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode == 0:
+                for line in result.stdout.strip().split("\n"):
+                    if not line:
+                        continue
+                    parts = line.split()
+                    if len(parts) >= 4:
+                        date_str = f"{parts[0]} {parts[1]}"
+                        if "install" in line.lower():
+                            pkg = parts[3] if len(parts) > 3 else "unknown"
+                            history.append(
+                                {
+                                    "date": date_str,
+                                    "operation": "install",
+                                    "package": pkg,
+                                    "status": "OK",
+                                }
+                            )
+                        elif "remove" in line.lower():
+                            pkg = parts[3] if len(parts) > 3 else "unknown"
+                            history.append(
+                                {
+                                    "date": date_str,
+                                    "operation": "remove",
+                                    "package": pkg,
+                                    "status": "OK",
+                                }
+                            )
+                        elif "upgrade" in line.lower():
+                            pkg = parts[3] if len(parts) > 3 else "unknown"
+                            history.append(
+                                {
+                                    "date": date_str,
+                                    "operation": "upgrade",
+                                    "package": pkg,
+                                    "status": "OK",
+                                }
+                            )
+        except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError) as e:
+            logger.warning(f"Failed to get APT history: {e}")
+        return history[-limit:] if history else []
+
+    def _get_history_pacman(self, limit: int) -> list[dict[str, Any]]:
+        """Get transaction history via Pacman."""
+        history: list[dict[str, Any]] = []
+        try:
+            result = subprocess.run(
+                ["tail", "-n", str(limit * 5), "/var/log/pacman.log"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode == 0:
+                for line in result.stdout.strip().split("\n"):
+                    if not line:
+                        continue
+                    parts = line.split()
+                    if len(parts) >= 4:
+                        date_str = parts[1] if len(parts) > 1 else "N/A"
+                        if "[ALPM]" in line and "installed" in line:
+                            pkg = parts[-1].rstrip(")")
+                            history.append(
+                                {
+                                    "date": date_str,
+                                    "operation": "install",
+                                    "package": pkg,
+                                    "status": "OK",
+                                }
+                            )
+                        elif "[ALPM]" in line and "removed" in line:
+                            pkg = parts[-1].rstrip(")")
+                            history.append(
+                                {
+                                    "date": date_str,
+                                    "operation": "remove",
+                                    "package": pkg,
+                                    "status": "OK",
+                                }
+                            )
+                        elif "[ALPM]" in line and "upgraded" in line:
+                            pkg = parts[-1].rstrip(")")
+                            history.append(
+                                {
+                                    "date": date_str,
+                                    "operation": "upgrade",
+                                    "package": pkg,
+                                    "status": "OK",
+                                }
+                            )
+        except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError) as e:
+            logger.warning(f"Failed to get Pacman history: {e}")
+        return history[-limit:] if history else []
+
+    def _get_history_dnf(self, limit: int) -> list[dict[str, Any]]:
+        """Get transaction history via DNF."""
+        history: list[dict[str, Any]] = []
+        try:
+            result = subprocess.run(
+                ["dnf", "history", "list", "--quiet"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode == 0:
+                for line in result.stdout.strip().split("\n"):
+                    if not line:
+                        continue
+                    parts = line.split()
+                    if len(parts) >= 4:
+                        history.append(
+                            {
+                                "date": parts[0],
+                                "operation": parts[2] if len(parts) > 2 else "unknown",
+                                "package": parts[3] if len(parts) > 3 else "unknown",
+                                "status": "OK",
+                            }
+                        )
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            logger.warning(f"Failed to get DNF history: {e}")
+        return history[-limit:] if history else []
+
+    def _get_history_brew(self, limit: int) -> list[dict[str, Any]]:
+        """Get transaction history via Brew."""
+        history: list[dict[str, Any]] = []
+        try:
+            result = subprocess.run(
+                ["brew", "log", f"--{limit}"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode == 0:
+                for line in result.stdout.strip().split("\n"):
+                    if not line:
+                        continue
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        history.append(
+                            {
+                                "date": "N/A",
+                                "operation": parts[0],
+                                "package": parts[1] if len(parts) > 1 else "unknown",
+                                "status": "OK",
+                            }
+                        )
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            logger.warning(f"Failed to get Brew history: {e}")
+        return history[-limit:] if history else []
