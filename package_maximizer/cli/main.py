@@ -926,6 +926,306 @@ def propose(packages, manager, solver, output, explain):
         sys.exit(1)
 
 
+@cli.command(name="analyze")
+@click.argument("packages", nargs=-1)
+@click.option(
+    "--manager",
+    "-m",
+    type=str,
+    default=None,
+    help="Package manager type (apt, pip, pacman, etc.)",
+)
+@click.option(
+    "--solver",
+    "-s",
+    type=str,
+    default=None,
+    help="Solver to use for analysis (greedy, z3, pulp, ortools, etc.)",
+)
+@click.option(
+    "--metadata",
+    is_flag=True,
+    default=False,
+    help="Load metadata through adapters for richer analysis",
+)
+@click.option(
+    "--conflicts",
+    "-c",
+    type=(str, str),
+    multiple=True,
+    help="Add conflict pair (pkg1,pkg2)",
+)
+@click.option(
+    "--depends",
+    "-d",
+    type=(str, str),
+    multiple=True,
+    help="Add dependency (pkg,dep)",
+)
+@click.option("--output", "-o", type=click.Choice(["text", "json"]), default="text")
+def analyze(packages, manager, solver, metadata, conflicts, depends, output):
+    """
+    Analyze package conflicts and dependencies.
+
+    Performs bottleneck analysis, identifies conflicting packages,
+    and optionally compares solver performance.
+
+    Examples:
+
+        pm-analyze pkg1 pkg2 pkg3 --manager apt --metadata
+
+        pm-analyze pkg1 pkg2 --solver z3 --metadata --output json
+    """
+    if not packages:
+        click.echo("Error: At least one package name is required", err=True)
+        sys.exit(1)
+
+    obj = click.get_current_context().obj or {}
+    cfg = obj.get("config")
+    if manager is None:
+        manager = cfg.default_manager if cfg else "apt"
+    if solver is None:
+        solver = cfg.default_solver if cfg else "greedy"
+
+    try:
+        manager_enum = PackageManagerType(manager)
+    except ValueError:
+        click.echo(f"Error: Unknown package manager '{manager}'", err=True)
+        sys.exit(1)
+
+    package_objs = [Package(name=p, status="candidate") for p in packages]
+
+    # Apply manual conflicts and dependencies
+    for a, b in conflicts:
+        for pkg in package_objs:
+            if pkg.name == a:
+                pkg.conflicts.append(b)
+            if pkg.name == b:
+                pkg.conflicts.append(a)
+    for pkg_name, dep_name in depends:
+        for pkg in package_objs:
+            if pkg.name == pkg_name:
+                pkg.depends.append(dep_name)
+
+    # Load metadata if requested
+    if metadata:
+        from ..adapters import get_adapter
+
+        try:
+            adapter = get_adapter(manager)
+        except Exception:
+            adapter = None
+
+        if adapter is not None:
+            for pkg in package_objs:
+                meta = adapter.fetch(pkg.name)
+                if meta and meta.name:
+                    if meta.depends:
+                        pkg.depends = list(meta.depends)
+                    if meta.conflicts:
+                        pkg.conflicts = list(meta.conflicts)
+        else:
+            click.echo(f"Warning: No metadata adapter for '{manager}'", err=True)
+
+    from ..core.maximizer import PackageMaximizer
+    from ..core.model_encoder import encode_packages
+
+    constraints = encode_packages(package_objs)
+    maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
+    result = maximizer.solve(package_objs)
+    selected_set = set(result)
+
+    all_names = {p.name for p in package_objs}
+    excluded = all_names - selected_set
+
+    # Build conflict map: which packages conflict with selected ones
+    conflict_map = {}
+    for name in sorted(excluded):
+        reasons = []
+        for a, b in constraints.conflicts:
+            if a == name and b in selected_set:
+                reasons.append(f"conflict with selected '{b}'")
+            elif b == name and a in selected_set:
+                reasons.append(f"conflict with selected '{a}'")
+        deps = constraints.dependencies.get(name, [])
+        unmet_deps = [d for d in deps if d not in selected_set]
+        if unmet_deps:
+            reasons.append(f"unmet dependencies: {', '.join(unmet_deps)}")
+        conflict_map[name] = reasons if reasons else ["not selected"]
+
+    # Bottleneck analysis: packages involved in most conflicts
+    conflict_count = {}
+    for a, b in constraints.conflicts:
+        conflict_count[a] = conflict_count.get(a, 0) + 1
+        conflict_count[b] = conflict_count.get(b, 0) + 1
+    bottlenecks = sorted(conflict_count.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    analysis = {
+        "total_packages": len(package_objs),
+        "selected_count": len(result),
+        "excluded_count": len(excluded),
+        "selected": result,
+        "excluded": {k: v for k, v in conflict_map.items() if v},
+        "conflict_count": len(constraints.conflicts),
+        "dependency_count": sum(len(d) for d in constraints.dependencies.values()),
+        "bottlenecks": [{"name": n, "conflict_count": c} for n, c in bottlenecks],
+        "solver": solver,
+        "manager": manager,
+    }
+
+    if output == "json":
+        click.echo(json.dumps(analysis, indent=2))
+    else:
+        click.echo("=== Package Analysis ===\n")
+        click.echo(f"Manager: {manager} | Solver: {solver}")
+        click.echo(f"Total packages: {len(package_objs)}")
+        click.echo(f"Selected: {len(result)} | Excluded: {len(excluded)}")
+        click.echo(
+            f"Conflicts: {len(constraints.conflicts)} | "
+            f"Dependencies: {sum(len(d) for d in constraints.dependencies.values())}"
+        )
+
+        if result:
+            click.echo(f"\nSelected packages: {', '.join(result)}")
+
+        if excluded:
+            click.echo(f"\n--- Exclusion Reasons ---")
+            for name, reasons in conflict_map.items():
+                if reasons:
+                    click.echo(f"  {name}: {'; '.join(reasons)}")
+
+        if bottlenecks:
+            click.echo(f"\n--- Bottleneck Packages (most conflicts) ---")
+            for b, c in bottlenecks:
+                click.echo(f"  {b}: {c} conflicts")
+
+
+@cli.command(name="compare")
+@click.argument("packages", nargs=-1)
+@click.option(
+    "--manager",
+    "-m",
+    type=str,
+    default=None,
+    help="Package manager type (apt, pip, pacman, etc.)",
+)
+@click.option(
+    "--metadata",
+    is_flag=True,
+    default=False,
+    help="Load metadata through adapters before comparing",
+)
+@click.option("--output", "-o", type=click.Choice(["text", "json"]), default="text")
+def compare(packages, manager, metadata, output):
+    """
+    Compare all available solvers on the given package set.
+
+    Runs every registered solver and reports timing and selection size.
+
+    Examples:
+
+        pm-compare pkg1 pkg2 pkg3 --manager apt --metadata
+
+        pm-compare pkg1 pkg2 --output json
+    """
+    if not packages:
+        click.echo("Error: At least one package name is required", err=True)
+        sys.exit(1)
+
+    obj = click.get_current_context().obj or {}
+    cfg = obj.get("config")
+    if manager is None:
+        manager = cfg.default_manager if cfg else "apt"
+
+    try:
+        manager_enum = PackageManagerType(manager)
+    except ValueError:
+        click.echo(f"Error: Unknown package manager '{manager}'", err=True)
+        sys.exit(1)
+
+    package_objs = [Package(name=p, status="candidate") for p in packages]
+
+    if metadata:
+        from ..adapters import get_adapter
+
+        try:
+            adapter = get_adapter(manager)
+        except Exception:
+            adapter = None
+
+        if adapter is not None:
+            for pkg in package_objs:
+                meta = adapter.fetch(pkg.name)
+                if meta and meta.name:
+                    if meta.depends:
+                        pkg.depends = list(meta.depends)
+                    if meta.conflicts:
+                        pkg.conflicts = list(meta.conflicts)
+
+    import time
+
+    from ..solvers import SOLVER_REGISTRY
+
+    solver_names = list(SOLVER_REGISTRY.keys())
+    results = []
+
+    # Suppress progress message for JSON output
+    if output != "json":
+        click.echo(
+            f"Comparing {len(solver_names)} solvers on {len(packages)} packages..."
+        )
+
+    for sname in solver_names:
+        try:
+            solver_cls = SOLVER_REGISTRY[sname]
+            solver_inst = solver_cls()
+            start = time.time()
+            res = solver_inst.solve(list(package_objs))
+            elapsed = time.time() - start
+            results.append(
+                {
+                    "solver": sname,
+                    "avg_time": elapsed,
+                    "selected_count": len(res),
+                    "selected": res,
+                    "success": True,
+                    "error": None,
+                }
+            )
+        except Exception as e:  # noqa: BLE001
+            results.append(
+                {
+                    "solver": sname,
+                    "avg_time": 0.0,
+                    "selected_count": 0,
+                    "selected": [],
+                    "success": False,
+                    "error": str(e),
+                }
+            )
+
+    results.sort(key=lambda r: r["avg_time"])
+
+    if output == "json":
+        click.echo(json.dumps({"results": results}, indent=2))
+    else:
+        click.echo("=== Solver Comparison ===")
+        click.echo(f"{'Solver':<20s} {'Time (s)':<12s} {'Selected':<10s} Status")
+        click.echo("-" * 60)
+        for r in results:
+            status = "OK" if r["success"] else f"ERR: {r['error']}"
+            click.echo(
+                f"{r['solver']:<20s} {r['avg_time']:<12.6f} {r['selected_count']:<10d} {status}"
+            )
+        click.echo("-" * 60)
+        if results:
+            best = results[0]
+            click.echo(
+                f"Best: {best['solver']} ({best['avg_time']:.6f}s, "
+                f"{best['selected_count']} selected)"
+            )
+
+
 @cli.command(name="tui")
 def tui_command() -> None:
     """
