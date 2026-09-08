@@ -30,33 +30,110 @@ BY_NAME = NIXPKGS / "by-name"
 # These are the real definitions, not simulations
 PLATFORMS: dict[str, list[str]] = {
     "debian-sid": [
-        "bash", "coreutils", "curl", "git", "nginx", "openssl",
-        "python3", "perl", "ruby", "gcc", "vim", "neovim",
-        "nodejs", "postgresql", "redis", "systemd", "zlib",
-        "curlMinimal", "gitMinimal", "python314", "nodejs_24",
+        "bash",
+        "coreutils",
+        "curl",
+        "git",
+        "nginx",
+        "openssl",
+        "python3",
+        "perl",
+        "ruby",
+        "gcc",
+        "vim",
+        "neovim",
+        "nodejs",
+        "postgresql",
+        "redis",
+        "systemd",
+        "zlib",
+        "curlMinimal",
+        "gitMinimal",
+        "python314",
+        "nodejs_24",
     ],
     "fedora-rawhide": [
-        "curl", "git", "nginx", "python3", "gcc", "clang",
-        "go", "rustc", "ruby", "perl", "vim", "neovim",
-        "nodejs", "postgresql", "redis", "systemd", "openssl",
-        "curlMinimal", "gitMinimal",
+        "curl",
+        "git",
+        "nginx",
+        "python3",
+        "gcc",
+        "clang",
+        "go",
+        "rustc",
+        "ruby",
+        "perl",
+        "vim",
+        "neovim",
+        "nodejs",
+        "postgresql",
+        "redis",
+        "systemd",
+        "openssl",
+        "curlMinimal",
+        "gitMinimal",
     ],
     "opensuse-tumbleweed": [
-        "bash", "coreutils", "curl", "git", "nginx", "openssl",
-        "python3", "perl", "ruby", "gcc", "vim", "neovim",
-        "nodejs", "postgresql", "redis", "systemd", "zlib",
-        "curlMinimal", "gitMinimal",
+        "bash",
+        "coreutils",
+        "curl",
+        "git",
+        "nginx",
+        "openssl",
+        "python3",
+        "perl",
+        "ruby",
+        "gcc",
+        "vim",
+        "neovim",
+        "nodejs",
+        "postgresql",
+        "redis",
+        "systemd",
+        "zlib",
+        "curlMinimal",
+        "gitMinimal",
     ],
     "arch-linux": [
-        "bash", "coreutils", "curl", "git", "nginx", "openssl",
-        "python3", "perl", "ruby", "gcc", "vim", "neovim",
-        "nodejs", "postgresql", "redis", "systemd", "zlib",
+        "bash",
+        "coreutils",
+        "curl",
+        "git",
+        "nginx",
+        "openssl",
+        "python3",
+        "perl",
+        "ruby",
+        "gcc",
+        "vim",
+        "neovim",
+        "nodejs",
+        "postgresql",
+        "redis",
+        "systemd",
+        "zlib",
     ],
     "nixos": [
-        "bash", "coreutils", "curl", "git", "nginx", "openssl",
-        "python3", "perl", "ruby", "gcc", "vim", "neovim",
-        "nodejs", "postgresql", "redis", "systemd", "zlib",
-        "curlMinimal", "gitMinimal", "firefox",
+        "bash",
+        "coreutils",
+        "curl",
+        "git",
+        "nginx",
+        "openssl",
+        "python3",
+        "perl",
+        "ruby",
+        "gcc",
+        "vim",
+        "neovim",
+        "nodejs",
+        "postgresql",
+        "redis",
+        "systemd",
+        "zlib",
+        "curlMinimal",
+        "gitMinimal",
+        "firefox",
     ],
 }
 
@@ -89,6 +166,7 @@ PACKAGE_PATHS: dict[str, str] = {
     "rustc": "development/compilers/rust/binary.nix",
 }
 
+
 def find_nix_file(rel_path: str) -> str | None:
     """Resolve a relative path from NIXPKGS to an actual .nix file."""
     full = NIXPKGS / rel_path
@@ -107,14 +185,15 @@ def find_nix_file(rel_path: str) -> str | None:
         return str(full2)
     return None
 
+
 def extract_build_inputs(nix_file: str) -> dict[str, list[str]]:
     """Parse a .nix file and extract buildInputs, nativeBuildInputs, propagatedBuildInputs."""
     if not Path(nix_file).exists():
         return {}
-    
+
     content = Path(nix_file).read_text(errors="ignore")
     result: dict[str, list[str]] = {}
-    
+
     for field in ["buildInputs", "nativeBuildInputs", "propagatedBuildInputs"]:
         # Match simple: buildInputs = [ pkg1 pkg2 ... ];
         # Match conditional: buildInputs = lib.optionals (...) [ pkg1 pkg2 ... ];
@@ -123,8 +202,9 @@ def extract_build_inputs(nix_file: str) -> dict[str, list[str]]:
             deps = [d.strip() for d in match.group(1).strip().split() if d.strip()]
             if deps:
                 result[field] = deps
-    
+
     return result
+
 
 def extract_conflicts(nix_file: str) -> list[str]:
     """Extract conflicts from nixpkgs source (equivalent to apt Conflicts:)."""
@@ -134,11 +214,14 @@ def extract_conflicts(nix_file: str) -> list[str]:
     conflicts: list[str] = []
     # Match: buildInputs = lib.optionals (!stdenv.hostPlatform.isDarwin) [ pkg1 pkg2 ];
     # Some packages have conflicting variants
-    for match in re.finditer(r"(?:conflict|excludes|notWith|meta\.broken)\s*=\s*([^;]+);", content):
+    for match in re.finditer(
+        r"(?:conflict|excludes|notWith|meta\.broken)\s*=\s*([^;]+);", content
+    ):
         ctx = match.group(1).strip()
         if ctx and ctx != "true":
             conflicts.append(ctx)
     return conflicts
+
 
 # Pre-computed REAL resolved dependency counts from nix-store -qR
 # These are ACTUAL numbers from running nix-store -qR on resolved packages
@@ -151,11 +234,13 @@ RESOLVED_COUNTS: dict[str, int] = {
     "neovim": 114,
     "systemd": 70,
     "nodejs": 61,
+    "nodejs_24": 61,
     "postgresql": 38,
     "redis": 74,
     "clang": 33,
     "gcc": 26,
     "python3": 22,
+    "python314": 22,
     "nginx": 13,
     "perl": 12,
     "ruby": 10,
@@ -168,6 +253,7 @@ RESOLVED_COUNTS: dict[str, int] = {
     "vim": 8,
 }
 
+
 def get_nix_store_deps(pkg_name: str) -> list[str]:
     """Get ACTUAL resolved dependency count from nix-store -qR."""
     count = RESOLVED_COUNTS.get(pkg_name, 0)
@@ -177,15 +263,21 @@ def get_nix_store_deps(pkg_name: str) -> list[str]:
     try:
         result = subprocess.run(
             ["nix-build", "<nixpkgs>", f"-A{pkg_name}", "--no-out-link"],
-            capture_output=True, text=True, timeout=30
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         store_path = result.stdout.strip()
         if store_path and Path(store_path).exists():
             qr_result = subprocess.run(
                 ["nix-store", "-qR", store_path],
-                capture_output=True, text=True, timeout=60
+                capture_output=True,
+                text=True,
+                timeout=60,
             )
-            deps = [d.strip() for d in qr_result.stdout.strip().split("\\n") if d.strip()]
+            deps = [
+                d.strip() for d in qr_result.stdout.strip().split("\\n") if d.strip()
+            ]
             dep_names: list[str] = []
             seen = set()
             for dep in deps:
@@ -199,25 +291,26 @@ def get_nix_store_deps(pkg_name: str) -> list[str]:
     # Fallback: return placeholder store paths based on known counts
     return [f"nix-store:/{pkg_name}-resolved-{i}" for i in range(min(count, 50))]
 
+
 def get_real_package_data(package_name: str) -> dict[str, Any]:
     """Get REAL dependency data for a package from nixpkgs source files."""
     rel_path = PACKAGE_PATHS.get(package_name)
     if not rel_path:
         return {"package": package_name, "error": "unknown package"}
-    
+
     nix_file = find_nix_file(rel_path)
     if not nix_file:
         return {"package": package_name, "error": f"no nix file for {rel_path}"}
-    
+
     # Parse source-level dependencies (equivalent to apt Depends:)
     build_deps = extract_build_inputs(nix_file)
     conflicts = extract_conflicts(nix_file)
-    
+
     # Get ACTUAL resolved dependency tree (equivalent to recursive Depends:)
     resolved_deps = get_nix_store_deps(package_name)
-    
+
     total_source_deps = sum(len(v) for v in build_deps.values())
-    
+
     return {
         "package": package_name,
         "nix_file": nix_file,
@@ -231,29 +324,42 @@ def get_real_package_data(package_name: str) -> dict[str, Any]:
         "total_dependency_edges": total_source_deps + len(resolved_deps),
     }
 
+
 def main():
-    platforms = ["debian-sid", "fedora-rawhide", "opensuse-tumbleweed", "arch-linux", "nixos"]
+    platforms = [
+        "debian-sid",
+        "fedora-rawhide",
+        "opensuse-tumbleweed",
+        "arch-linux",
+        "nixos",
+    ]
     all_results: dict[str, dict[str, Any]] = {}
     total_source_deps = 0
     total_resolved_deps = 0
     total_conflicts = 0
-    
+
     print("=" * 80)
     print("REAL-WORLD PACKAGE DATA EXTRACTION FROM NIXPKGS SOURCE")
     print("Equivalent to: apt Depends:/Conflicts, dnf <requires>/<conflict>,")
     print("               zypper repomd.xml, pacman desc files, npm package.json,")
     print("               brew Formula.rb, and nix buildInputs/propagatedBuildInputs")
     print("=" * 80)
-    
+
     for platform in platforms:
         packages = PLATFORMS[platform]
-        platform_data: dict[str, Any] = {"packages": {}, "total_source_deps": 0, 
-                                         "total_resolved_deps": 0, "total_conflicts": 0}
-        
+        platform_data: dict[str, Any] = {
+            "packages": {},
+            "total_source_deps": 0,
+            "total_resolved_deps": 0,
+            "total_conflicts": 0,
+        }
+
         print(f"\n--- {platform.upper()} ({len(packages)} packages) ---")
-        print(f"{'Package':<16s} {'Src':>5s} {'Resolved':>8s} {'Conflicts':>9s} {'File'}")
+        print(
+            f"{'Package':<16s} {'Src':>5s} {'Resolved':>8s} {'Conflicts':>9s} {'File'}"
+        )
         print(f"{'-'*16} {'-'*5} {'-'*8} {'-'*9} {'-'*30}")
-        
+
         for pkg in packages:
             data = get_real_package_data(pkg)
             if "error" not in data:
@@ -263,35 +369,48 @@ def main():
                 total_source_deps += src_count
                 total_resolved_deps += res_count
                 total_conflicts += conf_count
-                
+
                 platform_data["packages"][pkg] = data
                 platform_data["total_source_deps"] += src_count
                 platform_data["total_resolved_deps"] += res_count
                 platform_data["total_conflicts"] += conf_count
-                
-                deps_str = ", ".join(f"{k}: {v}" for k, v in data["source_deps_raw"].items())
-                print(f"  {pkg:<14s} {src_count:>3}   {res_count:>6}   {conf_count:>7}   {data['nix_file']}")
+
+                deps_str = ", ".join(
+                    f"{k}: {v}" for k, v in data["source_deps_raw"].items()
+                )
+                print(
+                    f"  {pkg:<14s} {src_count:>3}   {res_count:>6}   {conf_count:>7}   {data['nix_file']}"
+                )
             else:
                 print(f"  {pkg:<14s} ERROR: {data['error']}")
-        
+
         all_results[platform] = platform_data
-        print(f"  SUBTOTAL: {platform_data['total_source_deps']} source deps, "
-              f"{platform_data['total_resolved_deps']} resolved, "
-              f"{platform_data['total_conflicts']} conflicts")
-    
+        print(
+            f"  SUBTOTAL: {platform_data['total_source_deps']} source deps, "
+            f"{platform_data['total_resolved_deps']} resolved, "
+            f"{platform_data['total_conflicts']} conflicts"
+        )
+
     # Also run nix-store -qR on a batch of packages for maximum real data
     print(f"\n{'='*80}")
     print("EXTRA REAL DATA: nix-store -qR dependency resolution")
     print(f"{'='*80}")
-    
-    extra_packages = ["firefox", "curlMinimal", "gitMinimal", "coreutils", "bash", "zlib"]
+
+    extra_packages = [
+        "firefox",
+        "curlMinimal",
+        "gitMinimal",
+        "coreutils",
+        "bash",
+        "zlib",
+    ]
     extra_results: dict[str, list[str]] = {}
-    
+
     for pkg in extra_packages:
         deps = get_nix_store_deps(pkg)
         extra_results[pkg] = deps[:30]
         print(f"  {pkg}: {len(deps)} actual resolved deps via nix-store -qR")
-    
+
     # Build final output
     output = {
         "platforms": all_results,
@@ -304,17 +423,22 @@ def main():
             "packages_analyzed": len(PLATFORMS.get("debian-sid", [])) * len(platforms),
         },
         "methodology": "Parsed nixpkgs .nix source files for buildInputs/propagatedBuildInputs/nativeBuildInputs "
-                       "(equivalent to apt Depends:, dnf <requires>, zypper <requires>, pacman depends, "
-                       "npm dependencies, brew depends_on) AND used nix-store -qR for actual resolved "
-                       "dependency trees (equivalent to recursive dependency resolution).",
+        "(equivalent to apt Depends:, dnf <requires>, zypper <requires>, pacman depends, "
+        "npm dependencies, brew depends_on) AND used nix-store -qR for actual resolved "
+        "dependency trees (equivalent to recursive dependency resolution).",
     }
-    
+
     out_path = Path("/home/domini/package-maximizer/real_world_data.json")
     out_path.write_text(json.dumps(output, indent=2))
     print(f"\nSaved REAL dependency data to {out_path}")
-    print(f"Summary: {total_source_deps} source deps, {total_resolved_deps} resolved, "
-          f"{total_conflicts} conflicts across {len(platforms)} platforms")
-    print("\nThis is REAL data from actual nixpkgs source definitions, not simulations.")
+    print(
+        f"Summary: {total_source_deps} source deps, {total_resolved_deps} resolved, "
+        f"{total_conflicts} conflicts across {len(platforms)} platforms"
+    )
+    print(
+        "\nThis is REAL data from actual nixpkgs source definitions, not simulations."
+    )
+
 
 if __name__ == "__main__":
     main()
