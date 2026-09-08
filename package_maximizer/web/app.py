@@ -1154,6 +1154,24 @@ def openapi_spec() -> tuple[dict, int]:
     return jsonify(spec), 200
 
 
+# ─── History endpoint ─────────────────────────────
+@app.get("/api/v1/history")
+@require_api_key
+def history_get() -> tuple[dict, int]:
+    """Get package manager transaction history."""
+    from ..integrations import RealRepoIntegration
+
+    manager = request.args.get("manager", "apt")
+    limit = request.args.get("limit", 20, type=int)
+
+    try:
+        integration = RealRepoIntegration(package_manager=manager)
+        history = integration.get_transaction_history(limit=limit)
+        return jsonify({"history": history, "count": len(history)}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.get("/api/v1/docs")
 def api_docs() -> tuple[str, int]:
     """Minimal human-readable API documentation page."""
