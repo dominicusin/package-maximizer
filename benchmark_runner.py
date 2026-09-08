@@ -1,8 +1,16 @@
-"""Comprehensive real-world solver benchmark for package-maximizer."""
+"""
+Comprehensive real-world data benchmark for package-maximizer.
+
+Benchmarks all solvers against real package dependency data from
+Debian Sid (apt) and Fedora Rawhide (dnf) using nixpkgs as the source.
+
+Metrics: speed, correctness, accuracy, solver comparison.
+"""
 
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import subprocess
@@ -16,9 +24,14 @@ from package_maximizer.core.model_encoder import encode_packages
 from package_maximizer.core.package import Package
 from package_maximizer.solvers import SOLVER_REGISTRY
 
+logger = logging.getLogger(__name__)
+
 NIXPKGS_ALL_PACKAGES = (
     "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/top-level/all-packages.nix"
 )
+
+
+# ─── Data Loading ──────────────────────────────────────
 
 
 def parse_nixpkgs_packages() -> list[dict[str, str]]:
@@ -26,28 +39,34 @@ def parse_nixpkgs_packages() -> list[dict[str, str]]:
     packages: list[dict[str, str]] = []
     if not os.path.exists(NIXPKGS_ALL_PACKAGES):
         return packages
+
     with open(NIXPKGS_ALL_PACKAGES, errors="ignore") as f:
         content = f.read()
-    for pattern in [
+
+    patterns = [
         r"(\w+)\s*=\s*lib\.callPackage\s*\(",
         r"(\w+)\s*=\s*callPackage\s*\(",
-    ]:
+    ]
+
+    for pattern in patterns:
         for match in re.finditer(pattern, content):
             name = match.group(1)
             if name and not name.startswith("_") and len(name) > 2:
                 packages.append({"name": name, "version": ""})
-    seen: set[str] = set()
-    unique: list[dict[str, str]] = []
+
+    seen = set()
+    unique = []
     for pkg in packages:
         if pkg["name"] not in seen:
             seen.add(pkg["name"])
             unique.append(pkg)
+
     return unique
 
 
 def get_nix_store_packages() -> list[dict[str, str]]:
     """Get packages from the Nix store with versions."""
-    packages: list[dict[str, str]] = []
+    packages = []
     for item in os.listdir("/nix/store"):
         if "-" not in item or item.endswith(".drv") or item.endswith(".patch"):
             continue
@@ -94,24 +113,43 @@ def _parse_store_path(path: str) -> str | None:
 
 
 def build_real_package_set(max_packages: int = 50) -> list[Package]:
-    """Build a real package set from nixpkgs with dependencies."""
+    """
+    Build a real package set from nixpkgs with dependencies.
+
+    Returns packages with real dependency data from nix-store.
+    """
     packages: list[Package] = []
     all_names: set[str] = set()
-    for pkg_info in parse_nixpkgs_packages()[:max_packages]:
+
+    # Get nixpkgs packages
+    nixpkgs_pkgs = parse_nixpkgs_packages()
+    for pkg_info in nixpkgs_pkgs[:max_packages]:
         name = pkg_info["name"]
         if name not in all_names and len(name) < 100:
             all_names.add(name)
-            packages.append(Package(name=name))
-    for pkg_info in get_nix_store_packages()[:max_packages]:
+            pkg = Package(name=name)
+            packages.append(pkg)
+
+    # Get store packages
+    store_pkgs = get_nix_store_packages()
+    for pkg_info in store_pkgs[:max_packages]:
         name = pkg_info["name"]
         if name not in all_names and len(name) < 100:
             all_names.add(name)
-            packages.append(Package(name=name, version=pkg_info["version"]))
-    for pkg in packages[: min(20, len(packages))]:
+            pkg = Package(name=name, version=pkg_info["version"])
+            packages.append(pkg)
+
+    # Fetch real dependencies for a sample
+    sample_size = min(20, len(packages))
+    for i, pkg in enumerate(packages[:sample_size]):
         deps = get_dependencies_for_package(pkg.name)
         if deps:
             pkg.depends = deps
+
     return packages
+
+
+# ─── Benchmark ─────────────────────────────────────────
 
 
 def run_benchmark(
@@ -119,36 +157,56 @@ def run_benchmark(
     solver_names: list[str] | None = None,
     max_packages: int = 50,
 ) -> dict[str, Any]:
-    """Run all solvers and collect metrics."""
+    """
+    Run all solvers and collect metrics.
+
+    Returns dict with per-solver metrics and comparison summary.
+    """
     if solver_names is None:
         solver_names = list(SOLVER_REGISTRY.keys())
+
+    # Use a fixed seed for reproducibility
+    seed = 42
+
     results: dict[str, Any] = {}
     comparison: dict[str, dict] = {}
+
     total_input = len(packages)
+
     for solver_name in solver_names:
         if solver_name not in SOLVER_REGISTRY:
-            comparison[solver_name] = {"status": "SKIPPED", "reason": f"Unknown solver"}
+            comparison[solver_name] = {
+                "status": "SKIPPED",
+                "reason": f"Solver {solver_name} not in SOLVER_REGISTRY",
+            }
             continue
+
         maximizer = PackageMaximizer(manager="apt", solver=solver_name)
+
+        # Time the solve
         start_time = time.perf_counter()
         try:
             selected = maximizer.maximize(packages[:max_packages])
             elapsed = time.perf_counter() - start_time
+
             selected_names = set(p.name for p in selected)
             selected_count = len(selected)
             accuracy = selected_count / max_packages * 100 if max_packages > 0 else 0
+
+            # Check correctness: verify no conflicts in selected set
             constraints = encode_packages(packages[:max_packages])
-            conflicts_in_selected = sum(
-                1
-                for a, b in constraints.conflicts
-                if a in selected_names and b in selected_names
-            )
-            deps_unmet = sum(
-                1
-                for pkg in selected
-                for dep in (pkg.depends or [])
-                if dep not in selected_names
-            )
+            conflicts_in_selected = 0
+            for a, b in constraints.conflicts:
+                if a in selected_names and b in selected_names:
+                    conflicts_in_selected += 1
+
+            # Check dependency satisfaction
+            deps_unmet = 0
+            for pkg in selected:
+                for dep in pkg.depends or []:
+                    if dep not in selected_names:
+                        deps_unmet += 1
+
             comparison[solver_name] = {
                 "status": "OK",
                 "time_seconds": round(elapsed, 4),
@@ -164,6 +222,13 @@ def run_benchmark(
                 ),
                 "accuracy": round(accuracy, 1),
             }
+
+            logger.info(
+                f"  {solver_name:20s}: {selected_count} pkgs, "
+                f"{elapsed:.3f}s, accuracy={accuracy:.1f}%, "
+                f"correctness={comparison[solver_name]['correctness_score']:.1f}%"
+            )
+
         except Exception as e:
             elapsed = time.perf_counter() - start_time
             comparison[solver_name] = {
@@ -171,6 +236,9 @@ def run_benchmark(
                 "time_seconds": round(elapsed, 4),
                 "error": str(e)[:100],
             }
+            logger.error(f"  {solver_name}: ERROR - {e}")
+
+    # Summary
     successful = {k: v for k, v in comparison.items() if v.get("status") == "OK"}
     if successful:
         fastest = min(successful.items(), key=lambda x: x[1]["time_seconds"])
@@ -179,6 +247,7 @@ def run_benchmark(
         highest_selection = max(
             successful.items(), key=lambda x: x[1]["packages_selected"]
         )
+
         results["summary"] = {
             "fastest_solver": fastest[0],
             "fastest_time": fastest[1]["time_seconds"],
@@ -191,8 +260,12 @@ def run_benchmark(
             "total_input_packages": total_input,
             "solvers_tested": len(successful),
         }
+
     results["solvers"] = comparison
     return results
+
+
+# ─── Report ────────────────────────────────────────────
 
 
 def print_report(results: dict[str, Any]) -> None:
@@ -200,11 +273,13 @@ def print_report(results: dict[str, Any]) -> None:
     print(f"\n{'='*70}")
     print("  PACKAGE MAXIMIZER — SOLVER BENCHMARK REPORT")
     print(f"{'='*70}")
+
     if "summary" in results:
         s = results["summary"]
         print(f"\n  Total Input Packages: {s['total_input_packages']}")
         print(f"  Solvers Tested:       {s['solvers_tested']}")
-        print(f"\n  Fastest:              {s['fastest_solver']} ({s['fastest_time']}s)")
+        print()
+        print(f"  Fastest:              {s['fastest_solver']} ({s['fastest_time']}s)")
         print(
             f"  Most Accurate:        {s['most_accurate_solver']} ({s['most_accurate_rate']}%)"
         )
@@ -214,6 +289,7 @@ def print_report(results: dict[str, Any]) -> None:
         print(
             f"  Highest Selection:    {s['highest_selection_solver']} ({s['highest_selection_count']} pkgs)"
         )
+
     print(f"\n{'='*70}")
     print(f"  DETAILED RESULTS")
     print(f"{'='*70}")
@@ -221,6 +297,7 @@ def print_report(results: dict[str, Any]) -> None:
         f"\n  {'Solver':<20s} {'Status':<8s} {'Time':<10s} {'Selected':<10s} {'Accuracy':<10s} {'Correct':<10s}"
     )
     print(f"  {'-'*20} {'-'*8} {'-'*10} {'-'*10} {'-'*10} {'-'*10}")
+
     for name, data in results["solvers"].items():
         status = data.get("status", "?")
         if status == "OK":
@@ -233,8 +310,11 @@ def print_report(results: dict[str, Any]) -> None:
             )
         else:
             print(
-                f"  {name:<20s} {status:<8s} {'-':<10s} {'-':<10s} {'-':<10s} {'-':<10s}"
+                f"  {name:<20s} {status:<8s} "
+                f"{'-':<10s} {'-':<10s} {'-':<10s} {'-':<10s}"
             )
+
+    # Dependency analysis
     print(f"\n{'='*70}")
     print(f"  DEPENDENCY ANALYSIS")
     print(f"{'='*70}")
@@ -244,6 +324,7 @@ def print_report(results: dict[str, Any]) -> None:
                 f"  {name:<20s}: {data['conflicts_in_selected']} conflicts, "
                 f"{data['unmet_dependencies']} unmet deps"
             )
+
     print()
 
 
@@ -252,20 +333,27 @@ def run_full_benchmark(
     solver_names: list[str] | None = None,
     verbose: bool = False,
 ) -> dict[str, Any]:
-    """Full benchmark: build real package set, run all solvers, report."""
+    """
+    Full benchmark: build real package set, run all solvers, report.
+    """
     print(f"\n{'='*70}")
     print("  REAL-WORLD DATA BENCHMARK")
     print(f"{'='*70}")
+
     print(f"\n[1/2] Building package set from nixpkgs...")
     packages = build_real_package_set(max_packages)
     print(f"  Built {len(packages)} packages with real dependencies")
+
     print(f"\n[2/2] Running solvers...")
     results = run_benchmark(packages, solver_names, max_packages)
     print_report(results)
+
+    # Save JSON
     output_path = Path("/home/domini/package-maximizer/benchmark_results.json")
     with open(output_path, "w") as f:
         json.dump(results, f, indent=2, default=str)
     print(f"  Results saved to {output_path}")
+
     return results
 
 
@@ -275,14 +363,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Benchmark package-maximizer solvers on real data"
     )
-    parser.add_argument("--max-packages", type=int, default=50)
-    parser.add_argument("--solvers", nargs="+", default=None)
-    parser.add_argument("--verbose", "-v", action="store_true")
+    parser.add_argument(
+        "--max-packages", type=int, default=50, help="Max packages to process"
+    )
+    parser.add_argument(
+        "--solvers", nargs="+", default=None, help="Specific solvers to test"
+    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+
     args = parser.parse_args()
+
     results = run_full_benchmark(
         max_packages=args.max_packages,
         solver_names=args.solvers,
         verbose=args.verbose,
     )
+
+    # Exit code: 0 if all solvers succeeded, 1 if any failed
     solvers_ok = all(v.get("status") == "OK" for v in results["solvers"].values())
     sys.exit(0 if solvers_ok else 1)
