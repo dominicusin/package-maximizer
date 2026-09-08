@@ -1,0 +1,86 @@
+{
+  "summary": {
+    "fastest_solver": "greedy",
+    "fastest_time": 0.0003,
+    "most_accurate_solver": "greedy",
+    "most_accurate_rate": 100.0,
+    "most_correct_solver": "greedy",
+    "most_correct_score": 100.0,
+    "highest_selection_solver": "greedy",
+    "highest_selection_count": 50,
+    "total_input_packages": 51,
+    "solvers_tested": 7
+  },
+  "solvers": {
+    "greedy": {
+      "status": "OK",
+      "time_seconds": 0.0003,
+      "packages_selected": 50,
+      "selection_rate": 100.0,
+      "conflicts_in_selected": 0,
+      "unmet_dependencies": 0,
+      "correctness_score": 100.0,
+      "accuracy": 100.0
+    },
+    "enhanced_greedy": {
+      "status": "OK",
+      "time_seconds": 0.0003,
+      "packages_selected": 50,
+      "selection_rate": 100.0,
+      "conflicts_in_selected": 0,
+      "unmet_dependencies": 0,
+      "correctness_score": 100.0,
+      "accuracy": 100.0
+    },
+    "z3": {
+      "status": "OK",
+      "time_seconds": 0.0243,
+      "packages_selected": 50,
+      "selection_rate": 100.0,
+      "conflicts_in_selected": 0,
+      "unmet_dependencies": 0,
+      "correctness_score": 100.0,
+      "accuracy": 100.0
+    },
+    "pulp": {
+      "status": "OK",
+      "time_seconds": 0.0088,
+      "packages_selected": 50,
+      "selection_rate": 100.0,
+      "conflicts_in_selected": 0,
+      "unmet_dependencies": 0,
+      "correctness_score": 100.0,
+      "accuracy": 100.0
+    },
+    "ortools": {
+      "status": "OK",
+      "time_seconds": 0.0005,
+      "packages_selected": 50,
+      "selection_rate": 100.0,
+      "conflicts_in_selected": 0,
+      "unmet_dependencies": 0,
+      "correctness_score": 100.0,
+      "accuracy": 100.0
+    },
+    "maxsat": {
+      "status": "OK",
+      "time_seconds": 0.0079,
+      "packages_selected": 50,
+      "selection_rate": 100.0,
+      "conflicts_in_selected": 0,
+      "unmet_dependencies": 0,
+      "correctness_score": 100.0,
+      "accuracy": 100.0
+    },
+    "minisat": {
+      "status": "OK",
+      "time_seconds": 0.0131,
+      "packages_selected": 50,
+      "selection_rate": 100.0,
+      "conflicts_in_selected": 0,
+      "unmet_dependencies": 0,
+      "correctness_score": 100.0,
+      "accuracy": 100.0
+    }
+  }
+}
