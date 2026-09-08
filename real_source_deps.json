@@ -1,0 +1,275 @@
+{
+  "packages": {
+    "firefox": {
+      "package": "firefox",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/applications/networking/browsers/firefox/packages/firefox.nix",
+      "dependencies": {},
+      "resolved_dependencies": [],
+      "dep_count": 0
+    },
+    "neovim": {
+      "package": "neovim",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/applications/editors/neovim/wrapper.nix",
+      "dependencies": {
+        "nativeBuildInputs": 2
+      },
+      "resolved_dependencies": [
+        {
+          "name": "makeWrapper",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "lndir",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        }
+      ],
+      "dep_count": 2
+    },
+    "git": {
+      "package": "git",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/build-support/fetchgit/default.nix",
+      "dependencies": {
+        "nativeBuildInputs": 2
+      },
+      "resolved_dependencies": [
+        {
+          "name": "git",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "cacert",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        }
+      ],
+      "dep_count": 2
+    },
+    "nginx": {
+      "package": "nginx",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/servers/http/nginx/stable.nix",
+      "dependencies": {},
+      "resolved_dependencies": [],
+      "dep_count": 0
+    },
+    "coreutils": {
+      "package": "coreutils",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/tools/misc/coreutils/default.nix",
+      "dependencies": {
+        "nativeBuildInputs": 2
+      },
+      "resolved_dependencies": [
+        {
+          "name": "perl",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "xz.bin",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        }
+      ],
+      "dep_count": 2
+    },
+    "gcc": {
+      "package": "gcc",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/development/compilers/gcc/all.nix",
+      "dependencies": {},
+      "resolved_dependencies": [],
+      "dep_count": 0
+    },
+    "vim": {
+      "package": "vim",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/applications/editors/vim/common.nix",
+      "dependencies": {},
+      "resolved_dependencies": [],
+      "dep_count": 0
+    },
+    "perl": {
+      "package": "perl",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/development/interpreters/perl/default.nix",
+      "dependencies": {},
+      "resolved_dependencies": [],
+      "dep_count": 0
+    },
+    "systemd": {
+      "package": "systemd",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/os-specific/linux/systemd/default.nix",
+      "dependencies": {
+        "buildInputs": 3,
+        "nativeBuildInputs": 23
+      },
+      "resolved_dependencies": [
+        {
+          "name": "libxcrypt",
+          "field": "buildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "libuuid",
+          "field": "buildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "linuxHeaders",
+          "field": "buildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "pkg-config",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "makeBinaryWrapper",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "gperf",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "ninja",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "meson",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "glibcLocales",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "m4",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "autoPatchelfHook",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "intltool",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "gettext",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "libxslt",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "docbook_xsl",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "docbook_xml_dtd_42",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "docbook_xml_dtd_45",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "bash",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "(buildPackages.python3Packages.python.withPackages",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "(",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "ps:",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "with",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "ps;",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "[",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "lxml",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "jinja2",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        }
+      ],
+      "dep_count": 26
+    },
+    "openssl": {
+      "package": "openssl",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/development/libraries/openssl/default.nix",
+      "dependencies": {},
+      "resolved_dependencies": [],
+      "dep_count": 0
+    },
+    "zlib": {
+      "package": "zlib",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/development/libraries/zlib/default.nix",
+      "dependencies": {},
+      "resolved_dependencies": [],
+      "dep_count": 0
+    },
+    "bash": {
+      "package": "bash",
+      "nix_file": "/nix/store/cc7ff4ysismx0c3778v8gc6b14plrz3z-source/pkgs/shells/bash/5.nix",
+      "dependencies": {
+        "nativeBuildInputs": 2
+      },
+      "resolved_dependencies": [
+        {
+          "name": "updateAutotoolsGnuConfigScriptsHook",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        },
+        {
+          "name": "bison",
+          "field": "nativeBuildInputs",
+          "path": "unknown"
+        }
+      ],
+      "dep_count": 2
+    }
+  },
+  "total_dependency_edges": 34
+}
