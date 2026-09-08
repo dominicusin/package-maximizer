@@ -372,6 +372,39 @@ def test_compare_invalid_manager(client):
     assert r.status_code == 400
 
 
+# --- History endpoint --------------------------------------------------------
+
+
+def test_history_get(client):
+    """GET /api/v1/history returns history."""
+    r = client.get("/api/v1/history", headers=auth_headers())
+    assert r.status_code == 200
+    data = r.get_json()
+    assert "history" in data
+    assert "selected" in data or "count" in data
+
+
+def test_history_get_with_params(client):
+    """GET /api/v1/history with query params."""
+    r = client.get("/api/v1/history?manager=apt&limit=5", headers=auth_headers())
+    assert r.status_code == 200
+    data = r.get_json()
+    assert "history" in data
+
+
+# --- Export endpoint ---------------------------------------------------------
+
+
+def test_export_post(client):
+    """POST /api/v1/export returns JSON result."""
+    payload = {"packages": ["pkg1"], "manager": "apt", "format": "json"}
+    r = client.post("/api/v1/export", json=payload, headers=auth_headers())
+    assert r.status_code == 200
+    data = r.get_json()
+    assert "selected" in data
+    assert "selected" in data or "count" in data
+
+
 def test_compare_missing_packages(client):
     r = client.post("/api/v1/compare", json={}, headers=auth_headers())
     assert r.status_code == 400
