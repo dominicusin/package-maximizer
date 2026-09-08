@@ -106,8 +106,24 @@ def cli(verbose: bool, quiet: bool, config: str | None):
     default=False,
     help="Автоматически загружать метаданные пакетов через адаптеры",
 )
+@click.option(
+    "--parallel",
+    "-p",
+    is_flag=True,
+    default=False,
+    help="Параллельная обработка пакетов (многопоточность)",
+)
 def maximize(
-    packages, manager, solver, conflicts, output, weights, depends, explain, metadata
+    packages,
+    manager,
+    solver,
+    conflicts,
+    output,
+    weights,
+    depends,
+    explain,
+    metadata,
+    parallel,
 ):
     """
     Максимизировать множество пакетов.
