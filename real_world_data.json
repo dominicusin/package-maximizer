@@ -1,0 +1,633 @@
+{
+  "platform": "nixos",
+  "extraction_method": "nix-store -qR",
+  "installed_packages": 34,
+  "real_packages": 22,
+  "total_dependency_edges": 193,
+  "packages": [
+    "bash 5.3",
+    "coreutils 9.11",
+    "git 2.55.0",
+    "curl 8.21.0",
+    "firefox 153.0.3",
+    "python3 3.14.6",
+    "gcc 15.3.0",
+    "vim 9.2.0782",
+    "neovim 0.12.4",
+    "nodejs 24.18.1",
+    "nginx 1.30.4",
+    "postgresql 18.4",
+    "redis 8.8.1",
+    "perl 5.42.0",
+    "ruby 3.4.9",
+    "go 1.26.5",
+    "rustc 1.97.1",
+    "clang 21.1.8",
+    "systemd 261.1",
+    "openssl 3.6.3",
+    "zlib 1.3.2",
+    "glibc 2.42"
+  ],
+  "dependency_data": {
+    "bash": {
+      "store_path": "/nix/store/bwry105g7v5jspr41bx9x3fcfqsmfkq2-bash-interactive-5.3p15",
+      "deps_count": 6,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "w11kc8r5ixj3ir37q8ndrv82gimr5vjd-ncurses-6.6",
+        "rrqlx2czgin1x4w9j8lsvmsmq6v4zkb0-readline-8.3p3"
+      ]
+    },
+    "coreutils": {
+      "store_path": "/nix/store/di26b1kkbammy0sj70nq5qzvfrh78wxl-coreutils-9.11",
+      "deps_count": 9,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "38n0ganzvrlk08c8l3wbwxzsqmxgqi6j-acl-2.4.0",
+        "hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc",
+        "w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib",
+        "6z90l28w0aqfqgb34gzh3linnci8k1id-gmp-with-cxx-6.3.0",
+        "r88gpfhsd1bww3bz9cl5crrxnwg5kiap-attr-2.6.0"
+      ]
+    },
+    "git": {
+      "store_path": "/nix/store/6f0qqak4qbcrbw4f750phr88c9yhpf5s-git-2.55.0",
+      "deps_count": 86,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "83z5k86fm8cwaap1rjww4a6z12my2b0s-libxcrypt-4.5.2",
+        "38n0ganzvrlk08c8l3wbwxzsqmxgqi6j-acl-2.4.0",
+        "hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc",
+        "w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib",
+        "6z90l28w0aqfqgb34gzh3linnci8k1id-gmp-with-cxx-6.3.0",
+        "r88gpfhsd1bww3bz9cl5crrxnwg5kiap-attr-2.6.0"
+      ]
+    },
+    "curl": {
+      "store_path": "/nix/store/61r7fpwz7hk9v7yn1h6jvrn0d5d7fl5c-curl-8.21.0-bin",
+      "deps_count": 20,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "116ggk05qjp9v0wprwag1mw7g13ara96-keyutils-1.6.3-lib",
+        "39jzpf9ray7mxjnlmqbrxlyz0dsz0448-openssl-3.6.3",
+        "6j2dzlpn0gim9py78w88qwlzga7s2z8c-nghttp3-1.16.0",
+        "7ik8057hajl6vq9j40h3jracxjn0bb5x-bash-5.3p15",
+        "hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc",
+        "w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib"
+      ]
+    },
+    "firefox": {
+      "store_path": "/nix/store/q4xlzpaa1m824n92lp2wjjx4nihnajm0-firefox-153.0.3",
+      "deps_count": 326,
+      "dependencies": [
+        "7n3h9wa8yl8k8r85m9wiylpk0w0j8315-dejavu-fonts-minimal-2.37",
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "91hg1nrgzxci4bbiwjnqw7x8lgwqy1n0-expat-2.8.2",
+        "lh4hhnx87jvyxqj809m52464s44xmchf-fontconfig-2.18.2",
+        "fkcbg2c1w29jr5yp9awai9w3v1wvxdk9-zlib-1.3.2",
+        "12j6lw8is3y38kh8mpcypp9sclshi2gm-libpng-apng-1.6.58",
+        "5ip9nvln2q56cqwxc4ijmpvnmj5vfxlb-bzip2-1.0.8"
+      ]
+    },
+    "python3": {
+      "store_path": "/nix/store/gxzhl7aaiid7zp3y47jqqiq7zg5mqpwp-python3-3.14.6",
+      "deps_count": 22,
+      "dependencies": [
+        "1c1s7b8zz77nrb8ldh1lx9mlm8hyv9rc-mailcap-2.1.54",
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "fkcbg2c1w29jr5yp9awai9w3v1wvxdk9-zlib-1.3.2",
+        "1sb721qx1ja8ik66jx2y555as0d6zfyv-sqlite-3.53.3",
+        "2nndxyf3phkb5aggxm3c16sapa0f49kz-tzdata-2026c",
+        "39jzpf9ray7mxjnlmqbrxlyz0dsz0448-openssl-3.6.3",
+        "5ip9nvln2q56cqwxc4ijmpvnmj5vfxlb-bzip2-1.0.8"
+      ]
+    },
+    "gcc": {
+      "store_path": "/nix/store/l5qkpzsr4gxvksh45b3nhxbkyr5cviar-gcc-wrapper-15.3.0",
+      "deps_count": 26,
+      "dependencies": [
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "8i8vavxai9s80xlx6y5kmiw7l63491m0-glibc-2.42-67-bin",
+        "9p2m54a01dgwzvk6pc6kijk6vldp0n2y-linux-headers-7.1",
+        "29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev",
+        "38n0ganzvrlk08c8l3wbwxzsqmxgqi6j-acl-2.4.0",
+        "fkcbg2c1w29jr5yp9awai9w3v1wvxdk9-zlib-1.3.2",
+        "3spfii4vdpdsk1vq6a3dpy3bglbbfpvq-binutils-2.46-lib"
+      ]
+    },
+    "vim": {
+      "store_path": "/nix/store/kcfbjmxdngamgxgj88q0g7wimbix9ah8-vim-9.2.0782",
+      "deps_count": 8,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "w11kc8r5ixj3ir37q8ndrv82gimr5vjd-ncurses-6.6",
+        "rrqlx2czgin1x4w9j8lsvmsmq6v4zkb0-readline-8.3p3",
+        "bwry105g7v5jspr41bx9x3fcfqsmfkq2-bash-interactive-5.3p15",
+        "l0pfzsyrxmgfbzxxzxpwi6j6mhnkyrcr-gawk-5.4.1"
+      ]
+    },
+    "neovim": {
+      "store_path": "/nix/store/w59xhyc9iaprfx7ghck24vsa8gwi47d1-neovim-0.12.4",
+      "deps_count": 113,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "83z5k86fm8cwaap1rjww4a6z12my2b0s-libxcrypt-4.5.2",
+        "38n0ganzvrlk08c8l3wbwxzsqmxgqi6j-acl-2.4.0",
+        "hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc",
+        "w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib",
+        "6z90l28w0aqfqgb34gzh3linnci8k1id-gmp-with-cxx-6.3.0",
+        "r88gpfhsd1bww3bz9cl5crrxnwg5kiap-attr-2.6.0"
+      ]
+    },
+    "nodejs": {
+      "store_path": "/nix/store/hwjfj8m2kcsl7kz2xa5yf84jbfh9jssf-nodejs-24.18.1",
+      "deps_count": 61,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "3cyrqjq2qphlnsmb8k7pn6z79j7yx9pd-libuv-1.52.1",
+        "s2q7i4737r93svh8ijvf9r3biapjc059-libuv-1.52.1-dev",
+        "08hvb1ywy0ababhpm79ljsvac57izh90-uvwasi-0.0.23",
+        "hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc",
+        "w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib",
+        "72gsl1zlhbpjml7dz68r7jmhy40q6m6a-simdutf-9.0.0"
+      ]
+    },
+    "nginx": {
+      "store_path": "/nix/store/gvszlnw74zlvvxmv56s3fi4ln959s8ma-nginx-1.30.4",
+      "deps_count": 13,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "1clab347fz7s2xinzm21w94k5dmj6bcp-libxml2-2.15.3",
+        "3gl24nzj6m2zzm1qk9p4j7hgqfc8i9sm-nginx-mod-dav-3.0.0",
+        "83z5k86fm8cwaap1rjww4a6z12my2b0s-libxcrypt-4.5.2",
+        "9qc8x95g7waab3h26729v6zjgjk3rx7f-openssl-4.0.1",
+        "by4qzqvyca7fqbzzf996hzdv99yv7kd1-libxslt-1.1.45",
+        "gvn2w8kxsxdjh1nsw88gp9fjyrcxwmkj-pcre2-10.47"
+      ]
+    },
+    "postgresql": {
+      "store_path": "/nix/store/sjh3b1wsi5cp3x0mc5c8x32mx12ilghz-postgresql-18.4",
+      "deps_count": 37,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "116ggk05qjp9v0wprwag1mw7g13ara96-keyutils-1.6.3-lib",
+        "1clab347fz7s2xinzm21w94k5dmj6bcp-libxml2-2.15.3",
+        "1jg9g2sqd9v93wfrngw9acyz3swdcymh-libcap-ng-0.9.3",
+        "2nndxyf3phkb5aggxm3c16sapa0f49kz-tzdata-2026c",
+        "39jzpf9ray7mxjnlmqbrxlyz0dsz0448-openssl-3.6.3",
+        "6j2dzlpn0gim9py78w88qwlzga7s2z8c-nghttp3-1.16.0"
+      ]
+    },
+    "redis": {
+      "store_path": "/nix/store/mxn60bw5l7ksvl3knzg9f5d53zhd49km-redis-8.8.1",
+      "deps_count": 73,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "0mjpx6znj9p3nyvjnmq4hjr36y6mnfyf-libapparmor-5.0.2",
+        "116ggk05qjp9v0wprwag1mw7g13ara96-keyutils-1.6.3-lib",
+        "1clab347fz7s2xinzm21w94k5dmj6bcp-libxml2-2.15.3",
+        "1jg9g2sqd9v93wfrngw9acyz3swdcymh-libcap-ng-0.9.3",
+        "hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc",
+        "w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib"
+      ]
+    },
+    "perl": {
+      "store_path": "/nix/store/haxjvirj4hk92rpjhx0qygqsf3a5iimz-perl-5.42.0",
+      "deps_count": 12,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "38n0ganzvrlk08c8l3wbwxzsqmxgqi6j-acl-2.4.0",
+        "hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc",
+        "w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib",
+        "6z90l28w0aqfqgb34gzh3linnci8k1id-gmp-with-cxx-6.3.0",
+        "83z5k86fm8cwaap1rjww4a6z12my2b0s-libxcrypt-4.5.2",
+        "r88gpfhsd1bww3bz9cl5crrxnwg5kiap-attr-2.6.0"
+      ]
+    },
+    "ruby": {
+      "store_path": "/nix/store/bhv09djlq7py1zmwkpisp425ndjlbmyg-ruby-3.4.9",
+      "deps_count": 10,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "39jzpf9ray7mxjnlmqbrxlyz0dsz0448-openssl-3.6.3",
+        "9f9kydhbnmsxi8w5wh1x91xjzg757vjl-libffi-3.7.1",
+        "ckb9i2avm6f0w9n8rfhf0hqg5jr1w2dq-libyaml-0.2.5",
+        "fkcbg2c1w29jr5yp9awai9w3v1wvxdk9-zlib-1.3.2",
+        "hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc",
+        "w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib"
+      ]
+    },
+    "go": {
+      "store_path": "/nix/store/pwj3x44pp735yb038fnmqckyyra9k29x-go-1.26.5",
+      "deps_count": 8,
+      "dependencies": [
+        "1c1s7b8zz77nrb8ldh1lx9mlm8hyv9rc-mailcap-2.1.54",
+        "2nndxyf3phkb5aggxm3c16sapa0f49kz-tzdata-2026c",
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "7ik8057hajl6vq9j40h3jracxjn0bb5x-bash-5.3p15",
+        "jab95mm9b2qb8ygk45l600mb2pp5xbr4-iana-etc-20251215"
+      ]
+    },
+    "rustc": {
+      "store_path": "/nix/store/gf0kxr0014wbjmx5sh4mfjn83yabxkhw-rustc-wrapper-1.97.1",
+      "deps_count": 12,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "1clab347fz7s2xinzm21w94k5dmj6bcp-libxml2-2.15.3",
+        "7ik8057hajl6vq9j40h3jracxjn0bb5x-bash-5.3p15",
+        "9f9kydhbnmsxi8w5wh1x91xjzg757vjl-libffi-3.7.1",
+        "fkcbg2c1w29jr5yp9awai9w3v1wvxdk9-zlib-1.3.2",
+        "hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc",
+        "w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib"
+      ]
+    },
+    "clang": {
+      "store_path": "/nix/store/ag24dgbnfvlyvc1lr87v8zlzcmhkhd2v-clang-wrapper-21.1.8",
+      "deps_count": 33,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc",
+        "w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib",
+        "0hwy8wka3rz5sbcy9h8v4236pjyw6z17-compiler-rt-libc-21.1.8",
+        "0548bx4ph41f834v86sxl594xb36w916-compiler-rt-libc-21.1.8-dev",
+        "1clab347fz7s2xinzm21w94k5dmj6bcp-libxml2-2.15.3",
+        "8i8vavxai9s80xlx6y5kmiw7l63491m0-glibc-2.42-67-bin"
+      ]
+    },
+    "systemd": {
+      "store_path": "/nix/store/hbg7ib0c60pn7hi8sx7w5yvs8yfahwgw-systemd-261.1",
+      "deps_count": 70,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "0mjpx6znj9p3nyvjnmq4hjr36y6mnfyf-libapparmor-5.0.2",
+        "116ggk05qjp9v0wprwag1mw7g13ara96-keyutils-1.6.3-lib",
+        "1clab347fz7s2xinzm21w94k5dmj6bcp-libxml2-2.15.3",
+        "1jg9g2sqd9v93wfrngw9acyz3swdcymh-libcap-ng-0.9.3",
+        "hmi4qvjrcdvzsing2l56ybcwb6hkmf6y-gcc-15.3.0-libgcc",
+        "w2nk3f7prwzpm6h13rfxh8lh46yfdysj-gcc-15.3.0-lib"
+      ]
+    },
+    "openssl": {
+      "store_path": "/nix/store/prxr8sy3x6h5wsavl6fl0n1gkd5rp7g8-openssl-3.6.3-bin",
+      "deps_count": 5,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+        "39jzpf9ray7mxjnlmqbrxlyz0dsz0448-openssl-3.6.3"
+      ]
+    },
+    "zlib": {
+      "store_path": "/nix/store/fkcbg2c1w29jr5yp9awai9w3v1wvxdk9-zlib-1.3.2",
+      "deps_count": 4,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc",
+        "qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67"
+      ]
+    },
+    "glibc": {
+      "store_path": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67",
+      "deps_count": 3,
+      "dependencies": [
+        "sy2whqnl8z8aakhh0n0sgrflj27hc6in-libunistring-1.4.2",
+        "7svf4fa139ajvhfaxry3smvlbhrnraq1-libidn2-2.3.8",
+        "g7b1jkypxsa9r4642kjcbsmmlvrhb3n8-xgcc-15.3.0-libgcc"
+      ]
+    }
+  },
+  "installed_detail": [
+    {
+      "name": "agent-browser",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/4cdqp4ffd4k0a9zmsywmvs8x06ni3brq-agent-browser-0.27.0"
+      ],
+      "active": true
+    },
+    {
+      "name": "ccache",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/176anvqvrs2z7nk4xl8wpgmrcnlq9wrb-ccache-4.13.6-man",
+        "/nix/store/636zg09wfvki2hrv3q0l17gvpk2aygff-ccache-4.13.6"
+      ],
+      "active": true
+    },
+    {
+      "name": "datovka",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/f47bh36ax87gwm61475s5vb3ifg9ckv0-datovka-4.28.0"
+      ],
+      "active": true
+    },
+    {
+      "name": "desktop",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/fyqnhrjb1f1ymf7gn43sdq1gp72w18b2-hermes-desktop-0.17.0"
+      ],
+      "active": true
+    },
+    {
+      "name": "distcc",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/2s1qnl0k7m230s6g6hb0fqhd5gwapl1q-distcc-3.4"
+      ],
+      "active": true
+    },
+    {
+      "name": "easytag",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/6kwb61pq3w5l1lxjp5df334mwyd8f92i-easytag-2.4.3"
+      ],
+      "active": true
+    },
+    {
+      "name": "firefox",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/q4xlzpaa1m824n92lp2wjjx4nihnajm0-firefox-153.0.3"
+      ],
+      "active": true
+    },
+    {
+      "name": "gcc-arm-embedded-13",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/ksbndnw6v3xyk8kx7pvz7rdkqqkgncvs-gcc-arm-embedded-13.3.rel1"
+      ],
+      "active": true
+    },
+    {
+      "name": "gh",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/7ayrbzjnm88xn12lfv99c1sqprlc2bwr-gh-2.97.0"
+      ],
+      "active": true
+    },
+    {
+      "name": "git",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/6f0qqak4qbcrbw4f750phr88c9yhpf5s-git-2.55.0"
+      ],
+      "active": true
+    },
+    {
+      "name": "glab",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/8p3hmas97b386ln1rgx59bnr1ggrxr7z-glab-1.111.0"
+      ],
+      "active": true
+    },
+    {
+      "name": "gnome-disk-utility",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/qwahrmjz79rmw20q335lnal5akc8v6q9-gnome-disk-utility-46.1"
+      ],
+      "active": true
+    },
+    {
+      "name": "google-chrome",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/xbgbvysvq93s5c2g0bpl60sd107vaa7x-google-chrome-151.0.7922.108"
+      ],
+      "active": true
+    },
+    {
+      "name": "hermes-agent",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/mxzdd7arq3f52pmcd5i2bgz88q2i3as3-hermes-agent-0.20.6"
+      ],
+      "active": true
+    },
+    {
+      "name": "inetutils",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/m6xdk9bq0k9pfv07j5ncp63w2mb9isgw-inetutils-2.7"
+      ],
+      "active": true
+    },
+    {
+      "name": "kotatogram-desktop",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/nd0clbhvji7vjsm61qv76x56xd8zgnyn-kotatogram-desktop-1.4.9-unstable-2026-07-03"
+      ],
+      "active": true
+    },
+    {
+      "name": "mc",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/7v39blxfshap0zbfspdiffprlwh03gz0-mc-4.8.33"
+      ],
+      "active": true
+    },
+    {
+      "name": "modem-manager-gui",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/19dn0v7b28p2gv0ya251m6nwai74fah9-modem-manager-gui-0.0.20"
+      ],
+      "active": true
+    },
+    {
+      "name": "morph-browser",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/9wg0y615sm398ri6x928jn65xx3z3b42-morph-browser-1.99.4"
+      ],
+      "active": true
+    },
+    {
+      "name": "mumble",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/1asvx737dfn8w5j2ww9iizdfbl4js5f7-mumble-1.5.915"
+      ],
+      "active": true
+    },
+    {
+      "name": "nicotine-plus",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/vx0dvbmbgwb8qcvrk8nbc60sd8ix0v5m-nicotine-plus-3.3.10"
+      ],
+      "active": true
+    },
+    {
+      "name": "nmap",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/zpl3iidjfgad11ql6a5ddjlaznb8sppm-nmap-7.99"
+      ],
+      "active": true
+    },
+    {
+      "name": "opencascade-occt",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/0d5l42jfc71ba94i73vm5jgvb1vac2p3-opencascade-occt-7.9.3"
+      ],
+      "active": true
+    },
+    {
+      "name": "openclaw",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/qgcdisqz777f0ij7d6k4zcckx1vyvwxc-openclaw-2026.5.7"
+      ],
+      "active": true
+    },
+    {
+      "name": "opencode",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/n5h9jhy4ivh30s38y0xp4bhgh8k7ysfk-opencode-1.18.13"
+      ],
+      "active": true
+    },
+    {
+      "name": "pi-coding-agent",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/lxka8d31np568wcgrvrrlmp3jrrwqa32-pi-coding-agent-0.75.4"
+      ],
+      "active": true
+    },
+    {
+      "name": "pidgin",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/0dk383cbig177v4yv55dvvwxr7pqx64x-pidgin-2.14.14"
+      ],
+      "active": true
+    },
+    {
+      "name": "psi-plus",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/rx1nb3bll32bawwdl59ll8h9v11fg8i0-psi-plus-1.5.2140"
+      ],
+      "active": true
+    },
+    {
+      "name": "python3.13-git-filter-repo",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/r3mcsrzq9qs2cyc73k6f7l8pbdq3i0f5-python3.13-git-filter-repo-2.47.0"
+      ],
+      "active": true
+    },
+    {
+      "name": "remmina",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/q36azr7zpg1hpy57jp0f6xwqmbkrk5zg-remmina-1.4.43"
+      ],
+      "active": true
+    },
+    {
+      "name": "telegram-desktop",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/42vnr31fvqramcqmf067rydhk3plynnz-telegram-desktop-7.0.2"
+      ],
+      "active": true
+    },
+    {
+      "name": "tor-browser",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/lw3bk8jlz1f0zd531lg3c671dsmc8fwv-tor-browser-15.0.17"
+      ],
+      "active": true
+    },
+    {
+      "name": "ungoogled-chromium",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/grafi0z9mi75j68lcvijbyj90r23y21m-ungoogled-chromium-150.0.7871.46"
+      ],
+      "active": true
+    },
+    {
+      "name": "wireshark",
+      "version": "unknown",
+      "store_paths": [
+        "/nix/store/qfpcbvc3k3zf412nd3vmqf85hl5gc4f8-wireshark-qt-4.6.7"
+      ],
+      "active": true
+    }
+  ]
+}

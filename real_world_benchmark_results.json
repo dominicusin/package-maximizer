@@ -1,0 +1,61 @@
+{
+  "total_packages": 21,
+  "solvers": {
+    "greedy": {
+      "status": "OK",
+      "time_seconds": 0.0003,
+      "selected": 21,
+      "accuracy": 100.0,
+      "conflicts": 0,
+      "unmet_deps": 190
+    },
+    "enhanced_greedy": {
+      "status": "OK",
+      "time_seconds": 0.0003,
+      "selected": 21,
+      "accuracy": 100.0,
+      "conflicts": 0,
+      "unmet_deps": 190
+    },
+    "z3": {
+      "status": "OK",
+      "time_seconds": 0.0142,
+      "selected": 21,
+      "accuracy": 100.0,
+      "conflicts": 0,
+      "unmet_deps": 190
+    },
+    "pulp": {
+      "status": "OK",
+      "time_seconds": 0.0082,
+      "selected": 21,
+      "accuracy": 100.0,
+      "conflicts": 0,
+      "unmet_deps": 190
+    },
+    "ortools": {
+      "status": "OK",
+      "time_seconds": 0.0004,
+      "selected": 21,
+      "accuracy": 100.0,
+      "conflicts": 0,
+      "unmet_deps": 190
+    },
+    "maxsat": {
+      "status": "OK",
+      "time_seconds": 0.0019,
+      "selected": 21,
+      "accuracy": 100.0,
+      "conflicts": 0,
+      "unmet_deps": 190
+    },
+    "minisat": {
+      "status": "OK",
+      "time_seconds": 0.0026,
+      "selected": 21,
+      "accuracy": 100.0,
+      "conflicts": 0,
+      "unmet_deps": 190
+    }
+  }
+}
