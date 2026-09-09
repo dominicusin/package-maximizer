@@ -1268,10 +1268,8 @@
             ]
           },
           "source_dep_count": 5,
-          "conflicts": [
-            "[\n        \"docs/ReleaseNotes.rst\"\n        \"lib/Sema/TreeTransform.h\"\n      ]"
-          ],
-          "conflict_count": 1,
+          "conflicts": [],
+          "conflict_count": 0,
           "resolved_dep_count": 33,
           "resolved_dependencies": [
             "nix-store:/clang-resolved-0",
@@ -1949,7 +1947,7 @@
       },
       "total_source_deps": 65,
       "total_resolved_deps": 529,
-      "total_conflicts": 1
+      "total_conflicts": 0
     },
     "opensuse-tumbleweed": {
       "packages": {
@@ -4699,7 +4697,7 @@
   "summary": {
     "total_source_dependency_edges": 327,
     "total_resolved_dependency_edges": 2568,
-    "total_conflicts": 1,
+    "total_conflicts": 0,
     "platforms": 5,
     "packages_analyzed": 105
   },
