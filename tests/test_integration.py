@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from package_maximizer.core.constraints import ConstraintParser, VersionConstraint
 from package_maximizer.core.maximizer import PackageMaximizer
 from package_maximizer.core.package import Package
-from package_maximizer.parsers import PARSER_REGISTRY, get_parser
-from package_maximizer.solvers import SOLVER_REGISTRY, get_solver
+from package_maximizer.parsers import get_parser
+from package_maximizer.solvers import get_solver
 
 
 # ─── End-to-end maximization scenarios ───────────────────────

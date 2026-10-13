@@ -2,9 +2,6 @@
 Tests for extended CLI commands (Phase 4)
 """
 
-import json
-
-import pytest
 from click.testing import CliRunner
 
 from package_maximizer.cli import (
