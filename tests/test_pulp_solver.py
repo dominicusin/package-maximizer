@@ -276,3 +276,133 @@ class TestPulPExceptionHandling:
         ]
         result = solver._greedy_fallback(pkgs, {"a": 1.0, "b": 2.0})
         assert not ("a" in result and "b" in result)
+
+
+class TestPulPBackendSelection:
+    """_make_backend avoids PuLP 4.0-deprecated APIs where possible."""
+
+    def test_explicit_solver_name_alias(self):
+        pytest.importorskip("pulp")
+        from package_maximizer.solvers.pulp_solver import PulPSolver
+
+        with patch("package_maximizer.solvers.pulp_solver.pulp.getSolver") as gs:
+            PulPSolver(solver_name="cbc", time_limit=2000)._make_backend()
+        gs.assert_called_once_with("COIN_CMD", msg=False, timeLimit=2.0)
+
+    def test_explicit_cbc_falls_back_to_bundled_when_coin_cmd_missing(self):
+        pulp = pytest.importorskip("pulp")
+        if not hasattr(pulp, "PULP_CBC_CMD"):
+            pytest.skip("PuLP >= 4.0 has no bundled CBC")
+        from package_maximizer.solvers.pulp_solver import PulPSolver
+
+        with patch.object(pulp.COIN_CMD, "available", return_value=False):
+            backend = PulPSolver(solver_name="CBC")._make_backend()
+        assert isinstance(backend, pulp.PULP_CBC_CMD)
+
+    def test_explicit_cbc_end_to_end_without_system_cbc(self):
+        pulp = pytest.importorskip("pulp")
+        from package_maximizer.solvers.pulp_solver import PulPSolver, _bundled_cbc
+
+        bundled = _bundled_cbc(1.0)
+        if bundled is None or not bundled.available():
+            pytest.skip("bundled CBC not available")
+
+        packages = [
+            Package(name="A", version="1.0", conflicts=["B", "C"]),
+            Package(name="B", version="1.0"),
+            Package(name="C", version="1.0"),
+        ]
+        solver = PulPSolver(solver_name="CBC")
+        with (
+            patch.object(pulp.COIN_CMD, "available", return_value=False),
+            patch.object(solver, "_greedy_fallback", side_effect=AssertionError),
+        ):
+            assert sorted(solver.solve(packages)) == ["B", "C"]
+
+    def test_explicit_solver_used_when_available(self):
+        pytest.importorskip("pulp")
+        from package_maximizer.solvers.pulp_solver import PulPSolver
+
+        with patch("package_maximizer.solvers.pulp_solver.pulp.getSolver") as gs:
+            gs.return_value.available.return_value = False
+            backend = PulPSolver(solver_name="HiGHS")._make_backend()
+        assert backend is gs.return_value
+
+    def test_prefers_available_coin_cmd(self):
+        pulp = pytest.importorskip("pulp")
+        from package_maximizer.solvers.pulp_solver import PulPSolver
+
+        with patch.object(pulp.COIN_CMD, "available", return_value="/usr/bin/cbc"):
+            backend = PulPSolver()._make_backend()
+        assert type(backend) is pulp.COIN_CMD
+
+    def test_bundled_cbc_fallback_without_deprecation_warning(self):
+        import warnings
+
+        pulp = pytest.importorskip("pulp")
+        if not hasattr(pulp, "PULP_CBC_CMD"):
+            pytest.skip("PuLP >= 4.0 has no bundled CBC")
+        from package_maximizer.solvers.pulp_solver import PulPSolver
+
+        with (
+            patch.object(pulp.COIN_CMD, "available", return_value=False),
+            patch.object(pulp.HiGHS, "available", return_value=False),
+            patch.object(pulp.HiGHS_CMD, "available", return_value=False),
+        ):
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", DeprecationWarning)
+                backend = PulPSolver()._make_backend()
+        assert isinstance(backend, pulp.PULP_CBC_CMD)
+
+    def test_no_backend_raises_and_solve_falls_back(self):
+        pulp = pytest.importorskip("pulp")
+        from package_maximizer.solvers import pulp_solver
+        from package_maximizer.solvers.pulp_solver import PulPSolver
+
+        fake = MagicMock(wraps=pulp)
+        fake.PULP_CBC_CMD = None
+        for name in ("COIN_CMD", "HiGHS", "HiGHS_CMD"):
+            setattr(fake, name, None)
+        with patch.object(pulp_solver, "pulp", fake):
+            with pytest.raises(RuntimeError):
+                PulPSolver()._make_backend()
+            pkgs = [Package(name="a", conflicts=["b"]), Package(name="b")]
+            result = PulPSolver().solve(pkgs)
+        assert result and not ("a" in result and "b" in result)
+
+    def test_binary_vars_legacy_api(self):
+        pulp = pytest.importorskip("pulp")
+        from package_maximizer.solvers.pulp_solver import _binary_vars
+
+        legacy_prob = MagicMock(spec=[])
+        with patch.object(
+            pulp.LpVariable, "dicts", return_value={"a": 1}, create=True
+        ) as d:
+            assert _binary_vars(legacy_prob, "Package", ["a"]) == {"a": 1}
+        d.assert_called_once()
+
+
+class TestPulPStatusName:
+    """_status_name supports PuLP 4 LpSolveStats and legacy int statuses."""
+
+    def test_pulp4_stats_object(self):
+        pytest.importorskip("pulp")
+        from package_maximizer.solvers.pulp_solver import _status_name
+
+        stats = MagicMock()
+        stats.status.name = "Optimal"
+        assert _status_name(MagicMock(spec=[]), stats) == "Optimal"
+
+    def test_legacy_int_status(self):
+        pytest.importorskip("pulp")
+        from package_maximizer.solvers import pulp_solver
+        from package_maximizer.solvers.pulp_solver import _status_name
+
+        prob = MagicMock(spec=["status"])
+        prob.status = 1
+        fake = MagicMock(wraps=pulp_solver.pulp)
+        fake.LpStatus = {1: "Optimal", 0: "Not Solved"}
+        with patch.object(pulp_solver, "pulp", fake):
+            assert _status_name(prob, 1) == "Optimal"
+            prob.status = 0
+            assert _status_name(prob, 0) == "Not Solved"
