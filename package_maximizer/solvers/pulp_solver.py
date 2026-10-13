@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import pulp
-    from pulp import LpBinary, LpMaximize, LpProblem, LpStatus, LpVariable, lpSum, value
+    from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
 
     PULP_AVAILABLE = True
 except ImportError:
@@ -38,6 +38,27 @@ def _binary_vars(prob, prefix: str, names: list[str]) -> dict:
     if hasattr(prob, "add_variable_dicts"):
         return prob.add_variable_dicts(prefix, names, cat=LpBinary)
     return LpVariable.dicts(prefix, names, cat=LpBinary)
+
+
+def _bundled_cbc(time_limit: float):
+    """PuLP's bundled CBC (``PULP_CBC_CMD``, PuLP < 4.0 only), or ``None``."""
+    bundled = getattr(pulp, "PULP_CBC_CMD", None)
+    if bundled is None:
+        return None
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        return bundled(msg=False, timeLimit=time_limit)
+
+
+def _status_name(prob, result) -> str:
+    """Solve status name for PuLP 4 (``LpSolveStats``) and older (int status)."""
+    status = getattr(result, "status", None)
+    if status is None:
+        status = getattr(prob, "status", result)
+    name = getattr(status, "name", None)
+    if isinstance(name, str):
+        return name
+    return getattr(pulp, "LpStatus", {}).get(status, str(status))
 
 
 class PulPSolver(ConstraintSolver):
@@ -109,16 +130,17 @@ class PulPSolver(ConstraintSolver):
                 prob += x[pkg] - x[dep] <= 0, f"Dep_{pkg}_{dep}"
 
         try:
-            prob.solve(self._make_backend())
+            result = prob.solve(self._make_backend())
         except Exception as e:
             logger.warning(f"PuLP solver failed: {e}")
             return self._greedy_fallback(package_list, weights)
 
-        if LpStatus[prob.status] == "Optimal":
+        status = _status_name(prob, result)
+        if status == "Optimal":
             return [
                 name for name in constraints.packages if (value(x[name]) or 0) > 0.5
             ]
-        logger.warning(f"PuLP solver status: {LpStatus[prob.status]}")
+        logger.warning(f"PuLP solver status: {status}")
         return self._greedy_fallback(package_list, weights)
 
     def _make_backend(self):
@@ -130,7 +152,10 @@ class PulPSolver(ConstraintSolver):
         time_limit = self.time_limit / 1000
         if self.solver_name:
             name = _SOLVER_ALIASES.get(self.solver_name.upper(), self.solver_name)
-            return pulp.getSolver(name, msg=False, timeLimit=time_limit)
+            backend = pulp.getSolver(name, msg=False, timeLimit=time_limit)
+            if name == "COIN_CMD" and not backend.available():
+                return _bundled_cbc(time_limit) or backend
+            return backend
 
         for name in ("COIN_CMD", "HiGHS", "HiGHS_CMD"):
             solver_cls = getattr(pulp, name, None)
@@ -140,14 +165,12 @@ class PulPSolver(ConstraintSolver):
             if candidate.available():
                 return candidate
 
-        bundled = getattr(pulp, "PULP_CBC_CMD", None)
+        bundled = _bundled_cbc(time_limit)
         if bundled is None:
             raise RuntimeError(
                 "No PuLP backend available; install CBC with `pip install pulp[cbc]`"
             )
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            return bundled(msg=False, timeLimit=time_limit)
+        return bundled
 
     def _greedy_fallback(
         self, packages: list[Package], weights: dict[str, float] | None = None
