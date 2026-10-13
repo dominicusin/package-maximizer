@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
-
-import pytest
 
 from package_maximizer.core.config import Config, load_config
 from package_maximizer.utils.logging_config import configure_logging, get_logger

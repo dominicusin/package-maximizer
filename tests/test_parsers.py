@@ -4,7 +4,6 @@ Tests for parsers module.
 
 import pytest
 
-from package_maximizer.core.package import Package
 from package_maximizer.parsers import APTParser, get_parser
 
 

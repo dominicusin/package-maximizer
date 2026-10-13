@@ -6,9 +6,7 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
 
-import pytest
 from click.testing import CliRunner
 
 from package_maximizer.cli.main import (
@@ -20,10 +18,8 @@ from package_maximizer.cli.main import (
     from_file,
     info,
     init_config_command,
-    list_installed,
     list_managers,
     list_solvers,
-    maximize,
     search,
     system_info,
     tui_command,

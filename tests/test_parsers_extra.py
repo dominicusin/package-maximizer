@@ -175,12 +175,9 @@ class TestNewParsers:
     def test_registry_includes_new_parsers(self):
         for key in ("snap", "flatpak", "cargo", "npm"):
             assert key in PARSER_REGISTRY
-            assert isinstance(
-                get_parser(key),
-                PackageParser := __import__(
-                    "package_maximizer.core.interfaces", fromlist=["PackageParser"]
-                ).PackageParser,
-            )
+            from package_maximizer.core.interfaces import PackageParser
+
+            assert isinstance(get_parser(key), PackageParser)
 
     def test_conda_parser(self):
         pkgs = CondaParser().parse(CONDA_LIST)

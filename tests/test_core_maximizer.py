@@ -4,8 +4,6 @@ Tests for core.maximizer module — targets uncovered branches.
 
 from __future__ import annotations
 
-import pytest
-
 from package_maximizer.core.enums import PackageManagerType, SolverType
 from package_maximizer.core.maximizer import PackageMaximizer
 from package_maximizer.core.package import Package
