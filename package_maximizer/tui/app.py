@@ -143,7 +143,6 @@ class MaximizerApp(App):
 
     def action_help(self) -> None:
         """Show help dialog via keyboard shortcut (Ctrl+H)."""
-        from textual.widgets import Footer
 
         log = self.query_one("#log_output", Log)
         log.write_line("")

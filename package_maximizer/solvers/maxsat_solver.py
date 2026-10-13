@@ -10,7 +10,7 @@ import logging
 from typing import TYPE_CHECKING, Iterable
 
 from ..core.interfaces import ConstraintSolver
-from ..core.model_encoder import ModelConstraints, encode_packages
+from ..core.model_encoder import encode_packages
 
 if TYPE_CHECKING:
     from ..core.package import Package
@@ -115,8 +115,6 @@ class MaxSatSolver(ConstraintSolver):
         )
 
         constraints = encode_packages(package_list)
-        var_map = {name: i + 1 for i, name in enumerate(constraints.packages)}
-
         selected: list[str] = []
         selected_names: set[str] = set()
 

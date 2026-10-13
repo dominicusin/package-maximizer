@@ -1105,13 +1105,13 @@ def analyze(packages, manager, solver, metadata, conflicts, depends, output):
             click.echo(f"\nSelected packages: {', '.join(result)}")
 
         if excluded:
-            click.echo(f"\n--- Exclusion Reasons ---")
+            click.echo("\n--- Exclusion Reasons ---")
             for name, reasons in conflict_map.items():
                 if reasons:
                     click.echo(f"  {name}: {'; '.join(reasons)}")
 
         if bottlenecks:
-            click.echo(f"\n--- Bottleneck Packages (most conflicts) ---")
+            click.echo("\n--- Bottleneck Packages (most conflicts) ---")
             for b, c in bottlenecks:
                 click.echo(f"  {b}: {c} conflicts")
 
@@ -1154,7 +1154,7 @@ def compare(packages, manager, metadata, output):
         manager = cfg.default_manager if cfg else "apt"
 
     try:
-        manager_enum = PackageManagerType(manager)
+        PackageManagerType(manager)
     except ValueError:
         click.echo(f"Error: Unknown package manager '{manager}'", err=True)
         sys.exit(1)
