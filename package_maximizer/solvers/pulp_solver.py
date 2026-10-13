@@ -10,6 +10,7 @@ PuLP ILP Solver — целочисленное линейное программ
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import TYPE_CHECKING, Iterable, Optional
 
 from ..core.interfaces import ConstraintSolver
@@ -27,6 +28,16 @@ try:
     PULP_AVAILABLE = True
 except ImportError:
     PULP_AVAILABLE = False
+
+
+_SOLVER_ALIASES = {"CBC": "COIN_CMD", "HIGHS": "HiGHS"}
+
+
+def _binary_vars(prob, prefix: str, names: list[str]) -> dict:
+    """Create binary variables via the PuLP 4.0 API when available."""
+    if hasattr(prob, "add_variable_dicts"):
+        return prob.add_variable_dicts(prefix, names, cat=LpBinary)
+    return LpVariable.dicts(prefix, names, cat=LpBinary)
 
 
 class PulPSolver(ConstraintSolver):
@@ -49,35 +60,7 @@ class PulPSolver(ConstraintSolver):
         if not package_list:
             return []
 
-        constraints = encode_packages(package_list)
-        prob = LpProblem("Package_Maximization", LpMaximize)
-
-        # Бинарные переменные
-        x = LpVariable.dicts("Package", constraints.packages, cat=LpBinary)
-
-        # Цель: максимизировать количество
-        prob += lpSum(x[name] for name in constraints.packages), "Total_Packages"
-
-        # Конфликты
-        for a, b in constraints.conflicts:
-            prob += x[a] + x[b] <= 1, f"Conflict_{a}_{b}"
-
-        # Зависимости: selected(pkg) => selected(dep)
-        for pkg, deps in constraints.dependencies.items():
-            for dep in deps:
-                prob += x[pkg] - x[dep] <= 0, f"Dep_{pkg}_{dep}"
-
-        try:
-            prob.solve(pulp.PULP_CBC_CMD(msg=False, timeLimit=self.time_limit / 1000))
-        except Exception as e:
-            logger.warning(f"PuLP solver failed: {e}")
-            return self._greedy_fallback(package_list)
-
-        if LpStatus[prob.status] == "Optimal":
-            return [name for name in constraints.packages if value(x[name]) == 1]
-        else:
-            logger.warning(f"PuLP solver status: {prob.status}")
-            return self._greedy_fallback(package_list)
+        return self._solve_ilp(package_list, None, "Package_Maximization")
 
     def solve_with_weights(
         self, packages: Iterable[Package], weights: dict[str, float] | None = None
@@ -95,37 +78,76 @@ class PulPSolver(ConstraintSolver):
         if weights is None:
             weights = {pkg.name: 1.0 for pkg in package_list}
 
+        return self._solve_ilp(package_list, weights, "Weighted_Package_Maximization")
+
+    def _solve_ilp(
+        self,
+        package_list: list[Package],
+        weights: dict[str, float] | None,
+        problem_name: str,
+    ) -> list[str]:
         constraints = encode_packages(package_list)
-        prob = LpProblem("Weighted_Package_Maximization", LpMaximize)
+        prob = LpProblem(problem_name, LpMaximize)
+        x = _binary_vars(prob, "Package", constraints.packages)
 
-        x = LpVariable.dicts("Package", constraints.packages, cat=LpBinary)
+        if weights is None:
+            prob += lpSum(x[name] for name in constraints.packages), "Total_Packages"
+        else:
+            prob += (
+                lpSum(
+                    x[name] * weights.get(name, 1.0) for name in constraints.packages
+                ),
+                "Total_Weight",
+            )
 
-        # Цель: максимизировать вес
-        prob += (
-            lpSum(x[name] * weights.get(name, 1.0) for name in constraints.packages),
-            "Total_Weight",
-        )
-
-        # Конфликты
         for a, b in constraints.conflicts:
             prob += x[a] + x[b] <= 1, f"Conflict_{a}_{b}"
 
-        # Зависимости
+        # selected(pkg) => selected(dep)
         for pkg, deps in constraints.dependencies.items():
             for dep in deps:
                 prob += x[pkg] - x[dep] <= 0, f"Dep_{pkg}_{dep}"
 
         try:
-            prob.solve(pulp.PULP_CBC_CMD(msg=False, timeLimit=self.time_limit / 1000))
+            prob.solve(self._make_backend())
         except Exception as e:
             logger.warning(f"PuLP solver failed: {e}")
             return self._greedy_fallback(package_list, weights)
 
         if LpStatus[prob.status] == "Optimal":
-            return [name for name in constraints.packages if value(x[name]) == 1]
-        else:
-            logger.warning(f"PuLP solver status: {prob.status}")
-            return self._greedy_fallback(package_list, weights)
+            return [
+                name for name in constraints.packages if (value(x[name]) or 0) > 0.5
+            ]
+        logger.warning(f"PuLP solver status: {LpStatus[prob.status]}")
+        return self._greedy_fallback(package_list, weights)
+
+    def _make_backend(self):
+        """Pick a PuLP backend without relying on APIs removed in PuLP 4.0.
+
+        Order: explicit ``solver_name`` → ``COIN_CMD`` (system or ``pulp[cbc]``
+        CBC) → HiGHS → bundled ``PULP_CBC_CMD`` (PuLP < 4.0 only).
+        """
+        time_limit = self.time_limit / 1000
+        if self.solver_name:
+            name = _SOLVER_ALIASES.get(self.solver_name.upper(), self.solver_name)
+            return pulp.getSolver(name, msg=False, timeLimit=time_limit)
+
+        for name in ("COIN_CMD", "HiGHS", "HiGHS_CMD"):
+            solver_cls = getattr(pulp, name, None)
+            if solver_cls is None:
+                continue
+            candidate = solver_cls(msg=False, timeLimit=time_limit)
+            if candidate.available():
+                return candidate
+
+        bundled = getattr(pulp, "PULP_CBC_CMD", None)
+        if bundled is None:
+            raise RuntimeError(
+                "No PuLP backend available; install CBC with `pip install pulp[cbc]`"
+            )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            return bundled(msg=False, timeLimit=time_limit)
 
     def _greedy_fallback(
         self, packages: list[Package], weights: dict[str, float] | None = None

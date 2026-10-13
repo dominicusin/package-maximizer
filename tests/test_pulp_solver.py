@@ -276,3 +276,65 @@ class TestPulPExceptionHandling:
         ]
         result = solver._greedy_fallback(pkgs, {"a": 1.0, "b": 2.0})
         assert not ("a" in result and "b" in result)
+
+
+class TestPulPBackendSelection:
+    """_make_backend avoids PuLP 4.0-deprecated APIs where possible."""
+
+    def test_explicit_solver_name_alias(self):
+        pytest.importorskip("pulp")
+        from package_maximizer.solvers.pulp_solver import PulPSolver
+
+        with patch("package_maximizer.solvers.pulp_solver.pulp.getSolver") as gs:
+            PulPSolver(solver_name="cbc", time_limit=2000)._make_backend()
+        gs.assert_called_once_with("COIN_CMD", msg=False, timeLimit=2.0)
+
+    def test_prefers_available_coin_cmd(self):
+        pulp = pytest.importorskip("pulp")
+        from package_maximizer.solvers.pulp_solver import PulPSolver
+
+        with patch.object(pulp.COIN_CMD, "available", return_value="/usr/bin/cbc"):
+            backend = PulPSolver()._make_backend()
+        assert isinstance(backend, pulp.COIN_CMD)
+        assert not isinstance(backend, pulp.PULP_CBC_CMD)
+
+    def test_bundled_cbc_fallback_without_deprecation_warning(self):
+        import warnings
+
+        pulp = pytest.importorskip("pulp")
+        from package_maximizer.solvers.pulp_solver import PulPSolver
+
+        with (
+            patch.object(pulp.COIN_CMD, "available", return_value=False),
+            patch.object(pulp.HiGHS, "available", return_value=False),
+            patch.object(pulp.HiGHS_CMD, "available", return_value=False),
+        ):
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", DeprecationWarning)
+                backend = PulPSolver()._make_backend()
+        assert isinstance(backend, pulp.PULP_CBC_CMD)
+
+    def test_no_backend_raises_and_solve_falls_back(self):
+        pulp = pytest.importorskip("pulp")
+        from package_maximizer.solvers import pulp_solver
+        from package_maximizer.solvers.pulp_solver import PulPSolver
+
+        fake = MagicMock(wraps=pulp)
+        fake.PULP_CBC_CMD = None
+        for name in ("COIN_CMD", "HiGHS", "HiGHS_CMD"):
+            setattr(fake, name, None)
+        with patch.object(pulp_solver, "pulp", fake):
+            with pytest.raises(RuntimeError):
+                PulPSolver()._make_backend()
+            pkgs = [Package(name="a", conflicts=["b"]), Package(name="b")]
+            result = PulPSolver().solve(pkgs)
+        assert result and not ("a" in result and "b" in result)
+
+    def test_binary_vars_legacy_api(self):
+        pulp = pytest.importorskip("pulp")
+        from package_maximizer.solvers.pulp_solver import _binary_vars
+
+        legacy_prob = MagicMock(spec=[])
+        with patch.object(pulp.LpVariable, "dicts", return_value={"a": 1}) as d:
+            assert _binary_vars(legacy_prob, "Package", ["a"]) == {"a": 1}
+        d.assert_called_once()
