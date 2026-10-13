@@ -115,11 +115,12 @@ class TestInitConfigCommand:
 class TestTuiCommand:
     """tui_command should fail cleanly when textual is unavailable."""
 
-    def test_tui_missing_textual_exits(self, monkeypatch):
+    def test_tui_missing_textual_falls_back_to_shell(self, monkeypatch):
         monkeypatch.setitem(sys.modules, "package_maximizer.tui.app", None)
         runner = CliRunner()
-        result = runner.invoke(tui_command, [])
-        assert result.exit_code != 0
+        result = runner.invoke(tui_command, [], input="quit\n")
+        assert result.exit_code == 0
+        assert "pip install 'package-maximizer[tui]'" in result.output
 
 
 class TestListManagersCommand:

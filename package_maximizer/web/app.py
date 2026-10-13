@@ -9,6 +9,7 @@ from typing import Any
 
 from flask import Flask, g, jsonify, request
 
+from .. import __version__
 from ..core.enums import PackageManagerType
 from ..core.maximizer import PackageMaximizer
 from ..core.package import Package
@@ -17,16 +18,7 @@ from ..utils import BenchmarkRunner, CacheManager
 app = Flask(__name__)
 
 # ─── Configuration ───────────────────────────────────────────
-try:
-    from importlib.metadata import PackageNotFoundError
-    from importlib.metadata import version as _dist_version
-
-    try:
-        APP_VERSION = _dist_version("package-maximizer")
-    except PackageNotFoundError:
-        APP_VERSION = "0.6.1"
-except ImportError:  # pragma: no cover
-    APP_VERSION = "0.6.1"
+APP_VERSION = __version__
 
 API_KEY = os.environ.get("PM_API_KEY", "")
 CACHE_ENABLED = os.environ.get("PM_CACHE_ENABLED", "true").lower() == "true"
