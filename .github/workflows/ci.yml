@@ -129,7 +129,7 @@ jobs:
         # Fatals coverage gate only where all heavy solvers build (ubuntu).
         # On macOS/Windows ortools/pysat cannot always compile, so their
         # modules stay uncovered and a hard gate would always fail there.
-        COV_FAIL_UNDER: ${{ matrix.os == 'ubuntu-latest' && '85' || '' }}
+        COV_FAIL_UNDER: ${{ matrix.os == 'ubuntu-latest' && '90' || '' }}
       shell: bash
       run: |
         GATE_FLAG=""

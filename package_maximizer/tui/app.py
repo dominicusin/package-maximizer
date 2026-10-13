@@ -50,14 +50,7 @@ class MaximizerApp(App):
 
     def toggle_dark_mode(self) -> None:
         self._dark_mode = not self._dark_mode
-        if self._dark_mode:
-            self.styles.background = "color: $boost"
-            self.query_one("#main").styles.background = "color: $surface"
-            self.query_one("#log").styles.background = "color: $surface"
-        else:
-            self.styles.background = "color: $surface"
-            self.query_one("#main").styles.background = None
-            self.query_one("#log").styles.background = None
+        self.set_class(self._dark_mode, "dark-mode")
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -143,8 +136,6 @@ class MaximizerApp(App):
 
     def action_help(self) -> None:
         """Show help dialog via keyboard shortcut (Ctrl+H)."""
-        from textual.widgets import Footer
-
         log = self.query_one("#log_output", Log)
         log.write_line("")
         log.write_line("=== HELP ===")
