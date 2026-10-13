@@ -308,15 +308,22 @@ def _drive(actions):
     return asyncio.run(_run())
 
 
+async def _wait_for(pilot, condition, attempts=100):
+    for _ in range(attempts):
+        if condition():
+            return
+        await pilot.pause(0.05)
+
+
 class TestTuiAppExtras:
     def test_dark_mode_button_toggles_twice(self):
         async def actions(app, pilot):
             btn = app.query_one("#dark_mode")
             btn.press()
-            await pilot.pause()
+            await _wait_for(pilot, lambda: str(btn.label) == "Light Mode")
             label_dark = str(btn.label)
             btn.press()
-            await pilot.pause()
+            await _wait_for(pilot, lambda: str(btn.label) == "Dark Mode")
             return label_dark, str(btn.label), app.dark_mode
 
         app, (dark, light, mode) = _drive(actions)
