@@ -408,3 +408,26 @@ def test_export_post(client):
 def test_compare_missing_packages(client):
     r = client.post("/api/v1/compare", json={}, headers=auth_headers())
     assert r.status_code == 400
+
+
+# --- Hardening -----------------------------------------------------------------
+
+
+def test_api_key_in_query_string_is_rejected(client):
+    r = client.post(f"/api/v1/maximize?api_key={DEFAULT_KEY}", json={"packages": ["a"]})
+    assert r.status_code == 401
+
+
+@pytest.mark.parametrize("name", ["--registry=http://evil", "-h", "foo bar"])
+def test_maximize_rejects_option_like_names(client, name):
+    r = client.post(
+        "/api/v1/maximize", json={"packages": [name]}, headers=auth_headers()
+    )
+    assert r.status_code == 400
+    assert "Invalid package name" in r.get_json()["message"]
+
+
+def test_propose_rejects_option_like_names(client):
+    payload = {"packages": ["--registry=http://evil"], "manager": "apt"}
+    r = client.post("/api/v1/propose", json=payload, headers=auth_headers())
+    assert r.status_code == 400
