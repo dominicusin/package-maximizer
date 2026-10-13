@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import os
 import time
 from functools import wraps
@@ -145,7 +146,7 @@ def require_api_key(f):
 
         # Check API key
         api_key = request.headers.get("X-API-Key") or request.args.get("api_key")
-        if not api_key or api_key != API_KEY:
+        if not api_key or not hmac.compare_digest(api_key, API_KEY):
             return (
                 jsonify(
                     {
@@ -959,7 +960,7 @@ def compare_post() -> tuple[dict, int]:
     metadata = data.get("metadata", False)
 
     try:
-        manager_enum = PackageManagerType(manager)
+        PackageManagerType(manager)
     except ValueError:
         valid = [m.value for m in PackageManagerType]
         return (

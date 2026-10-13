@@ -6,9 +6,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
-import tempfile
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from ..core.package import Package

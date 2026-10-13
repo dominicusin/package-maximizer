@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from ..core.package import Package
 from ..solvers import SOLVER_REGISTRY
@@ -267,7 +267,7 @@ class BenchmarkRunner:
         summary = report.get_summary()
 
         print(f"\n{'='*70}")
-        print(f"Benchmark Report")
+        print("Benchmark Report")
         print(f"{'='*70}")
         print(f"Total solvers: {summary['total_solvers']}")
         print(f"Best solver: {summary['best_solver']} ({summary['best_time']:.4f}s)")

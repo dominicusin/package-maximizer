@@ -5,8 +5,6 @@ Pacman Parser - Парсер для пакетов Pacman (Arch Linux).
 from __future__ import annotations
 
 import logging
-import re
-import subprocess
 from typing import TYPE_CHECKING
 
 from ..core.interfaces import PackageParser

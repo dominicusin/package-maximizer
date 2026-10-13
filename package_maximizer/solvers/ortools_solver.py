@@ -13,7 +13,7 @@ import logging
 from typing import TYPE_CHECKING, Iterable
 
 from ..core.interfaces import ConstraintSolver
-from ..core.model_encoder import ModelConstraints, encode_packages
+from ..core.model_encoder import encode_packages
 
 if TYPE_CHECKING:
     from ..core.package import Package
