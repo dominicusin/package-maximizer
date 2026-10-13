@@ -60,7 +60,7 @@ def cli(verbose: bool, quiet: bool, config: str | None):
     "-m",
     type=str,
     default=None,
-    help="Тип пакетного менеджера (apt, pacman, dnf, brew, snap, flatpak, cargo, npm, pip, gem, apk, zypper, yum, yarn, composer, vcpkg, nuget, winget, scoop, choco, conda, portage)",
+    help="Тип пакетного менеджера (apt, pacman, dnf, brew, snap, flatpak, cargo, npm, pip, gem, apk, zypper, yum, yarn, composer, vcpkg, nuget, winget, scoop, choco, conda, portage, nix, guix, spack)",
 )
 @click.option(
     "--solver",

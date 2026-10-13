@@ -724,3 +724,174 @@ class ChocoParser(PackageParser):
                 version = parts[1]
                 packages.append(Package(name=name, version=version, status="installed"))
         return packages
+
+
+_NIX_STORE_PATH_RE = re.compile(r"/(?:nix|gnu)/store/[0-9a-z]{32}-(\S+)")
+
+
+def _split_drv_name(drv_name: str) -> tuple[str, str]:
+    """Split ``name-version`` like Nix ``builtins.parseDrvName``.
+
+    The version starts at the first dash that is followed by a non-letter.
+    """
+    match = re.search(r"-(?=[^A-Za-z-])", drv_name)
+    if match is None:
+        return drv_name, ""
+    return drv_name[: match.start()], drv_name[match.end() :]
+
+
+class NixParser(PackageParser):
+    """
+    Parser for ``nix-env -q`` and ``nix profile list`` (text or ``--json``).
+
+    Example::
+
+        hello-2.12.1
+        python3.11-numpy-1.26.4
+
+        Name:               hello
+        Store paths:        /nix/store/<hash>-hello-2.12.1
+    """
+
+    def parse(self, raw: str) -> list[Package]:
+        if not raw.strip():
+            return []
+        stripped = raw.strip()
+        if stripped.startswith("{"):
+            return self._parse_json(stripped)
+
+        packages: list[Package] = []
+        seen: set[str] = set()
+        for line in stripped.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            store = _NIX_STORE_PATH_RE.search(line)
+            if store:
+                drv_name = store.group(1)
+            elif ":" in line or " " in line:
+                continue
+            else:
+                drv_name = line
+            name, version = _split_drv_name(drv_name)
+            if name and name not in seen:
+                seen.add(name)
+                packages.append(Package(name=name, version=version, status="installed"))
+        return packages
+
+    def _parse_json(self, raw: str) -> list[Package]:
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as e:
+            logger.warning(f"Invalid nix profile JSON: {e}")
+            return []
+        elements = data.get("elements", {})
+        if isinstance(elements, dict):
+            entries = list(elements.items())
+        else:
+            entries = [(None, el) for el in elements if isinstance(el, dict)]
+
+        packages: list[Package] = []
+        for key, element in entries:
+            store_paths = element.get("storePaths") or []
+            match = _NIX_STORE_PATH_RE.search(store_paths[0]) if store_paths else None
+            name, version = _split_drv_name(match.group(1)) if match else ("", "")
+            name = key or name
+            if name:
+                packages.append(Package(name=name, version=version, status="installed"))
+        return packages
+
+
+class GuixParser(PackageParser):
+    """
+    Parser for ``guix package --list-installed`` / ``--list-available``.
+
+    Example::
+
+        hello   2.12.1  out     /gnu/store/<hash>-hello-2.12.1
+        coreutils       9.1     out,debug       gnu/packages/base.scm:351:2
+    """
+
+    def parse(self, raw: str) -> list[Package]:
+        if not raw.strip():
+            return []
+
+        packages: list[Package] = []
+        for line in raw.strip().splitlines():
+            parts = line.split()
+            if len(parts) < 2 or not re.match(r"^\d", parts[1]):
+                continue
+            installed = len(parts) >= 4 and parts[3].startswith("/gnu/store/")
+            packages.append(
+                Package(
+                    name=parts[0],
+                    version=parts[1],
+                    status="installed" if installed else "candidate",
+                )
+            )
+        return packages
+
+
+_SPACK_SPEC_RE = re.compile(r"^([A-Za-z0-9_][A-Za-z0-9_.-]*)@=?([^\s+~%^/@]+)")
+
+
+class SpackParser(PackageParser):
+    """
+    Parser for ``spack find`` (text, ``-l``/``-v`` variants, or ``--json``).
+
+    Example::
+
+        -- linux-ubuntu22.04-x86_64 / gcc@11.4.0 ------------------------
+        autoconf@2.72  zlib-ng@2.1.6
+        ==> 2 installed packages
+    """
+
+    def parse(self, raw: str) -> list[Package]:
+        if not raw.strip():
+            return []
+        stripped = raw.strip()
+        if stripped.startswith("["):
+            return self._parse_json(stripped)
+
+        packages: list[Package] = []
+        seen: set[tuple[str, str]] = set()
+        for line in stripped.splitlines():
+            line = line.strip()
+            if not line or line.startswith(("--", "==>")):
+                continue
+            for token in line.split():
+                match = _SPACK_SPEC_RE.match(token)
+                if not match or match.groups() in seen:
+                    continue
+                seen.add(match.groups())
+                name, version = match.groups()
+                packages.append(Package(name=name, version=version, status="installed"))
+        return packages
+
+    def _parse_json(self, raw: str) -> list[Package]:
+        try:
+            specs = json.loads(raw)
+        except json.JSONDecodeError as e:
+            logger.warning(f"Invalid spack JSON: {e}")
+            return []
+
+        packages: list[Package] = []
+        for spec in specs:
+            if not isinstance(spec, dict) or "name" not in spec:
+                continue
+            deps = spec.get("dependencies") or []
+            if isinstance(deps, dict):
+                depends = list(deps)
+            else:
+                depends = [
+                    d["name"] for d in deps if isinstance(d, dict) and "name" in d
+                ]
+            packages.append(
+                Package(
+                    name=spec["name"],
+                    version=str(spec.get("version", "")),
+                    status="installed",
+                    depends=depends,
+                )
+            )
+        return packages

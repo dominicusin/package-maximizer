@@ -16,12 +16,15 @@ if TYPE_CHECKING:
         CondaParser,
         FlatpakParser,
         GemParser,
+        GuixParser,
+        NixParser,
         NpmParser,
         NuGetParser,
         PipParser,
         PortageParser,
         ScoopParser,
         SnapParser,
+        SpackParser,
         VcpkgParser,
         WingetParser,
         YarnParser,
@@ -54,6 +57,9 @@ __all__ = [
     "WingetParser",
     "ScoopParser",
     "ChocoParser",
+    "NixParser",
+    "GuixParser",
+    "SpackParser",
     "get_parser",
     "PARSER_REGISTRY",
 ]
@@ -82,6 +88,9 @@ _PARSER_SPECS = {
     "winget": (".extra_parsers", "WingetParser", None),
     "scoop": (".extra_parsers", "ScoopParser", None),
     "choco": (".extra_parsers", "ChocoParser", None),
+    "nix": (".extra_parsers", "NixParser", None),
+    "guix": (".extra_parsers", "GuixParser", None),
+    "spack": (".extra_parsers", "SpackParser", None),
 }
 
 # Public class names importable directly (resolved lazily).
@@ -108,6 +117,9 @@ _PUBLIC_PARSER_NAMES = {
     "WingetParser": (".extra_parsers", "WingetParser"),
     "ScoopParser": (".extra_parsers", "ScoopParser"),
     "ChocoParser": (".extra_parsers", "ChocoParser"),
+    "NixParser": (".extra_parsers", "NixParser"),
+    "GuixParser": (".extra_parsers", "GuixParser"),
+    "SpackParser": (".extra_parsers", "SpackParser"),
 }
 
 

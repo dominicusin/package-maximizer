@@ -124,7 +124,7 @@ class TestTuiCommand:
 
 
 class TestListManagersCommand:
-    """list_managers shows all 22 registered package managers."""
+    """list_managers shows all registered package managers."""
 
     def test_list_managers_text(self):
         runner = CliRunner()
@@ -135,6 +135,8 @@ class TestListManagersCommand:
         assert "brew" in result.output
         assert "pip" in result.output
         assert "conda" in result.output
+        assert "nix" in result.output
+        assert "spack" in result.output
 
 
 class TestMaximizeCommand:

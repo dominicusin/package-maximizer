@@ -66,9 +66,9 @@
 
 | Менеджер | Платформа | Приоритет |
 |----------|-----------|-----------|
-| Nix | Linux/macOS | Высокий |
-| Guix | Linux | Высокий |
-| Spack | Linux (HPC) | Высокий |
+| Nix | Linux/macOS | ✅ Готово |
+| Guix | Linux | ✅ Готово |
+| Spack | Linux (HPC) | ✅ Готово |
 | xbps | Void Linux | Средний |
 | pkgsrc | NetBSD | Средний |
 | apk-tools | Alpine (уже есть) | — |
