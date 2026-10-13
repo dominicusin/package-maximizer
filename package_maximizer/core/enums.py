@@ -31,6 +31,9 @@ class PackageManagerType(Enum):
     WINGET = "winget"
     SCOOP = "scoop"
     CHOCO = "choco"
+    NIX = "nix"
+    GUIX = "guix"
+    SPACK = "spack"
 
 
 class SolverType(Enum):

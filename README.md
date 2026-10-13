@@ -19,11 +19,11 @@
 - Использовать различные алгоритмы решения (жадный, SAT, ILP, SMT, CP-SAT)
 - Учитывать версионные ограничения и зависимости
 - Экспортировать результаты в JSON, CSV и GraphML
-- Парсить вывод 22+ систем управления пакетами
+- Парсить вывод 25+ систем управления пакетами
 
 ## ✨ Возможности
 
-### 🔧 Поддерживаемые пакетные менеджеры (22)
+### 🔧 Поддерживаемые пакетные менеджеры (25)
 
 **Linux:**
 - ✅ **APT** (Debian/Ubuntu) — `apt list --installed`
@@ -51,7 +51,6 @@
 
 **C++:**
 - ✅ **Vcpkg** — `vcpkg list`
-- ✅ **Conan** — `conan search`
 - ✅ **NuGet** (.NET) — `dotnet list package`
 
 **Контейнеры / универсальные:**
@@ -59,6 +58,11 @@
 - ✅ **Flatpak** — `flatpak list`
 - ✅ **Conda** (Python) — `conda list`
 - ✅ **Portage** (Gentoo) — `emerge -p`
+
+**Функциональные / HPC:**
+- ✅ **Nix** (NixOS/macOS) — `nix-env -q` / `nix profile list [--json]`
+- ✅ **Guix** (GNU Guix) — `guix package --list-installed`
+- ✅ **Spack** (HPC) — `spack find` / `spack find --json`
 
 ### 🧠 Поддерживаемые солверы
 - ✅ **GreedySolver** — Базовый жадный алгоритм
@@ -142,7 +146,7 @@ package-maximizer list-solvers
 # Просмотр доступных парсеров
 package-maximizer list-parsers
 
-# Просмотр поддерживаемых пакетных менеджеров (22)
+# Просмотр поддерживаемых пакетных менеджеров (25)
 package-maximizer list-managers
 
 # Проверка версии
