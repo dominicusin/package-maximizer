@@ -4,13 +4,10 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
 
-import pytest
 from click.testing import CliRunner
 
 from package_maximizer.cli.main import (
-    cli,
     config_command,
     export_command,
     from_file,

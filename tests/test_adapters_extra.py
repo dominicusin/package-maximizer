@@ -10,7 +10,6 @@ import pytest
 from package_maximizer.adapters import (
     BrewMetadataAdapter,
     NpmMetadataAdapter,
-    PackageMetadata,
 )
 
 

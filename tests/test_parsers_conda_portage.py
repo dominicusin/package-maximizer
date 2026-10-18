@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from package_maximizer.parsers import CondaParser, PortageParser
 
 

@@ -4,10 +4,6 @@ Tests for solvers.ortools_solver — CP-SAT solver with fallback behavior.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
-import pytest
-
 from package_maximizer.core.package import Package
 
 
