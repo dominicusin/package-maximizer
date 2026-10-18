@@ -150,13 +150,13 @@ class RealRepoIntegration:
         """Получить установленные пакеты через Brew."""
         try:
             result = subprocess.run(
-                ["brew", "list", "--formula", "--cask"],
+                ["brew", "list", "-1"],
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
             if result.returncode == 0:
-                return self.parser.parse(result.stdout)
+                return self.parser.parse_installed(result.stdout)
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
             logger.warning(f"Failed to get installed Brew packages: {e}")
         return []

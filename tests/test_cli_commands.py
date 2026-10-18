@@ -115,15 +115,16 @@ class TestInitConfigCommand:
 class TestTuiCommand:
     """tui_command should fail cleanly when textual is unavailable."""
 
-    def test_tui_missing_textual_exits(self, monkeypatch):
+    def test_tui_missing_textual_falls_back_to_shell(self, monkeypatch):
         monkeypatch.setitem(sys.modules, "package_maximizer.tui.app", None)
         runner = CliRunner()
-        result = runner.invoke(tui_command, [])
-        assert result.exit_code != 0
+        result = runner.invoke(tui_command, [], input="quit\n")
+        assert result.exit_code == 0
+        assert "pip install 'package-maximizer[tui]'" in result.output
 
 
 class TestListManagersCommand:
-    """list_managers shows all 22 registered package managers."""
+    """list_managers shows all registered package managers."""
 
     def test_list_managers_text(self):
         runner = CliRunner()
@@ -134,6 +135,8 @@ class TestListManagersCommand:
         assert "brew" in result.output
         assert "pip" in result.output
         assert "conda" in result.output
+        assert "nix" in result.output
+        assert "spack" in result.output
 
 
 class TestMaximizeCommand:

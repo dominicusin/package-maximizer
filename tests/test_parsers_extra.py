@@ -293,6 +293,9 @@ class TestNewParsers:
             "winget",
             "scoop",
             "choco",
+            "nix",
+            "guix",
+            "spack",
         }
         for key in expected:
             assert key in PARSER_REGISTRY, f"{key} not in registry"
