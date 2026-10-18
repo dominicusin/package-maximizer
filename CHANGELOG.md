@@ -7,9 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Security
-- Веб-API принимает ключ только в заголовке `X-API-Key`; параметр `?api_key=` больше не поддерживается (ключ попадал в логи прокси и сервера).
-- Имена пакетов в `/api/v1/maximize` и `/api/v1/propose`, начинающиеся с `-` или содержащие пробелы, отклоняются с кодом 400.
+### Fixed
+- `web/app.py`: `APP_VERSION` now comes from `package_maximizer.__version__`; the stale `0.6.1` fallback is gone. The fallback versions in `__init__.py`, `pyproject.toml` (`setuptools_scm.fallback_version`) and `CITATION.cff` are synced to `0.29.0` and checked by `tests/test_version_sync.py`.
+- `package-maximizer tui` without the `tui` extra (textual) now falls back to the text `shell` instead of exiting with an error.
+- `APTParser`: `dpkg -l` header/legend rows (`Desired=…`, `||/ Name …`, `+++-…`) are no longer parsed as packages.
+- Homebrew: `brew list --formula --cask` (mutually exclusive flags, always failed) replaced with `brew list -1`; installed packages are marked `installed`.
+
+### Tests
+- `tests/test_real_system.py` (`real_system` marker): `RealRepoIntegration` against the host's real APT/Homebrew. Skipped when the tool is absent.
+
+### Changed
+- CHANGELOG: removed the stale "Planned" section (JWT, Flask-Limiter) and merged the duplicated `[0.6.0]` sections.
+
+### Releases 0.11.0 – 0.29.0 (summary)
+These releases were tagged without CHANGELOG entries. Main changes, from merged PRs:
+- 0.11.0–0.12.0: maximize/propose endpoints use metadata adapters; `--metadata` flag (#78, #84).
+- 0.13.0–0.17.0: TUI metadata checkbox; `benchmark`, `analyze`, `compare` CLI commands and web endpoints; CLI `shell` and `history` (#85–#89).
+- 0.18.0–0.21.x: TUI enhancements; web API history and export endpoints; real-world data runner with `--parallel` (#91–#93).
+- 0.22.0–0.29.0: real-world solver benchmarks and nixpkgs-derived package data; fixed conflict detection from nixpkgs sources (#95–#101).
 
 ## [0.10.0] - 2026-09-05
 
@@ -100,10 +115,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Result exporters: JSON, CSV, GraphML.
 - Config-driven CLI defaults via `-C/--config`.
 
-### Planned (not yet implemented)
-- JWT authentication support alongside API key.
-- Flask-Limiter based rate limiting (currently in-memory fallback).
-
 ### Changed
 - Lazy solver/parser registries to avoid optional-dependency import failures.
 - `SolverType` enum extended with `ENHANCED_GREEDY`.
@@ -114,16 +125,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pulp_solver` import compatibility.
 - Makefile `PYTHON` override for venv compatibility.
 
-## [0.6.0] - 2026-09-02
-
-### Added
+### Added (package managers)
 - 12 new package managers: apk, zypper, yum, pip, gem, yarn, composer, vcpkg, nuget, winget, scoop, choco.
 - Registered CondaParser and PortageParser (were implemented but not registered).
 - Total registered package managers: **8 → 22**.
 - CLI `list-managers` command shows all supported package managers.
 - Updated README with full list of 22 package managers.
 
-### Changed
+### Changed (package managers)
 - Updated `--manager` help text with all 22 options.
 - Updated package description to reflect 22+ package manager support.
 

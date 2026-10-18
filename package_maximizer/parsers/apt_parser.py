@@ -16,6 +16,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# dpkg -l status column, e.g. "ii", "rc", "iU", "hiR"; rejects header rows.
+_DPKG_STATUS_RE = re.compile(r"[uihrp][ncUHFWti][R ]?")
+
 
 class APTParser(PackageParser):
     """
@@ -85,6 +88,8 @@ class APTParser(PackageParser):
                 continue
 
             status = parts[0]
+            if not _DPKG_STATUS_RE.fullmatch(status):
+                continue
             name = parts[1]
             version = parts[2]
 
