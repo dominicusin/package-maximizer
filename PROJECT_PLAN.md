@@ -51,10 +51,10 @@
 
 ### 1.3. Известные долги и баги
 
-- [ ] `CHANGELOG.md`: секция "Planned" устарела (JWT, Flask-Limiter)
-- [ ] `web/app.py`: версия hard-coded как "0.5.0" в health/openapi
-- [ ] `tui/app.py`: требует `textual` extra, нет fallback
-- [ ] `integrations/real_repo_integration.py`: 90% coverage, но не тестируется на реальных системах
+- [x] `CHANGELOG.md`: секция "Planned" устарела (JWT, Flask-Limiter)
+- [x] `web/app.py`: версия hard-coded как "0.5.0" в health/openapi
+- [x] `tui/app.py`: требует `textual` extra, нет fallback (теперь fallback на `shell`)
+- [x] `integrations/real_repo_integration.py`: 90% coverage, но не тестируется на реальных системах (`tests/test_real_system.py`)
 
 ---
 
@@ -66,9 +66,9 @@
 
 | Менеджер | Платформа | Приоритет |
 |----------|-----------|-----------|
-| Nix | Linux/macOS | Высокий |
-| Guix | Linux | Высокий |
-| Spack | Linux (HPC) | Высокий |
+| Nix | Linux/macOS | ✅ Готово |
+| Guix | Linux | ✅ Готово |
+| Spack | Linux (HPC) | ✅ Готово |
 | xbps | Void Linux | Средний |
 | pkgsrc | NetBSD | Средний |
 | apk-tools | Alpine (уже есть) | — |

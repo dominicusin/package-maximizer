@@ -147,6 +147,13 @@ class BrewParser(PackageParser):
 
         return packages
 
+    def parse_installed(self, raw: str) -> list[Package]:
+        """Parse ``brew list -1`` output (headers only appear on a TTY)."""
+        packages = self.parse(raw)
+        for pkg in packages:
+            pkg.status = "installed"
+        return packages
+
     def _parse_simple_list(self, raw: str) -> list[Package]:
         """
         Разобрать простой список имен пакетов.
@@ -184,13 +191,13 @@ class BrewParser(PackageParser):
         """
         try:
             result = subprocess.run(
-                ["brew", "list", "--formula", "--cask"],
+                ["brew", "list", "-1"],
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
             if result.returncode == 0:
-                return self._parse_brew_list(result.stdout)
+                return self.parse_installed(result.stdout)
         except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError) as e:
             logger.warning(f"Failed to get installed packages: {e}")
 
