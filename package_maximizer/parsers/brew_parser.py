@@ -5,7 +5,6 @@ Brew Parser - Парсер для пакетов Homebrew (macOS).
 from __future__ import annotations
 
 import logging
-import re
 import subprocess
 from typing import TYPE_CHECKING
 

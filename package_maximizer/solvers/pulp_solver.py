@@ -14,7 +14,7 @@ import warnings
 from typing import TYPE_CHECKING, Iterable, Optional
 
 from ..core.interfaces import ConstraintSolver
-from ..core.model_encoder import ModelConstraints, encode_packages
+from ..core.model_encoder import encode_packages
 
 if TYPE_CHECKING:
     from ..core.package import Package

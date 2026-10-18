@@ -12,6 +12,13 @@ from dataclasses import dataclass, field
 
 from ..core.package import Package
 
+_SAFE_NAME_RE = re.compile(r"^[^\s-]\S{0,255}$")
+
+
+def _is_safe_package_name(name: str) -> bool:
+    """Reject names that a CLI could parse as options (e.g. ``--registry=...``)."""
+    return isinstance(name, str) and bool(_SAFE_NAME_RE.match(name))
+
 
 @dataclass
 class PackageMetadata:
@@ -59,6 +66,8 @@ class APTMetadataAdapter:
 
     def fetch(self, package_name: str) -> PackageMetadata | None:
         """Получить метаданные через apt-cache show."""
+        if not _is_safe_package_name(package_name):
+            return None
         try:
             result = subprocess.run(
                 ["apt-cache", "show", package_name],
@@ -177,6 +186,8 @@ class PipMetadataAdapter:
 
     def fetch(self, package_name: str) -> PackageMetadata | None:
         """Получить метаданные через pip show."""
+        if not _is_safe_package_name(package_name):
+            return None
         try:
             result = subprocess.run(
                 ["pip", "show", package_name],
@@ -267,6 +278,8 @@ class PacmanMetadataAdapter:
 
     def fetch(self, package_name: str) -> PackageMetadata | None:
         """Получить метаданные через pacman -Si."""
+        if not _is_safe_package_name(package_name):
+            return None
         try:
             result = subprocess.run(
                 ["pacman", "-Si", package_name],
@@ -350,6 +363,8 @@ class NpmMetadataAdapter:
 
     def fetch(self, package_name: str) -> PackageMetadata | None:
         """Получить метаданные через npm view."""
+        if not _is_safe_package_name(package_name):
+            return None
         try:
             result = subprocess.run(
                 ["npm", "view", package_name, "json"],
@@ -453,6 +468,8 @@ class BrewMetadataAdapter:
 
     def fetch(self, package_name: str) -> PackageMetadata | None:
         """Получить метаданные через brew info --json=v2."""
+        if not _is_safe_package_name(package_name):
+            return None
         try:
             result = subprocess.run(
                 ["brew", "info", "--json=v2", package_name],

@@ -8,7 +8,7 @@ service registration, and lifecycle management.
 from __future__ import annotations
 
 import inspect
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, Callable, TypeVar
 
 T = TypeVar("T")
 
