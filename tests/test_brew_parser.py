@@ -153,3 +153,22 @@ class TestBrewParserParseFromSystem:
         with patch("subprocess.run", side_effect=FileNotFoundError("brew not found")):
             result = parser.parse_from_system()
             assert result == []
+
+
+class TestBrewParseInstalled:
+    """`brew list -1` output when piped has no section headers."""
+
+    def test_parse_installed_marks_status(self):
+        result = BrewParser().parse_installed("vim\nwget\nfirefox\n")
+        assert [p.name for p in result] == ["vim", "wget", "firefox"]
+        assert all(p.status == "installed" for p in result)
+
+    def test_get_all_installed_uses_valid_brew_flags(self):
+        completed = MagicMock(returncode=0, stdout="vim\n")
+        with patch(
+            "package_maximizer.parsers.brew_parser.subprocess.run",
+            return_value=completed,
+        ) as run:
+            result = BrewParser()._get_all_installed()
+        assert run.call_args[0][0] == ["brew", "list", "-1"]
+        assert result[0].status == "installed"

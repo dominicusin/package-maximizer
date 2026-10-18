@@ -27,6 +27,20 @@ rc  apache2                    2.4.57-1ubuntu1     amd64        Apache HTTP Serv
         assert any(p.name == "vim" for p in result)
         assert any(p.name == "apache2" for p in result)
 
+    def test_parse_dpkg_l_skips_header_rows(self):
+        """Real `dpkg -l` output starts with a 5-line legend/header."""
+        parser = APTParser()
+        raw = """Desired=Unknown/Install/Remove/Purge/Hold
+| Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+|/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+||/ Name           Version      Architecture Description
++++-==============-============-============-=================================
+ii  vim            2:8.2.3995-1 amd64        Vi IMproved
+iU  half           1.0          amd64        Unpacked package
+"""
+        result = parser.parse(raw)
+        assert [p.name for p in result] == ["vim", "half"]
+
     def test_parse_apt_list_format(self):
         """Test parsing apt list --installed format."""
         parser = APTParser()

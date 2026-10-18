@@ -60,7 +60,7 @@ def cli(verbose: bool, quiet: bool, config: str | None):
     "-m",
     type=str,
     default=None,
-    help="Тип пакетного менеджера (apt, pacman, dnf, brew, snap, flatpak, cargo, npm, pip, gem, apk, zypper, yum, yarn, composer, vcpkg, nuget, winget, scoop, choco, conda, portage)",
+    help="Тип пакетного менеджера (apt, pacman, dnf, brew, snap, flatpak, cargo, npm, pip, gem, apk, zypper, yum, yarn, composer, vcpkg, nuget, winget, scoop, choco, conda, portage, nix, guix, spack)",
 )
 @click.option(
     "--solver",
@@ -1246,14 +1246,22 @@ def compare(packages, manager, metadata, output):
 def tui_command() -> None:
     """
     Запустить интерактивный TUI (Textual).
+
+    Без extra ``tui`` (textual) запускается текстовая оболочка ``shell``.
     """
     try:
         from ..tui.app import run_tui
-
-        run_tui()
     except ImportError as e:
-        click.echo(f"Ошибка: {e}", err=True)
-        sys.exit(1)
+        click.echo(
+            f"Textual недоступен ({e}); запускаю текстовую оболочку. "
+            "Для TUI: pip install 'package-maximizer[tui]'",
+            err=True,
+        )
+        from ..tui.shell import MaximizerShell
+
+        MaximizerShell().run()
+        return
+    run_tui()
 
 
 @cli.command(name="history")
