@@ -315,6 +315,17 @@ async def _wait_for(pilot, condition, attempts=100):
         await pilot.pause(0.05)
 
 
+async def _wait_for_log(pilot, log, before, attempts=100):
+    """Wait until the log grew past ``before`` and stopped changing."""
+    prev = -1
+    for _ in range(attempts):
+        await pilot.pause(0.05)
+        n = len(log.lines)
+        if n > before and n == prev:
+            return
+        prev = n
+
+
 class TestTuiAppExtras:
     def test_dark_mode_button_toggles_twice(self):
         async def actions(app, pilot):
@@ -348,9 +359,11 @@ class TestTuiAppExtras:
             app.query_one("#packages").value = packages
             app.query_one("#metadata").value = metadata
             await pilot.pause()
+            log = app.query_one("#log_output")
+            before = len(log.lines)
             app.query_one("#run").press()
-            await pilot.pause()
-            return list(app.query_one("#log_output").lines)
+            await _wait_for_log(pilot, log, before)
+            return list(log.lines)
 
         patches = [
             patch("package_maximizer.adapters.get_adapter", return_value=adapter)

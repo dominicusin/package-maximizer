@@ -4,9 +4,6 @@ Tests for utils module
 
 import tempfile
 import time
-from pathlib import Path
-
-import pytest
 
 from package_maximizer.core.package import Package
 from package_maximizer.utils import CacheManager

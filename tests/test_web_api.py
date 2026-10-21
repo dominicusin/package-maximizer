@@ -395,7 +395,7 @@ def test_history_get_with_params(client):
 # --- Export endpoint ---------------------------------------------------------
 
 
-def test_export_post(client):
+def test_export_post_returns_selected(client):
     """POST /api/v1/export returns JSON result."""
     payload = {"packages": ["pkg1"], "manager": "apt", "format": "json"}
     r = client.post("/api/v1/export", json=payload, headers=auth_headers())

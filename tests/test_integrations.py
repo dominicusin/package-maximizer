@@ -4,9 +4,6 @@ Tests for integrations module
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from package_maximizer.core.package import Package
 from package_maximizer.integrations import RealRepoIntegration
 
 

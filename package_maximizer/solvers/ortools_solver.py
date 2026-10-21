@@ -49,31 +49,31 @@ class ORToolsSolver(ConstraintSolver):
         model = cp_model.CpModel()
 
         # Бинарные переменные
-        x = {name: model.NewBoolVar(name) for name in constraints.packages}
+        x = {name: model.new_bool_var(name) for name in constraints.packages}
 
         # Цель: максимизировать количество
-        model.Maximize(sum(x.values()))
+        model.maximize(sum(x.values()))
 
         # Конфликты
         for a, b in constraints.conflicts:
-            model.AddBoolOr([x[a].Not(), x[b].Not()])
+            model.add_bool_or([x[a].negated(), x[b].negated()])
 
         # Зависимости: selected(pkg) => selected(dep)
         for pkg, deps in constraints.dependencies.items():
             for dep in deps:
-                model.AddImplication(x[pkg], x[dep])
+                model.add_implication(x[pkg], x[dep])
 
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = self.time_limit / 1000.0
 
         try:
-            status = solver.Solve(model)
+            status = solver.solve(model)
         except Exception as e:
             logger.warning(f"OR-Tools solver failed: {e}")
             return self._greedy_fallback(package_list)
 
         if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            return [name for name in constraints.packages if solver.Value(x[name])]
+            return [name for name in constraints.packages if solver.value(x[name])]
         else:
             logger.warning(f"OR-Tools solver status: {status}")
             return self._greedy_fallback(package_list)
@@ -97,34 +97,34 @@ class ORToolsSolver(ConstraintSolver):
         constraints = encode_packages(package_list)
         model = cp_model.CpModel()
 
-        x = {name: model.NewBoolVar(name) for name in constraints.packages}
+        x = {name: model.new_bool_var(name) for name in constraints.packages}
 
         # Цель: максимизировать вес (целочисленный)
         int_weights = {name: int(w * 1000) for name, w in weights.items()}
-        model.Maximize(
+        model.maximize(
             sum(x[name] * int_weights.get(name, 1000) for name in constraints.packages)
         )
 
         # Конфликты
         for a, b in constraints.conflicts:
-            model.AddBoolOr([x[a].Not(), x[b].Not()])
+            model.add_bool_or([x[a].negated(), x[b].negated()])
 
         # Зависимости
         for pkg, deps in constraints.dependencies.items():
             for dep in deps:
-                model.AddImplication(x[pkg], x[dep])
+                model.add_implication(x[pkg], x[dep])
 
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = self.time_limit / 1000.0
 
         try:
-            status = solver.Solve(model)
+            status = solver.solve(model)
         except Exception as e:
             logger.warning(f"OR-Tools solver failed: {e}")
             return self._greedy_fallback(package_list, weights)
 
         if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            return [name for name in constraints.packages if solver.Value(x[name])]
+            return [name for name in constraints.packages if solver.value(x[name])]
         else:
             logger.warning(f"OR-Tools solver status: {status}")
             return self._greedy_fallback(package_list, weights)

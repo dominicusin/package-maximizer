@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from package_maximizer.adapters import (
     APTMetadataAdapter,
     PackageMetadata,

@@ -146,7 +146,7 @@ def require_api_key(f):
             return f(*args, **kwargs)
 
         # Check API key
-        api_key = request.headers.get("X-API-Key")
+        api_key = request.headers.get("X-API-Key") or request.args.get("api_key")
         if not api_key or not hmac.compare_digest(api_key, API_KEY):
             return (
                 jsonify(

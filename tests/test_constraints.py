@@ -2,8 +2,6 @@
 Tests for constraints module
 """
 
-import pytest
-
 from package_maximizer.core.constraints import (
     ConflictConstraint,
     ConstraintParser,

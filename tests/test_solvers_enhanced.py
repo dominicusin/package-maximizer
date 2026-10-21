@@ -2,8 +2,6 @@
 Tests for EnhancedGreedySolver
 """
 
-import pytest
-
 from package_maximizer.core.package import Package
 from package_maximizer.solvers import EnhancedGreedySolver
 

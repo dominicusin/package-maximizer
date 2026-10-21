@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
-from package_maximizer.core.package import Package
 from package_maximizer.di import (
     Container,
     ServiceLocator,

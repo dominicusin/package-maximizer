@@ -4,10 +4,8 @@ Tests for the new CLI commands: history and shell.
 
 from __future__ import annotations
 
-import json
 from unittest.mock import patch
 
-import pytest
 from click.testing import CliRunner
 
 from package_maximizer.cli.main import cli
@@ -18,7 +16,7 @@ from package_maximizer.cli.main import cli
 def test_shell_command_imports():
     """shell command imports MaximizerShell without crashing."""
     runner = CliRunner()
-    with patch("package_maximizer.tui.shell.MaximizerShell") as mock_shell:
+    with patch("package_maximizer.tui.shell.MaximizerShell"):
         result = runner.invoke(cli, ["shell"])
     assert result.exit_code == 0
 
