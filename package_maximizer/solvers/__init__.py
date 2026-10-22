@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .backtracking_solver import BacktrackingSolver
     from .enhanced_greedy import EnhancedGreedySolver
     from .greedy import GreedySolver
     from .maxsat_solver import MaxSatSolver
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 _PUBLIC_SOLVER_NAMES = {
     "GreedySolver": (".greedy", "GreedySolver"),
     "EnhancedGreedySolver": (".enhanced_greedy", "EnhancedGreedySolver"),
+    "BacktrackingSolver": (".backtracking_solver", "BacktrackingSolver"),
     "Z3Solver": (".z3_solver", "Z3Solver"),
     "PulPSolver": (".pulp_solver", "PulPSolver"),
     "ORToolsSolver": (".ortools_solver", "ORToolsSolver"),
@@ -35,6 +37,7 @@ __all__ = [
     "MaxSatSolver",
     "MiniSatSolver",
     "EnhancedGreedySolver",
+    "BacktrackingSolver",
     "get_solver",
     "SOLVER_REGISTRY",
 ]
@@ -45,6 +48,7 @@ __all__ = [
 _SOLVER_SPECS = {
     "greedy": (".greedy", "GreedySolver", None),
     "enhanced_greedy": (".enhanced_greedy", "EnhancedGreedySolver", None),
+    "backtracking": (".backtracking_solver", "BacktrackingSolver", None),
     "z3": (".z3_solver", "Z3Solver", "z3"),
     "pulp": (".pulp_solver", "PulPSolver", "pulp"),
     "ortools": (".ortools_solver", "ORToolsSolver", "ortools"),
@@ -70,11 +74,14 @@ class _LazySolverRegistry(dict):
     def __getitem__(self, name: str):  # type: ignore[override]
         if name not in _SOLVER_SPECS:
             raise KeyError(name)
-        cached = super().__getitem__(name)
+        # Берём напрямую из dict, чтобы не вызывать __getitem__ рекурсивно.
+        # ``dict.get`` (а не ``__getitem__``) важен: на пустом реестре
+        # ``__getitem__`` бросил бы KeyError вместо ленивой загрузки класса.
+        cached = dict.get(self, name)
         if cached is not None:
             return cached
         cls = _load_solver_class(name)
-        super().__setitem__(name, cls)
+        dict.__setitem__(self, name, cls)
         return cls
 
     def get(self, name: str, default=None):  # type: ignore[override]

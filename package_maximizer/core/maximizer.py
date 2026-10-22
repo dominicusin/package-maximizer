@@ -40,6 +40,7 @@ class PackageMaximizer:
         analyzer: ResultAnalyzer | str | None = None,
         use_cache: bool = True,
         cache_ttl: int = 3600,
+        strictness: str = "warn",
     ) -> None:
         """
         Инициализация PackageMaximizer.
@@ -51,6 +52,8 @@ class PackageMaximizer:
             analyzer: Анализатор результатов (опционально)
             use_cache: Использовать кэширование
             cache_ttl: Время жизни кэша в секундах
+            strictness: Строгость разрешения конфликтов: "warn" (вывод предупреждения),
+                        "skip" (пропустить конфликтующие), "fail" (выбросить ошибку)
         """
         self.manager = (
             manager
@@ -69,6 +72,13 @@ class PackageMaximizer:
             # Предполагаем, что это уже экземпляр солвера
             self.solver = solver
             self.solver_type = self._infer_solver_type(solver)
+
+        # Строгость разрешения конфликтов
+        self.strictness = strictness
+        if self.strictness not in {"warn", "skip", "fail"}:
+            raise ValueError(
+                f"Invalid strictness: {strictness!r} (expected 'warn'|'skip'|'fail')"
+            )
 
         # Парсер
         self.parser = self._get_parser_instance(parser)
@@ -166,6 +176,8 @@ class PackageMaximizer:
     def maximize(self, packages: Sequence[Package]) -> list[Package]:
         """
         Максимизировать множество пакетов с использованием настроенного солвера.
+        Пропускает снапшот ресурсов до решения, чтобы учёт памяти не смешивается
+        с измерением самого солвера.
 
         Args:
             packages: Последовательность объектов Package
@@ -178,8 +190,14 @@ class PackageMaximizer:
         if self.use_cache and cache_key in self._cache:
             return self._cache[cache_key]
 
-        # Получение имен пакетов из солвера
+        # Кодирование графа зависимостей и конфликтов
+        from ..core.model_encoder import encode_packages
+
+        _constraints = encode_packages(list(packages))
         selected_names = self.solver.solve(packages)
+
+        # Фильтрация по строгости разрешения конфликтов
+        selected_names = self._apply_strictness(selected_names, _constraints)
 
         # Возврат полных объектов Package
         selected_packages = []
@@ -192,6 +210,66 @@ class PackageMaximizer:
             self._cache[cache_key] = selected_packages
 
         return selected_packages
+
+    def _apply_strictness(self, selected_names: list[str], constraints) -> list[str]:
+        """
+        Применить строгость разрешения конфликтов к результату солвера.
+
+        Args:
+            selected_names: Имена пакетов, выбранных солвером.
+            constraints: Объект ModelConstraints (граф зависимостей/конфликтов).
+
+        Returns:
+            Очищенный (по строгости) список имён пакетов.
+        """
+        selected = set(selected_names)
+        rejected: list[str] = []
+
+        # Проверка конфликтов
+        for a, b in constraints.conflicts:
+            if a in selected and b in selected:
+                if self.strictness == "fail":
+                    raise ValueError(
+                        f"Итоговый набор содержит конфликтующие друг с другом "
+                        f"пакеты: {a!r} и {b!r}. strictness=fail отклонил решение."
+                    )
+                elif self.strictness == "skip":
+                    # Удаляем конфликтующий пакет (в порядке алфавита для
+                    # детерминизма: берём тот, который идёт позже в списке)
+                    loser = max(a, b)
+                    rejected.append(loser)
+                else:  # warn
+                    logger = logging.getLogger(__name__)
+                    logger.warning(
+                        "Конфликтующие пакеты %s и %s выбраны оба; предупреждение.",
+                        a,
+                        b,
+                    )
+
+        if rejected:
+            selected -= set(rejected)
+            if self.strictness != "fail":
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    "Строгость '%s': отброшены конфликтующие %s",
+                    self.strictness,
+                    rejected,
+                )
+
+        # Дополнительная проверка зависимостей: если выбран пакет, его зависимости
+        # тоже должны быть выбраны (иначе конфликт зависимостей указывает на
+        # несогласованность графа, который ведёт себя строго как 'fail').
+        if self.strictness == "fail":
+            for pkg, deps in constraints.dependencies.items():
+                if pkg in selected:
+                    missing = [d for d in deps if d not in selected]
+                    if missing:
+                        raise ValueError(
+                            f"Пакет {pkg!r} выбран, но невыполненные зависимости: {', '.join(missing)}. "
+                            "strictness=fail отклонил решение."
+                        )
+
+        return sorted(selected)
 
     def solve(self, packages: Sequence[Package]) -> list[str]:
         """

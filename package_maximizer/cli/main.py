@@ -113,6 +113,27 @@ def cli(verbose: bool, quiet: bool, config: str | None):
     default=False,
     help="Параллельная обработка пакетов (многопоточность)",
 )
+@click.option(
+    "--manifest",
+    "manifest_paths",
+    type=click.Path(exists=True),
+    multiple=True,
+    help="Путь к локальному манифесту (YAML/JSON) с пакетами, зависимостями и конфликтами",
+)
+@click.option(
+    "--strict",
+    "strictness",
+    type=click.Choice(["warn", "skip", "fail"]),
+    default=None,
+    help="Строгость разрешения конфликтов: warn (вывод), skip (пропуск), fail (ошибка)",
+)
+@click.option(
+    "--report",
+    "report_file",
+    type=click.Path(),
+    default=None,
+    help="Путь к JSON-отчёту с метриками работы и отбором пакетов",
+)
 def maximize(
     packages,
     manager,
@@ -124,6 +145,9 @@ def maximize(
     explain,
     metadata,
     parallel,
+    manifest_paths,
+    strictness,
+    report_file,
 ):
     """
     Максимизировать множество пакетов.
@@ -135,6 +159,9 @@ def maximize(
         package-maximizer pkg1 pkg2 -c pkg1,pkg2 -s z3
 
         package-maximizer pkg1 pkg2 pkg3 -w pkg1,2.0 -w pkg2,1.5
+
+    Манифесты (YAML/JSON) с --manifest, строгость конфликтов --strict,
+    отчёт --report.
     """
     # Resolve config-driven defaults (explicit CLI flags take precedence).
     obj = click.get_current_context().obj or {}
@@ -152,24 +179,47 @@ def maximize(
             click.echo(f"Ошибка: Неизвестный пакетный менеджер '{manager}'", err=True)
             sys.exit(1)
 
-        # Создание объектов пакетов
-        package_objs = []
+        # Создание объектов пакетов из CLI-списка
+        package_objs = [Package(name=n, status="candidate") for n in packages]
+
+        # Загрузка локальных манифестов (YAML/JSON) + метаданные
+        if manifest_paths:
+            from ..parsing import ManifestLoader, ManifestParseException
+
+            for manifest_path in manifest_paths:
+                try:
+                    loader = ManifestLoader.from_file(manifest_path)
+                    packages = loader.parse()
+                except ManifestParseException as e:
+                    click.echo(
+                        f"Ошибка: не удалось прочитать манифест {manifest_path}: {e}",
+                        err=True,
+                    )
+                    sys.exit(1)
+                except Exception as e:
+                    click.echo(
+                        f"Ошибка: неожиданная ошибка при загрузке {manifest_path}: {e}",
+                        err=True,
+                    )
+                    sys.exit(1)
+
+                # Добавляем пакеты из манифеста (includes depends/conflicts)
+                for pkg in packages:
+                    package_objs.append(pkg)
+
+        # Добавление конфликтов из CLI
         conflict_map = {}
-
-        for pkg_name in packages:
-            pkg = Package(name=pkg_name, status="candidate")
-            package_objs.append(pkg)
-
-        # Добавление конфликтов
         for pkg_name, conflict_name in conflicts:
             conflict_map.setdefault(pkg_name, []).append(conflict_name)
 
         # Применение конфликтов к пакетам
         for pkg in package_objs:
             if pkg.name in conflict_map:
-                pkg.conflicts = conflict_map[pkg.name]
+                pkg.conflicts = list(
+                    dict.fromkeys(pkg.conflicts + conflict_map[pkg.name])
+                )
 
-        # Добавление зависимостей
+        # Добавление зависимостей из CLI
         dep_map = {}
         for pkg_name, dep_name in depends:
             dep_map.setdefault(pkg_name, []).append(dep_name)
@@ -177,7 +227,7 @@ def maximize(
         # Применение зависимостей к пакетам
         for pkg in package_objs:
             if pkg.name in dep_map:
-                pkg.depends = dep_map[pkg.name]
+                pkg.depends = list(dict.fromkeys(pkg.depends + dep_map[pkg.name]))
 
         # Автоматическая загрузка метаданных через адаптеры
         if metadata:
@@ -218,18 +268,54 @@ def maximize(
         # Создание словаря весов
         weights_dict = dict(weights) if weights else None
 
-        # Создание максимайзера
+        # Определение строгости разрешения конфликтов
+        strict = strictness if strictness else "warn"
+
+        # Создание максимайзера с учётом строгости
         try:
-            maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
+            maximizer = PackageMaximizer(
+                manager=manager_enum,
+                solver=solver,
+                strictness=strict,
+            )
         except ValueError:
             click.echo(f"Ошибка: Неизвестный солвер '{solver}'", err=True)
             sys.exit(1)
+
+        # Сбор метрик (монтиoring) при запросе отчёта
+        metrics = {"input_count": len(package_objs), "strictness": strict}
+        monitor = None
+        if report_file:
+            from ..utils.monitor import ResourceMonitor
+
+            monitor = ResourceMonitor()
+            metrics.update(monitor.to_dict())
 
         # Решение
         if weights_dict:
             result = maximizer.solve_with_weights(package_objs, weights_dict)
         else:
             result = maximizer.solve(package_objs)
+
+        # Сбор метрик после решения
+        if report_file:
+            metrics.update(monitor.to_dict())
+            metrics["selected_count"] = len(result)
+            metrics["excluded"] = [p.name for p in package_objs if p.name not in result]
+            report = {
+                "title": "Package Maximizer — отчёт решения",
+                "manager": manager,
+                "solver": solver,
+                "strictness": strict,
+                "input_count": metrics["input_count"],
+                "selected_count": len(result),
+                "result": result,
+                "excluded": metrics["excluded"],
+                "metrics": metrics,
+            }
+            with open(report_file, "w", encoding="utf-8") as fh:
+                json.dump(report, fh, ensure_ascii=False, indent=2)
+            click.echo(f"Отчёт записан в {report_file}")
 
         # Вывод
         if output == "json":
@@ -270,7 +356,7 @@ def maximize(
                             elif b == name and a in selected_set:
                                 reasons.append(f"конфликт с {a}")
 
-                        # Проверяем зависимости (если pkg исключён, возможно его зависимости не выбраны)
+                        # Проверяем зависимости
                         deps = constraints.dependencies.get(name, [])
                         for dep in deps:
                             if dep not in selected_set:

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import warnings
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Iterable, Optional, cast
 
 from ..core.interfaces import ConstraintSolver
 from ..core.model_encoder import encode_packages
@@ -37,7 +37,7 @@ def _binary_vars(prob, prefix: str, names: list[str]) -> dict:
     """Create binary variables via the PuLP 4.0 API when available."""
     if hasattr(prob, "add_variable_dicts"):
         return prob.add_variable_dicts(prefix, names, cat=LpBinary)
-    return LpVariable.dicts(prefix, names, cat=LpBinary)
+    return cast(Any, LpVariable).dicts(prefix, names, cat=LpBinary)
 
 
 def _bundled_cbc(time_limit: float):

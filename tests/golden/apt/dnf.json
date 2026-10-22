@@ -1,0 +1,21 @@
+{
+  "packages": [
+    {
+      "name": "dnf",
+      "version": "4.8.0",
+      "depends": [
+        "libsolv",
+        "hawkey"
+      ],
+      "conflicts": []
+    },
+    {
+      "name": "libsolv",
+      "version": "0.7.27",
+      "depends": [
+        "zlib"
+      ],
+      "conflicts": []
+    }
+  ]
+}
