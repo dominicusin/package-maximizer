@@ -4,6 +4,7 @@ Package Maximizer CLI - Командный интерфейс.
 
 from __future__ import annotations
 
+import functools
 import json
 import logging
 import sys
@@ -17,12 +18,33 @@ from ..core.enums import PackageManagerType
 from ..core.maximizer import PackageMaximizer
 from ..core.package import Package
 from ..integrations import RealRepoIntegration
-from ..utils.logging_config import configure_logging
+from ..utils.logging_config import configure_logging, quiet_logging
 
 if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger(__name__)
+
+
+def json_safe(f):
+    """Keep a command's ``--output json`` stream free of diagnostics.
+
+    Wraps a command so that, when it is invoked with ``--output json``, library
+    and solver logging is silenced for the duration of the call.  Without this,
+    a single ``logger.warning`` (for example PuLP falling back to greedy because
+    no ILP backend is installed) lands on stderr and corrupts the JSON document
+    that consumers parse.  Commands without an ``--output`` option are
+    untouched, and text output keeps its diagnostics.
+    """
+
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if kwargs.get("output") == "json":
+            with quiet_logging():
+                return f(*args, **kwargs)
+        return f(*args, **kwargs)
+
+    return wrapper
 
 
 @click.group()
@@ -54,6 +76,7 @@ def cli(verbose: bool, quiet: bool, config: str | None):
 
 
 @cli.command()
+@json_safe
 @click.argument("packages", nargs=-1)
 @click.option(
     "--manager",
@@ -113,6 +136,27 @@ def cli(verbose: bool, quiet: bool, config: str | None):
     default=False,
     help="Параллельная обработка пакетов (многопоточность)",
 )
+@click.option(
+    "--manifest",
+    "manifest_paths",
+    type=click.Path(exists=True),
+    multiple=True,
+    help="Путь к локальному манифесту (YAML/JSON) с пакетами, зависимостями и конфликтами",
+)
+@click.option(
+    "--strict",
+    "strictness",
+    type=click.Choice(["warn", "skip", "fail"]),
+    default=None,
+    help="Строгость разрешения конфликтов: warn (вывод), skip (пропуск), fail (ошибка)",
+)
+@click.option(
+    "--report",
+    "report_file",
+    type=click.Path(),
+    default=None,
+    help="Путь к JSON-отчёту с метриками работы и отбором пакетов",
+)
 def maximize(
     packages,
     manager,
@@ -124,6 +168,9 @@ def maximize(
     explain,
     metadata,
     parallel,
+    manifest_paths,
+    strictness,
+    report_file,
 ):
     """
     Максимизировать множество пакетов.
@@ -135,6 +182,9 @@ def maximize(
         package-maximizer pkg1 pkg2 -c pkg1,pkg2 -s z3
 
         package-maximizer pkg1 pkg2 pkg3 -w pkg1,2.0 -w pkg2,1.5
+
+    Манифесты (YAML/JSON) с --manifest, строгость конфликтов --strict,
+    отчёт --report.
     """
     # Resolve config-driven defaults (explicit CLI flags take precedence).
     obj = click.get_current_context().obj or {}
@@ -152,24 +202,47 @@ def maximize(
             click.echo(f"Ошибка: Неизвестный пакетный менеджер '{manager}'", err=True)
             sys.exit(1)
 
-        # Создание объектов пакетов
-        package_objs = []
+        # Создание объектов пакетов из CLI-списка
+        package_objs = [Package(name=n, status="candidate") for n in packages]
+
+        # Загрузка локальных манифестов (YAML/JSON) + метаданные
+        if manifest_paths:
+            from ..parsing import ManifestLoader, ManifestParseException
+
+            for manifest_path in manifest_paths:
+                try:
+                    loader = ManifestLoader.from_file(manifest_path)
+                    packages = loader.parse()
+                except ManifestParseException as e:
+                    click.echo(
+                        f"Ошибка: не удалось прочитать манифест {manifest_path}: {e}",
+                        err=True,
+                    )
+                    sys.exit(1)
+                except Exception as e:
+                    click.echo(
+                        f"Ошибка: неожиданная ошибка при загрузке {manifest_path}: {e}",
+                        err=True,
+                    )
+                    sys.exit(1)
+
+                # Добавляем пакеты из манифеста (includes depends/conflicts)
+                for pkg in packages:
+                    package_objs.append(pkg)
+
+        # Добавление конфликтов из CLI
         conflict_map = {}
-
-        for pkg_name in packages:
-            pkg = Package(name=pkg_name, status="candidate")
-            package_objs.append(pkg)
-
-        # Добавление конфликтов
         for pkg_name, conflict_name in conflicts:
             conflict_map.setdefault(pkg_name, []).append(conflict_name)
 
         # Применение конфликтов к пакетам
         for pkg in package_objs:
             if pkg.name in conflict_map:
-                pkg.conflicts = conflict_map[pkg.name]
+                pkg.conflicts = list(
+                    dict.fromkeys(pkg.conflicts + conflict_map[pkg.name])
+                )
 
-        # Добавление зависимостей
+        # Добавление зависимостей из CLI
         dep_map = {}
         for pkg_name, dep_name in depends:
             dep_map.setdefault(pkg_name, []).append(dep_name)
@@ -177,7 +250,7 @@ def maximize(
         # Применение зависимостей к пакетам
         for pkg in package_objs:
             if pkg.name in dep_map:
-                pkg.depends = dep_map[pkg.name]
+                pkg.depends = list(dict.fromkeys(pkg.depends + dep_map[pkg.name]))
 
         # Автоматическая загрузка метаданных через адаптеры
         if metadata:
@@ -218,18 +291,54 @@ def maximize(
         # Создание словаря весов
         weights_dict = dict(weights) if weights else None
 
-        # Создание максимайзера
+        # Определение строгости разрешения конфликтов
+        strict = strictness if strictness else "warn"
+
+        # Создание максимайзера с учётом строгости
         try:
-            maximizer = PackageMaximizer(manager=manager_enum, solver=solver)
+            maximizer = PackageMaximizer(
+                manager=manager_enum,
+                solver=solver,
+                strictness=strict,
+            )
         except ValueError:
             click.echo(f"Ошибка: Неизвестный солвер '{solver}'", err=True)
             sys.exit(1)
+
+        # Сбор метрик (монтиoring) при запросе отчёта
+        metrics = {"input_count": len(package_objs), "strictness": strict}
+        monitor = None
+        if report_file:
+            from ..utils.monitor import ResourceMonitor
+
+            monitor = ResourceMonitor()
+            metrics.update(monitor.to_dict())
 
         # Решение
         if weights_dict:
             result = maximizer.solve_with_weights(package_objs, weights_dict)
         else:
             result = maximizer.solve(package_objs)
+
+        # Сбор метрик после решения
+        if report_file:
+            metrics.update(monitor.to_dict())
+            metrics["selected_count"] = len(result)
+            metrics["excluded"] = [p.name for p in package_objs if p.name not in result]
+            report = {
+                "title": "Package Maximizer — отчёт решения",
+                "manager": manager,
+                "solver": solver,
+                "strictness": strict,
+                "input_count": metrics["input_count"],
+                "selected_count": len(result),
+                "result": result,
+                "excluded": metrics["excluded"],
+                "metrics": metrics,
+            }
+            with open(report_file, "w", encoding="utf-8") as fh:
+                json.dump(report, fh, ensure_ascii=False, indent=2)
+            click.echo(f"Отчёт записан в {report_file}")
 
         # Вывод
         if output == "json":
@@ -270,7 +379,7 @@ def maximize(
                             elif b == name and a in selected_set:
                                 reasons.append(f"конфликт с {a}")
 
-                        # Проверяем зависимости (если pkg исключён, возможно его зависимости не выбраны)
+                        # Проверяем зависимости
                         deps = constraints.dependencies.get(name, [])
                         for dep in deps:
                             if dep not in selected_set:
@@ -287,6 +396,7 @@ def maximize(
 
 
 @cli.command()
+@json_safe
 def list_solvers():
     """
     Показать доступные солверы.
@@ -302,6 +412,7 @@ def list_solvers():
 
 
 @cli.command()
+@json_safe
 def list_managers():
     """
     Показать поддерживаемые пакетные менеджеры.
@@ -316,6 +427,7 @@ def list_managers():
 
 
 @cli.command()
+@json_safe
 def list_parsers():
     """
     Показать доступные парсеры.
@@ -330,6 +442,7 @@ def list_parsers():
 
 
 @cli.command()
+@json_safe
 def version():
     """
     Показать версию.
@@ -340,6 +453,7 @@ def version():
 
 
 @cli.command()
+@json_safe
 @click.argument("package_file", type=click.Path(exists=True))
 @click.option("--manager", "-m", type=str, default="apt")
 @click.option("--solver", "-s", type=str, default="greedy")
@@ -408,6 +522,7 @@ def from_file(package_file, manager, solver, output):
 
 
 @cli.command()
+@json_safe
 @click.option(
     "--solvers", "-s", type=str, default="all", help="Список солверов через запятую"
 )
@@ -501,6 +616,7 @@ def benchmark(solvers, packages, runs, output):
 
 
 @cli.command()
+@json_safe
 @click.option(
     "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
 )
@@ -537,6 +653,7 @@ def list_installed(manager, limit, output):
 
 
 @cli.command()
+@json_safe
 @click.argument("query")
 @click.option(
     "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
@@ -574,6 +691,7 @@ def search(query, manager, limit, output):
 
 
 @cli.command()
+@json_safe
 @click.argument("package_name")
 @click.option(
     "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
@@ -620,6 +738,7 @@ def info(package_name, manager, output):
 
 
 @cli.command()
+@json_safe
 @click.option(
     "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
 )
@@ -652,6 +771,7 @@ def check_updates(manager, output):
 
 
 @cli.command()
+@json_safe
 @click.option(
     "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
 )
@@ -677,6 +797,7 @@ def system_info(manager, output):
 
 
 @cli.command(name="config")
+@json_safe
 @click.option(
     "--config",
     "-C",
@@ -791,6 +912,7 @@ def export_command(packages, manager, solver, conflicts, format, output_file):
 
 
 @cli.command(name="propose")
+@json_safe
 @click.argument("packages", nargs=-1)
 @click.option(
     "--manager",
@@ -943,6 +1065,7 @@ def propose(packages, manager, solver, output, explain):
 
 
 @cli.command(name="analyze")
+@json_safe
 @click.argument("packages", nargs=-1)
 @click.option(
     "--manager",
@@ -1117,6 +1240,7 @@ def analyze(packages, manager, solver, metadata, conflicts, depends, output):
 
 
 @cli.command(name="compare")
+@json_safe
 @click.argument("packages", nargs=-1)
 @click.option(
     "--manager",
@@ -1265,6 +1389,7 @@ def tui_command() -> None:
 
 
 @cli.command(name="history")
+@json_safe
 @click.option("--manager", "-m", type=str, default="apt", help="Package manager type")
 @click.option("--limit", "-l", type=int, default=20, help="Number of entries to show")
 @click.option("--output", "-o", type=click.Choice(["text", "json"]), default="text")

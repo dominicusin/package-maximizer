@@ -39,6 +39,7 @@ class PackageManagerType(Enum):
 class SolverType(Enum):
     GREEDY = "greedy"
     ENHANCED_GREEDY = "enhanced_greedy"
+    BACKTRACKING = "backtracking"
     Z3 = "z3"
     PULP = "pulp"
     ORTOOLS = "ortools"

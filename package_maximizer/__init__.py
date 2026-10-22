@@ -45,9 +45,17 @@ from .core.constraints import (
 
 # Core components
 from .core.enums import PackageManagerType, PackageStatus, SolverType
+from .core.graph_builder import (
+    GraphBuilder,
+    PackageGraph,
+    build_buildtime_graph,
+    build_runtime_graph,
+    detect_cycles,
+)
 from .core.interfaces import ConstraintSolver, PackageParser
 from .core.interfaces import ResultAnalyzer as ResultAnalyzerInterface
 from .core.maximizer import PackageMaximizer
+from .core.objective import Objective, get_default_weights
 from .core.package import Package, PackageConstraint
 
 # Integrations
@@ -63,9 +71,13 @@ from .parsers import (
     get_parser,
 )
 
+# Manifest parsing (YAML/JSON/CSV + remote HTTP inventory)
+from .parsing import ManifestLoader, ManifestParseException, RemoteManifestSource
+
 # Solvers
 from .solvers import (
     SOLVER_REGISTRY,
+    BacktrackingSolver,
     EnhancedGreedySolver,
     GreedySolver,
     MaxSatSolver,
@@ -77,7 +89,7 @@ from .solvers import (
 )
 
 # Utilities
-from .utils import BenchmarkRunner, CacheManager
+from .utils import BenchmarkRunner, CacheManager, ResourceMonitor, ResourceSnapshot
 
 __all__ = [
     # Version info
@@ -101,6 +113,13 @@ __all__ = [
     "ConflictConstraint",
     "ConstraintParser",
     "PackageMaximizer",
+    "GraphBuilder",
+    "PackageGraph",
+    "build_runtime_graph",
+    "build_buildtime_graph",
+    "detect_cycles",
+    "Objective",
+    "get_default_weights",
     # Solvers
     "GreedySolver",
     "Z3Solver",
@@ -109,8 +128,13 @@ __all__ = [
     "MaxSatSolver",
     "MiniSatSolver",
     "EnhancedGreedySolver",
+    "BacktrackingSolver",
     "get_solver",
     "SOLVER_REGISTRY",
+    # Manifest parsing
+    "ManifestLoader",
+    "RemoteManifestSource",
+    "ManifestParseException",
     # Parsers
     "APTParser",
     "PacmanParser",
@@ -125,6 +149,8 @@ __all__ = [
     # Utilities
     "CacheManager",
     "BenchmarkRunner",
+    "ResourceMonitor",
+    "ResourceSnapshot",
     # Integrations
     "RealRepoIntegration",
     # CLI

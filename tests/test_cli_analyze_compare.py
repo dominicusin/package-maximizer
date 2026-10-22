@@ -148,7 +148,14 @@ def test_compare_json_output():
     runner = CliRunner()
     result = runner.invoke(cli, ["compare", "pkg1", "pkg2", "--output", "json"])
     assert result.exit_code == 0, result.output
-    data = json.loads(result.output)
+    try:
+        data = json.loads(result.output)
+    except json.JSONDecodeError:
+        import sys as _sys
+
+        print("DEBUG_OUTPUT_REPR:", repr(result.output), file=_sys.stderr)
+        print("DEBUG_STDERR_REPR:", repr(result.stderr), file=_sys.stderr)
+        raise
     assert "results" in data
     assert len(data["results"]) > 0
     # Check structure of result entries
