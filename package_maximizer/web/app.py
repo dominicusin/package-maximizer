@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hmac
 import os
+import re
 import time
 from functools import wraps
 from typing import Any
@@ -61,6 +62,19 @@ RATE_LIMITER = RateLimiter(
 # ─── Input validation ────────────────────────────────────────
 MAX_PACKAGES = int(os.environ.get("PM_MAX_PACKAGES", "5000"))
 MAX_NAME_LEN = int(os.environ.get("PM_MAX_NAME_LEN", "256"))
+_NAME_RE = re.compile(r"^[^\s-]\S*$")
+
+
+def _check_name(name: str) -> str:
+    """Return a stripped package name or raise ``ValueError`` if it is unsafe."""
+    name = name.strip()
+    if not name:
+        raise ValueError("Package names must not be empty")
+    if len(name) > MAX_NAME_LEN:
+        raise ValueError(f"Package name too long (max {MAX_NAME_LEN} chars)")
+    if not _NAME_RE.match(name):
+        raise ValueError(f"Invalid package name {name!r}")
+    return name
 
 
 def validate_maximize_payload(data: Any) -> tuple[list[str], list, dict | None]:
@@ -83,12 +97,7 @@ def validate_maximize_payload(data: Any) -> tuple[list[str], list, dict | None]:
     for pkg in raw_packages:
         if not isinstance(pkg, str):
             raise ValueError("Each package name must be a string")
-        name = pkg.strip()
-        if not name:
-            raise ValueError("Package names must not be empty")
-        if len(name) > MAX_NAME_LEN:
-            raise ValueError(f"Package name too long (max {MAX_NAME_LEN} chars)")
-        cleaned.append(name)
+        cleaned.append(_check_name(pkg))
 
     if len(cleaned) > MAX_PACKAGES:
         raise ValueError(f"Too many packages (max {MAX_PACKAGES})")
@@ -136,8 +145,9 @@ def require_api_key(f):
         if request.endpoint == "health":
             return f(*args, **kwargs)
 
-        # Check API key
-        api_key = request.headers.get("X-API-Key") or request.args.get("api_key")
+        # Check API key (header-only: query-string keys are rejected so the
+        # secret never lands in access logs or browser history).
+        api_key = request.headers.get("X-API-Key")
         if not api_key or not hmac.compare_digest(api_key, API_KEY):
             return (
                 jsonify(
@@ -461,6 +471,13 @@ def propose_post() -> tuple[dict, int]:
             jsonify({"error": "Bad Request", "message": "'packages' must be a list"}),
             400,
         )
+
+    try:
+        for pkg_name in packages:
+            if isinstance(pkg_name, str):
+                _check_name(pkg_name)
+    except ValueError as e:
+        return jsonify({"error": "Bad Request", "message": str(e)}), 400
 
     manager = data.get("manager", "apt")
     solver = data.get("solver", "greedy")
