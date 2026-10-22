@@ -90,7 +90,11 @@ class PackageGraph:
             return
         self.nodes[node.name] = node
         self.dependencies.setdefault(node.name, [])
+        for dep in node.depends:
+            self.dependencies.setdefault(node.name, []).append(dep)
         self.conflicts.setdefault(node.name, [])
+        for conflict, _ in node.conflicts:
+            self.conflicts.setdefault(node.name, []).append((conflict, ""))
         self.declared_by[node.name] = node.declared_by or node.name
 
     def topological_order(self) -> list[str]:
