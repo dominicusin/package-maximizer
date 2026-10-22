@@ -12,7 +12,8 @@ import json
 import logging
 import os
 import sys
-from typing import Any
+from contextlib import contextmanager
+from typing import Any, Generator
 
 _DEFAULT_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
@@ -73,3 +74,28 @@ def configure_logging(
 def get_logger(name: str) -> logging.Logger:
     """Return a named logger under the package hierarchy."""
     return logging.getLogger(name)
+
+
+@contextmanager
+def quiet_logging(level: int = logging.CRITICAL) -> Generator[None, None, None]:
+    """Route diagnostics away from the terminal for the duration of a block.
+
+    Commands that emit machine-readable output (``--output json``) promise a
+    parseable document on their output stream.  Solver and library diagnostics
+    are written to stderr, which Click's test runner merges into
+    ``result.output`` and which combined-output consumers (``2>&1 | jq``) see
+    as corruption — a ``2026-10-22 02:11:58 - ...`` log line parses as the JSON
+    number ``2026`` and breaks the document.
+
+    Raising the global disable threshold keeps those records off the terminal
+    without touching the JSON on stdout.  Text output is unaffected, so
+    operators keep their diagnostics by not asking for JSON.
+
+    Args:
+        level: records at or below this level are dropped (default: all).
+    """
+    logging.disable(level)
+    try:
+        yield
+    finally:
+        logging.disable(logging.NOTSET)

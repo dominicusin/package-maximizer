@@ -4,6 +4,7 @@ Package Maximizer CLI - Командный интерфейс.
 
 from __future__ import annotations
 
+import functools
 import json
 import logging
 import sys
@@ -17,12 +18,33 @@ from ..core.enums import PackageManagerType
 from ..core.maximizer import PackageMaximizer
 from ..core.package import Package
 from ..integrations import RealRepoIntegration
-from ..utils.logging_config import configure_logging
+from ..utils.logging_config import configure_logging, quiet_logging
 
 if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger(__name__)
+
+
+def json_safe(f):
+    """Keep a command's ``--output json`` stream free of diagnostics.
+
+    Wraps a command so that, when it is invoked with ``--output json``, library
+    and solver logging is silenced for the duration of the call.  Without this,
+    a single ``logger.warning`` (for example PuLP falling back to greedy because
+    no ILP backend is installed) lands on stderr and corrupts the JSON document
+    that consumers parse.  Commands without an ``--output`` option are
+    untouched, and text output keeps its diagnostics.
+    """
+
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if kwargs.get("output") == "json":
+            with quiet_logging():
+                return f(*args, **kwargs)
+        return f(*args, **kwargs)
+
+    return wrapper
 
 
 @click.group()
@@ -54,6 +76,7 @@ def cli(verbose: bool, quiet: bool, config: str | None):
 
 
 @cli.command()
+@json_safe
 @click.argument("packages", nargs=-1)
 @click.option(
     "--manager",
@@ -373,6 +396,7 @@ def maximize(
 
 
 @cli.command()
+@json_safe
 def list_solvers():
     """
     Показать доступные солверы.
@@ -388,6 +412,7 @@ def list_solvers():
 
 
 @cli.command()
+@json_safe
 def list_managers():
     """
     Показать поддерживаемые пакетные менеджеры.
@@ -402,6 +427,7 @@ def list_managers():
 
 
 @cli.command()
+@json_safe
 def list_parsers():
     """
     Показать доступные парсеры.
@@ -416,6 +442,7 @@ def list_parsers():
 
 
 @cli.command()
+@json_safe
 def version():
     """
     Показать версию.
@@ -426,6 +453,7 @@ def version():
 
 
 @cli.command()
+@json_safe
 @click.argument("package_file", type=click.Path(exists=True))
 @click.option("--manager", "-m", type=str, default="apt")
 @click.option("--solver", "-s", type=str, default="greedy")
@@ -494,6 +522,7 @@ def from_file(package_file, manager, solver, output):
 
 
 @cli.command()
+@json_safe
 @click.option(
     "--solvers", "-s", type=str, default="all", help="Список солверов через запятую"
 )
@@ -587,6 +616,7 @@ def benchmark(solvers, packages, runs, output):
 
 
 @cli.command()
+@json_safe
 @click.option(
     "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
 )
@@ -623,6 +653,7 @@ def list_installed(manager, limit, output):
 
 
 @cli.command()
+@json_safe
 @click.argument("query")
 @click.option(
     "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
@@ -660,6 +691,7 @@ def search(query, manager, limit, output):
 
 
 @cli.command()
+@json_safe
 @click.argument("package_name")
 @click.option(
     "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
@@ -706,6 +738,7 @@ def info(package_name, manager, output):
 
 
 @cli.command()
+@json_safe
 @click.option(
     "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
 )
@@ -738,6 +771,7 @@ def check_updates(manager, output):
 
 
 @cli.command()
+@json_safe
 @click.option(
     "--manager", "-m", type=str, default="apt", help="Тип пакетного менеджера"
 )
@@ -763,6 +797,7 @@ def system_info(manager, output):
 
 
 @cli.command(name="config")
+@json_safe
 @click.option(
     "--config",
     "-C",
@@ -877,6 +912,7 @@ def export_command(packages, manager, solver, conflicts, format, output_file):
 
 
 @cli.command(name="propose")
+@json_safe
 @click.argument("packages", nargs=-1)
 @click.option(
     "--manager",
@@ -1029,6 +1065,7 @@ def propose(packages, manager, solver, output, explain):
 
 
 @cli.command(name="analyze")
+@json_safe
 @click.argument("packages", nargs=-1)
 @click.option(
     "--manager",
@@ -1203,6 +1240,7 @@ def analyze(packages, manager, solver, metadata, conflicts, depends, output):
 
 
 @cli.command(name="compare")
+@json_safe
 @click.argument("packages", nargs=-1)
 @click.option(
     "--manager",
@@ -1351,6 +1389,7 @@ def tui_command() -> None:
 
 
 @cli.command(name="history")
+@json_safe
 @click.option("--manager", "-m", type=str, default="apt", help="Package manager type")
 @click.option("--limit", "-l", type=int, default=20, help="Number of entries to show")
 @click.option("--output", "-o", type=click.Choice(["text", "json"]), default="text")
