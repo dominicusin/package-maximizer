@@ -101,9 +101,7 @@ class TestEdgeCases:
 
     def test_strictness_fail_raises_on_final_conflict(self):
         """strictness=fail rejects a final set that still contains a conflict."""
-        maximizer = PackageMaximizer(
-            solver=SolverType.GREEDY, strictness="fail"
-        )
+        maximizer = PackageMaximizer(solver=SolverType.GREEDY, strictness="fail")
         pkg1 = Package(name="pkg1", conflicts=["pkg2"])
         pkg2 = Package(name="pkg2", conflicts=["pkg1"])
         packages = [pkg1, pkg2]
@@ -115,9 +113,7 @@ class TestEdgeCases:
 
     def test_strictness_skip_removes_conflict(self):
         """strictness=skip drops the losing package from the final set."""
-        maximizer = PackageMaximizer(
-            solver=SolverType.GREEDY, strictness="skip"
-        )
+        maximizer = PackageMaximizer(solver=SolverType.GREEDY, strictness="skip")
         pkg1 = Package(name="pkg1", conflicts=["pkg2"])
         pkg2 = Package(name="pkg2", conflicts=["pkg1"])
         packages = [pkg1, pkg2]
@@ -141,9 +137,7 @@ class TestEdgeCases:
         logger = logging.getLogger("package_maximizer.core.maximizer")
         logger.addHandler(handler)
         try:
-            maximizer = PackageMaximizer(
-                solver=SolverType.GREEDY, strictness="warn"
-            )
+            maximizer = PackageMaximizer(solver=SolverType.GREEDY, strictness="warn")
             result = maximizer._apply_strictness(["pkg1", "pkg2"], constraints)
         finally:
             logger.removeHandler(handler)

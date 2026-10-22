@@ -42,7 +42,11 @@ def apt_packages():
     cur: dict | None = None
     for line in APT_STATUS.read_text(encoding="utf-8").split("\n"):
         if line.startswith("Package: "):
-            cur = {"Package": line.split(":", 1)[1].strip(), "Depends": [], "Conflicts": []}
+            cur = {
+                "Package": line.split(":", 1)[1].strip(),
+                "Depends": [],
+                "Conflicts": [],
+            }
             blocks[cur["Package"]] = cur
         elif cur is not None and line.startswith("Depends: "):
             deps = [d.strip() for d in line.split(":", 1)[1].split(",")]
@@ -55,10 +59,31 @@ def apt_packages():
 
     # Deterministic ordering; keep a manageable, meaningful subset.
     known = {
-        "nginx", "apache2", "php", "python3", "libc6", "libgcc-s1", "libstdc++6",
-        "openssh-server", "vim", "tmux", "git", "apt", "dpkg", "openssl",
-        "ca-certificates", "zlib1g", "make", "gcc", "curl", "wget",
-        "postgresql", "redis-server", "nodejs", "firewalld", "netplan",
+        "nginx",
+        "apache2",
+        "php",
+        "python3",
+        "libc6",
+        "libgcc-s1",
+        "libstdc++6",
+        "openssh-server",
+        "vim",
+        "tmux",
+        "git",
+        "apt",
+        "dpkg",
+        "openssl",
+        "ca-certificates",
+        "zlib1g",
+        "make",
+        "gcc",
+        "curl",
+        "wget",
+        "postgresql",
+        "redis-server",
+        "nodejs",
+        "firewalld",
+        "netplan",
     }
 
     result = []
