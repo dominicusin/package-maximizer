@@ -145,8 +145,9 @@ def require_api_key(f):
         if request.endpoint == "health":
             return f(*args, **kwargs)
 
-        # Check API key
-        api_key = request.headers.get("X-API-Key") or request.args.get("api_key")
+        # Check API key (header-only: query-string keys are rejected so the
+        # secret never lands in access logs or browser history).
+        api_key = request.headers.get("X-API-Key")
         if not api_key or not hmac.compare_digest(api_key, API_KEY):
             return (
                 jsonify(
