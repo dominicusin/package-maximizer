@@ -37,6 +37,6 @@ jobs:
       - uses: actions/download-artifact@v8
         with: {name: dist, path: dist}
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.14.2
+        uses: pypa/gh-action-pypi-publish@v1.14.3
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
